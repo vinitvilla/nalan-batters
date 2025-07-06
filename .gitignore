@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/generated/prisma
+
+/src/generated/prisma
+nalan-batters-firebase-adminsdk-fbsvc-0b103d9719.json
+webdesign.webp
