@@ -29,6 +29,8 @@ export function UserOtpStep({ onUserFound, onUserNotFound, onBack, confirmationR
       if (!confirmationResult) throw new Error("No OTP confirmation");
       const firebaseUser = await confirmationResult.confirm(otp);
       const token = await firebaseUser.user.getIdToken();
+      const idTokenResult = await firebaseUser.user.getIdTokenResult();
+      userStore.getState().setIsAdmin(Boolean(idTokenResult.claims.admin));
       userStore.getState().setToken(token);
       // After OTP is verified, check user in DB
       const res = await fetch(`/api/public/users?phone=${encodeURIComponent(phone)}`);

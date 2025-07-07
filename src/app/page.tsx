@@ -23,7 +23,6 @@ export default function HomePage() {
         <div className="mt-6 md:mt-10">
           <QuickOrderSection />
         </div>
-        <ProductList products={products} />
         <div className="mt-8 md:mt-16">
           <TestimonialsSection />
         </div>

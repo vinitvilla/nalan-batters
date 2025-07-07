@@ -5,6 +5,7 @@ import { useSignOut } from "@/hooks/useSignOut";
 
 export default function UserDropdown({ onClose }: { onClose?: () => void }) {
   const user = userStore((s) => s.user);
+  const isAdmin = userStore((s) => s.isAdmin);
   const phoneNumber = userStore((s) => s.phone);
   const fullName = userStore((s) => s.fullName);
   const signOut = useSignOut();
@@ -19,6 +20,15 @@ export default function UserDropdown({ onClose }: { onClose?: () => void }) {
           <span className="text-xs text-gray-500">{phoneNumber}</span>
         </div>
       </div>
+      {
+        isAdmin && (
+          <Link href="/admin" className="block">
+            <Button variant="ghost" className="w-full text-left cursor-pointer px-2 py-2" onClick={onClose}>
+              Admin Dashboard
+            </Button>
+          </Link>
+        )
+      }
       <Link href="/settings">
         <Button variant="ghost" className="w-full text-left cursor-pointer px-2 py-2" onClick={onClose}>
           Settings

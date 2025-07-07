@@ -5,27 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { useCartStore } from "@/store/cartStore";
 import { showAddToCartToast } from "@/components/CartToast";
+import { useProductStore } from "@/store/productStore";
 
 export default function QuickOrderSection() {
-	const [items, setItems] = useState<any[]>([]);
+	const products = useProductStore((state) => state.products);
+	const fetchProducts = useProductStore((state) => state.fetchProducts);
 	const [quantities, setQuantities] = useState<{ [id: string]: number }>({});
 	const addToCart = useCartStore((state) => state.addToCart);
-	const removeFromCart = useCartStore((state) => state.removeFromCart);
-	const updateQuantity = useCartStore((state) => state.updateQuantity);
 
+	// Fetch products if not loaded and initialize quantities
 	useEffect(() => {
-		fetch("/api/public/products")
-			.then((res) => res.json())
-			.then((data) => {
-				setItems(data);
-				// Initialize quantities to 1 for each product
-				const initialQuantities: { [id: string]: number } = {};
-				data.forEach((item: any) => {
-					initialQuantities[item.id] = 1;
-				});
-				setQuantities(initialQuantities);
-			});
-	}, []);
+		if (products.length === 0) fetchProducts();
+		const initialQuantities: { [id: string]: number } = {};
+		products.forEach((item) => {
+			initialQuantities[item.id] = 1;
+		});
+		setQuantities(initialQuantities);
+	}, [products.length]);
 
 	const handleAddToCart = (item: {
 		id: string;
@@ -47,16 +43,16 @@ export default function QuickOrderSection() {
 	return (
 		<section
 			id="quickOrder"
-			className="container mx-auto py-6 px-2 sm:py-16 sm:px-0 text-center"
+			className="container mx-auto py-2 px-2 sm:py-8 sm:px-0 text-center"
 		>
 			<h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">
 				Quick Order
 			</h2>
 			<p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">
-				Get your favorite dishes delivered to your doorstep in no time!
+				Get your favorite batters delivered to your doorstep!
 			</p>
 			<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-10">
-				{items.map((item) => (
+				{products.map((item) => (
 					<Card className="shadow-md flex flex-col" key={item.id}>
 						<div className="relative w-full h-40 sm:h-48">
 							{item.imageUrl && (
@@ -99,15 +95,14 @@ export default function QuickOrderSection() {
 								/>
 								<Button
 									className="bg-green-400 text-white font-bold hover:bg-green-500 px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-base cursor-pointer"
-									onClick={() => {
-										const quantity = quantities[item.id] || 1;
+									onClick={() =>
 										handleAddToCart({
 											id: item.id,
 											name: item.name,
 											price: item.price,
-											quantity,
-										});
-									}}
+											quantity: quantities[item.id] || 1,
+										})
+									}
 								>
 									Add to Cart
 								</Button>
@@ -130,42 +125,49 @@ export default function QuickOrderSection() {
 								</span>
 							</div>
 							<div className="w-full flex flex-col sm:flex-row sm:justify-between gap-4 mt-2">
-								<div className="flex-1 flex flex-col items-center">
-									<span className="font-semibold text-green-700">
-										Thursday
-									</span>
-									<span className="text-gray-700 text-sm mt-1">
-										Mississauga, Brampton, Downtown Toronto
-									</span>
-								</div>
-								<div className="hidden sm:block w-px bg-green-200 mx-2" />
-								<div className="flex-1 flex flex-col items-center">
-									<span className="font-semibold text-green-700">
-										Friday
-									</span>
-									<span className="text-gray-700 text-sm mt-1">
-										Pickering, Ajax, Whitby, Oshawa
-									</span>
-								</div>
-								<div className="hidden sm:block w-px bg-green-200 mx-2" />
-								<div className="flex-1 flex flex-col items-center">
-									<span className="font-semibold text-green-700">
-										Saturday
-									</span>
-									<span className="text-gray-700 text-sm mt-1">
-										Etobicoke, Northyork
-									</span>
-								</div>
-								<div className="hidden sm:block w-px bg-green-200 mx-2" />
-								<div className="flex-1 flex flex-col items-center">
-									<span className="font-semibold text-green-700">
-										Sunday
-									</span>
-									<span className="text-gray-700 text-sm mt-1">
-										Scarborough, Markham{" "}
-										<span className="text-gray-400">(Until 407)</span>
-									</span>
-								</div>
+								{[
+									{
+										day: "Thursday",
+										areas: "Brampton, Mississauga, Downtown Toronto",
+									},
+									{
+										day: "Friday",
+										areas: "Ajax, Whitby, Oshawa, Pickering",
+									},
+									{ day: "Saturday", areas: "Etobicoke, North York" },
+									{
+										day: "Sunday",
+										areas: (
+											<span>
+												Scarborough, Markham{" "}
+												<span className="text-red-400">
+													(Until 407)
+												</span>
+											</span>
+										),
+									},
+								].map(({ day, areas }, idx, arr) => (
+									<div
+										key={day}
+										className="flex-1 flex flex-col items-center"
+									>
+										<span className="font-semibold text-green-700">
+											{day}
+										</span>
+										<div className="flex flex-col text-gray-700 text-sm mt-1">
+											{typeof areas === "string"
+												? areas.split(", ").map((area, i, arr) => (
+														<span key={area} className="">
+															{area}
+														</span>
+												  ))
+												: areas}
+										</div>
+										{idx < arr.length - 1 && (
+											<div className="hidden sm:block w-px bg-green-200 mx-2" />
+										)}
+									</div>
+								))}
 							</div>
 						</CardContent>
 					</Card>
