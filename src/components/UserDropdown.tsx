@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { userStore } from "@/store/userStore";
+import { useSignOut } from "@/hooks/useSignOut";
 
 export default function UserDropdown({ onClose }: { onClose?: () => void }) {
   const user = userStore((s) => s.user);
   const phoneNumber = userStore((s) => s.phone);
   const fullName = userStore((s) => s.fullName);
-  const signOut = userStore((s) => s.signOut);
+  const signOut = useSignOut();
   return (
     <div className="absolute right-0 mt-2 w-56 bg-white border rounded shadow-lg z-50 p-2">
       <div className="flex items-center gap-3 px-2 py-2 border-b">
