@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { userStore } from '@/store/userStore';
 
 export type CartItem = {
   id: string; // productId
@@ -24,14 +25,21 @@ interface CartState {
   setPromo: (promo: string) => void;
   setPromoApplied: (applied: boolean) => void;
   setDiscount: (discount: number) => void;
-  fetchAndMergeCart: (userId: string) => Promise<void>;
-  syncCartToDB: (userId: string) => Promise<void>;
+  fetchAndMergeCart: () => Promise<void>;
+  syncCartToDB: () => Promise<void>;
 }
 
 export const useCartStore = create(
   devtools<CartState>((set, get) => ({
     items: [],
     addToCart: (item) => {
+      const userId = userStore.getState().id;
+      if (!item || !item.id || item.quantity <= 0) return;
+      // Check if item already exists in cart
+      if (item.quantity <= 0) {
+        get().removeFromCart(item.id);
+        return;
+      }
       const items = get().items;
       const existing = items.find(i => i.id === item.id);
       if (existing) {
@@ -43,15 +51,33 @@ export const useCartStore = create(
       } else {
         set({ items: [...items, item] });
       }
+      if (userId) {
+        get().syncCartToDB();
+      }
     },
-    removeFromCart: (id) => set({ items: get().items.filter(i => i.id !== id) }),
-    clearCart: () => set({ items: [] }),
-    updateQuantity: (id, quantity) =>
+    removeFromCart: (id) => {
+      const userId = userStore.getState().id;
+      set({ items: get().items.filter(i => i.id !== id) });
+      if (userId) get().syncCartToDB();
+    },
+    clearCart: () => {
+      const userId = userStore.getState().id;
+      set({ items: [] });
+      if (userId) get().syncCartToDB();
+    },
+    updateQuantity: (id, quantity) => {
+      const userId = userStore.getState().id;
+      if (quantity <= 0) {
+        get().removeFromCart(id);
+        return;
+      }
       set({
         items: get().items.map(i =>
           i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i
         ),
-      }),
+      });
+      if (userId) get().syncCartToDB();
+    },
     cartCount: 0,
     isCartOpen: false,
     openCart: () => set({ isCartOpen: true }),
@@ -63,7 +89,8 @@ export const useCartStore = create(
     setPromoApplied: (applied) => set({ promoApplied: applied }),
     setDiscount: (discount) => set({ discount }),
     // --- Cart persistence/merging ---
-    fetchAndMergeCart: async (userId: string) => {
+    fetchAndMergeCart: async () => {
+      const userId = userStore.getState().id;
       if (!userId) return;
       const localItems = get().items;
       const res = await fetch(`/api/public/cart?userId=${userId}`);
@@ -90,9 +117,11 @@ export const useCartStore = create(
       const merged = Array.from(map.values());
       set({ items: merged });
       // Sync merged cart to DB
-      await get().syncCartToDB(userId);
+      await get().syncCartToDB();
     },
-    syncCartToDB: async (userId: string) => {
+    syncCartToDB: async () => {
+      const userId = userStore.getState().id;
+      if (!userId) return;
       const items = get().items;
       await fetch('/api/public/cart', {
         method: 'POST',

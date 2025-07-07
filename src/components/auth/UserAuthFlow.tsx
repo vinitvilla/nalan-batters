@@ -5,6 +5,7 @@ import { UserRegisterStep } from "./UserRegisterStep";
 import { UserType } from "@/types/UserType";
 import { userStore } from "@/store/userStore";
 import { ConfirmationResult } from "firebase/auth";
+import { useCartStore } from "@/store/cartStore";
 
 export interface UserAuthFlowProps {
   onSuccess: (user: UserType) => void;
@@ -37,6 +38,7 @@ export function UserAuthFlow({ onSuccess, initialPhone = "" }: UserAuthFlowProps
         onUserFound={(user: UserType) => {
           setUserId(user.id);
           setUserExists(true);
+          useCartStore.getState().fetchAndMergeCart();
           onSuccess({ id: user.id, phone: user.phone, fullName: user.fullName || "" });
         }}
         onUserNotFound={ () => {

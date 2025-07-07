@@ -8,7 +8,6 @@ import { userStore } from "@/store/userStore";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { AddressFields } from "@/store/addressStore";
-import { ensureUserInDb } from "@/lib/ensureUserInDb";
 
 export interface OrderSummaryProps {
   cartItems: Array<{ id: string; name: string; price: number; quantity: number }>;
@@ -38,14 +37,11 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
     setPlacing(true);
     setOrderError("");
     try {
-      // 1. Ensure user exists in DB
-      const userId = await ensureUserInDb(user);
-      // 2. Place order
       const res = await fetch("/api/public/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
+          userId: user?.id,
           address: selectedAddress, // Pass the full address object
           items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity, price: i.price })),
         }),
@@ -110,6 +106,34 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
         {cartItems.length !== 0 && <>
           <Separator className="my-4" />
           <div className="flex flex-col gap-1 mb-2">
+            {/* Promo code input */}
+            <div className="flex items-center gap-2 mb-2 w-full">
+              <Input
+                type="text"
+                placeholder="Enter promo code"
+                value={promo}
+                onChange={e => setPromo(e.target.value)}
+                className="w-40"
+                disabled={promoApplied}
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={promoApplied || !promo}
+                onClick={() => {
+                  // Example: hardcoded promo logic
+                  if (promo.toLowerCase() === "save10") {
+                    setDiscount(10);
+                    setPromoApplied(true);
+                  } else {
+                    setDiscount(0);
+                    setPromoApplied(false);
+                  }
+                }}
+              >
+                {promoApplied ? "Applied" : "Apply"}
+              </Button>
+            </div>
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
