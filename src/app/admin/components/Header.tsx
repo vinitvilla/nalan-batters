@@ -1,20 +1,14 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
-import { Home } from "lucide-react";
-import { auth } from "@/lib/firebase/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { LogOut, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { userStore } from "@/store/userStore";
+import { useSignOut } from "@/hooks/useSignOut";
 
 const Header: React.FC = () => {
   const router = useRouter();
-  
+  const signOut = useSignOut();
   const user = userStore((state) => state.user);
-  const handleSignOut = async () => {
-    userStore.getState().signOut();
-    useRouter().push("/");
-  };
 
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b">
@@ -25,7 +19,7 @@ const Header: React.FC = () => {
           Back to Home
         </Button>
         {user && (
-          <Button className="cursor-pointer" variant="outline" onClick={handleSignOut}>
+          <Button className="cursor-pointer" variant="outline" onClick={signOut}>
             <LogOut className="h-4 w-4" />
             Sign Out
           </Button>

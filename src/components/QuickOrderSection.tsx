@@ -10,6 +10,8 @@ export default function QuickOrderSection() {
 	const [items, setItems] = useState<any[]>([]);
 	const [quantities, setQuantities] = useState<{ [id: string]: number }>({});
 	const addToCart = useCartStore((state) => state.addToCart);
+	const removeFromCart = useCartStore((state) => state.removeFromCart);
+	const updateQuantity = useCartStore((state) => state.updateQuantity);
 
 	useEffect(() => {
 		fetch("/api/public/products")

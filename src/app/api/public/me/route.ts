@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { getAuth } from "firebase-admin/auth";
+import { adminAuth } from "@/lib/firebase/firebase-admin";
 
 export async function GET() {
   const token = (await cookies()).get("auth-token")?.value;
@@ -8,8 +8,8 @@ export async function GET() {
 
   let decoded;
   try {
-    decoded = await getAuth().verifyIdToken(token);
-  } catch {
+    decoded = await adminAuth.verifyIdToken(token);
+  } catch(err) {
     return Response.json({ error: "Invalid token" }, { status: 401 });
   }
 

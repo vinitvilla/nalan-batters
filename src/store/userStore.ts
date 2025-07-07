@@ -1,10 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { UserType } from "@/types/UserType";
-import { useAddressStore } from "@/store/addressStore";
-import { signOut } from "firebase/auth";
-import { toast } from "sonner";
-import { auth } from "@/lib/firebase/firebase";
 
 interface UserState {
   id: string | null;
@@ -21,7 +17,6 @@ interface UserState {
   setPhone: (phone: string) => void;
   setIsAdmin: (isAdmin: boolean) => void;
   setLoading: (loading: boolean) => void;
-  signOut: () => void;
   reset: () => void;
 }
 
@@ -35,12 +30,14 @@ export const userStore = create(
       phone: "",
       isAdmin: false,
       loading: true,
-      setUser: (user) => set((state) => ({
-        user,
-        id: user?.id,
-        fullName: user?.fullName || "",
-        phone: user?.phone ? (user.phone.startsWith("+1") ? user.phone : "+1" + user.phone.replace(/^\+?1?/, "")) : "",
-      })),
+      setUser: (user) => {
+        set((state) => ({
+          user,
+          id: user?.id,
+          fullName: user?.fullName || "",
+          phone: user?.phone ? (user.phone.startsWith("+1") ? user.phone : "+1" + user.phone.replace(/^\+?1?/, "")) : "",
+        }));
+      },
       setToken: (token) => {
         set({ token });
         if (typeof window !== "undefined") {
@@ -59,21 +56,6 @@ export const userStore = create(
       setPhone: (phone: string) => set({ phone: phone.startsWith("+1") ? phone : "+1" + phone.replace(/^\+?1?/, "") }),
       setIsAdmin: (isAdmin: boolean) => set({ isAdmin }),
       setLoading: (loading: boolean) => set({ loading }),
-      signOut: (): void => {
-        signOut(auth).catch((error) => {
-          toast.error("Error signing out. Please try again.");
-        });
-        set({ id: null, user: null, token: null, fullName: "", phone: "", isAdmin: false });
-        if (typeof window !== "undefined") {
-          document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          localStorage.removeItem("auth-token");
-          // Clear address store on sign out
-          useAddressStore.getState().setAddresses([]);
-          useAddressStore.getState().setSelectedAddress(null);
-          useAddressStore.getState().clearNewAddress();
-        }
-        toast.success("You have been signed out successfully.");
-      },
       reset: () => set({ id: null, user: null, token: null, fullName: "", phone: "", isAdmin: false, loading: false }),
     }),
     { name: "UserStore" }
