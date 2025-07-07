@@ -1,4 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nalan Batters
+
+
+
+## Project Overview
+
+Nalan Batters is a web application built with Next.js, TypeScript, and Prisma ORM. It features a modern UI and supports user authentication, product management, cart functionality, and admin features. The project uses Firebase for authentication and admin operations, and Prisma for database access and migrations.
+
+### Key Features
+
+- **Next.js App Router**: Uses the `/app` directory structure for routing.
+- **TypeScript**: Type-safe codebase for both frontend and backend.
+- **Prisma ORM**: Database schema and migrations managed in `/prisma`.
+- **Firebase Admin SDK**: For secure admin operations and authentication.
+- **Modern UI Components**: Located in `/src/components` and `/src/components/ui`.
+- **Cart & Checkout**: Cart state managed in `/src/store/cartStore.ts`, with checkout flow in `/src/checkout`.
+- **Admin Dashboard**: Admin pages and API handlers in `/src/app/admin`.
+- **User Authentication**: Phone-based user auth flow in `/src/components/auth`.
+- **Reusable Hooks**: Custom hooks for authentication and sign-out in `/src/hooks`.
+- **API Routes**: Organized under `/src/app/api`.
+- **Seed Scripts**: Database seeding scripts in `/prisma/seeds`.
+- **Global Styles**: Located in `/src/app/globals.css`.
+- **Font Optimization**: Uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to load [Geist](https://vercel.com/font).
 
 ## Getting Started
 
@@ -16,9 +38,41 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
+
+- `src/app/` - Main app directory (routing, layouts, pages, admin, API, checkout, signin)
+- `src/components/` - UI and feature components (cart, auth, forms, etc.)
+- `src/store/` - State management (cart, user, product, address)
+- `src/lib/` - Utility functions, Prisma client, Firebase integration
+- `prisma/` - Database schema, migrations, and seed scripts
+- `public/` - Static assets (SVGs, images)
+- `scripts/` - Utility scripts (e.g., setAdmin.js)
+- `types/` - TypeScript type definitions
+
+## Database
+
+- **Prisma ORM**: Database schema in `prisma/schema.prisma`
+- **Migrations**: In `prisma/migrations/`
+- **Seeding**: Use `prisma/seed.ts` or scripts in `prisma/seeds/`
+
+## Authentication
+
+- **Firebase Admin SDK**: Credentials in `nalan-batters-firebase-adminsdk-fbsvc-0b103d9719.json`
+- **User Auth Flow**: Phone-based, with OTP and registration steps
+
+## Admin Features
+
+- **Admin Dashboard**: `/src/app/admin`
+- **API Handlers**: `/src/app/admin/api-handler.ts`
+- **Admin Utilities**: `/src/lib/requireAdmin.ts`, `/scripts/setAdmin.js`
+
+## UI/UX
+
+- **Modern UI**: Custom components in `/src/components/ui`
+- **Global Styles**: `/src/app/globals.css`
+- **Font**: [Geist](https://vercel.com/font) via `next/font`
 
 ## Learn More
 
