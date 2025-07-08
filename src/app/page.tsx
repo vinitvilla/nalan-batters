@@ -30,7 +30,6 @@ export default function HomePage() {
           <ContactSection />
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

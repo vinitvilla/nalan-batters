@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
 import { usePathname } from "next/navigation";
 import { SessionHydrator } from "@/components/SessionHydrator";
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
         { !(isAdmin || isSiginIn) && <Header />}
         <Toaster />
         {children}
+        <Footer />
       </body>
     </html>
   );

@@ -4,13 +4,6 @@ import { prisma } from "@/lib/prisma";
 // GET: List all users (for admin)
 export async function GET(req: NextRequest) {
   const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      phone: true,
-      fullName: true,
-      createdAt: true,
-      updatedAt: true,
-    },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(users);

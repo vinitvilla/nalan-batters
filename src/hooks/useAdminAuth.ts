@@ -12,8 +12,6 @@ export function useAdminAuth() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         await hydrateUserFromApi();
-        const token = await firebaseUser.getIdTokenResult();
-        setIsAdmin(!!token.claims.admin);
       } else {
         setUser(null);
         setIsAdmin(false);

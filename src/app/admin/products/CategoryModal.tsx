@@ -5,7 +5,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Edit, Trash2 } from "lucide-react";
 import Modal from "@/app/admin/components/modal";
 import { toast } from "sonner";
-import { adminApiHandler } from "@/app/admin/api-handler";
+import { useAdminApi } from "../use-admin-api";
 
 type Props = {
     open: boolean;
@@ -19,6 +19,7 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
     const [editing, setEditing] = useState<{ id?: string; name: string } | null>(null);
     const [name, setName] = useState("");
     const [loading, setLoading] = useState(false);
+    const adminApiFetch = useAdminApi();
 
     useEffect(() => {
         if (!open) {
@@ -32,7 +33,7 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
         setLoading(true);
         try {
             const method = editing?.id ? "PUT" : "POST";
-            const res = await adminApiHandler("/api/admin/categories", {
+            const res = await adminApiFetch("/api/admin/categories", {
                 method,
                 headers: {
                     "Content-Type": "application/json",
@@ -41,7 +42,7 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
                 credentials: "include",
                 body: JSON.stringify({ id: editing?.id, name }),
             });
-            if (!res.ok) throw new Error("Failed to save category");
+            if (!res || !res.ok) throw new Error("Failed to save category");
             toast.success(editing?.id ? "Category updated" : "Category added");
             onCategoryChange();
             setEditing(null);
@@ -60,7 +61,7 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
         if (!window.confirm("Delete this category?")) return;
         setLoading(true);
         try {
-            const res = await adminApiHandler("/api/admin/categories", {
+            const res = await adminApiFetch("/api/admin/categories", {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
@@ -69,7 +70,7 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
                 credentials: "include",
                 body: JSON.stringify({ id }),
             });
-            if (!res.ok) throw new Error("Failed to delete category");
+            if (!res || !res.ok) throw new Error("Failed to delete category");
             toast.success("Category deleted");
             onCategoryChange();
         } catch (e) {

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
 import { UserType } from "@/types/UserType";
-import { useStore } from "zustand";
+import { USER_ROLE } from "@/constants/userRole";
 
 export interface UserOtpStepProps {
   onUserFound: (user: UserType) => void;
@@ -44,6 +44,11 @@ export function UserOtpStep({ onUserFound, onUserNotFound, onBack, confirmationR
         }
         if (data.defaultAddress) {
           useAddressStore.getState().setSelectedAddress(data.defaultAddress);
+        }
+        if (data.user.role) {
+          if (!userStore.getState().isAdmin) {
+            userStore.getState().setIsAdmin(data.user.role === USER_ROLE.ADMIN);
+          }
         }
         onUserFound({ id: data.user.id, phone: data.user.phone, fullName: data.user.fullName || "" });
       } else {

@@ -1,6 +1,7 @@
 import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
 import { useCartStore } from "@/store/cartStore";
+import { USER_ROLE } from "@/constants/userRole";
 
 export async function hydrateUserFromApi({
   token,
@@ -22,6 +23,7 @@ export async function hydrateUserFromApi({
     const data = await res.json();
     if (data.user) {
       userStore.getState().setUser(data.user);
+      userStore.getState().setIsAdmin?.(data.user.role === USER_ROLE.ADMIN);
       if (data.user.addresses) {
         useAddressStore.getState().setAddresses(data.user.addresses);
       }

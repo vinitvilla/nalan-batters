@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useAdminApi } from "@/app/admin/use-admin-api";
+import { USER_ROLE } from "@/constants/userRole";
 
 export default function UsersPage() {
   const adminApiFetch = useAdminApi();
@@ -12,6 +14,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [roleEdits, setRoleEdits] = useState<{ [userId: string]: string }>({});
+  const [savingRole, setSavingRole] = useState<string | null>(null);
 
   useEffect(() => {
     adminApiFetch("/api/admin/users").then(async (res) => {
@@ -37,6 +41,20 @@ export default function UsersPage() {
       return `(${p.slice(0,3)}) ${p.slice(3,6)}-${p.slice(6,10)}`;
     }
     return p;
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    setSavingRole(userId);
+    setRoleEdits((prev) => ({ ...prev, [userId]: newRole }));
+    const res = await adminApiFetch("/api/admin/users/role", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, role: newRole }),
+    });
+    if (res && res.ok) {
+      setUsers((prev) => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    }
+    setSavingRole(null);
   };
 
   // --- Render ---
@@ -67,6 +85,7 @@ export default function UsersPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>ID</TableHead>
                 </TableRow>
               </TableHeader>
@@ -75,6 +94,22 @@ export default function UsersPage() {
                   <TableRow key={user.id}>
                     <TableCell>{user.fullName}</TableCell>
                     <TableCell>{displayPhone(user.phone)}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={roleEdits[user.id] ?? user.role}
+                        onValueChange={val => handleRoleChange(user.id, val)}
+                        disabled={savingRole === user.id}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.values(USER_ROLE).map(role => (
+                            <SelectItem key={role} value={role}>{role}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell className="text-xs text-gray-500">{user.id}</TableCell>
                   </TableRow>
                 ))}
