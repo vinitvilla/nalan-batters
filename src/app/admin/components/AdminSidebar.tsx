@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
     { label: "Orders", href: "/admin/orders" },
     { label: "Products", href: "/admin/products" },
     { label: "Users", href: "/admin/users" },
+    { label: "Feature Flags", href: "/admin/feature-flags" },
     { label: "Settings", href: "/admin/settings" },
 ];
 

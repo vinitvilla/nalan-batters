@@ -22,7 +22,7 @@ const CartButton = forwardRef<{ openDropdown: () => void }>((_, ref) => {
         variant="ghost"
         className="relative p-2 rounded-full hover:bg-green-100 cursor-pointer"
         aria-label="View cart"
-        onClick={() => isCartOpen ? closeCart() : openCart()}
+        onClick={openCart}
       >
         <ShoppingBasket className="w-10 h-10 text-lg text-green-500" />
         {cartCount > 0 && (

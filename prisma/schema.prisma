@@ -25,6 +25,13 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   cart              Cart?
+  role              UserRole  @default(USER)
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MANAGER
 }
 
 model Address {
@@ -130,6 +137,14 @@ model Config {
   title     String   @unique
   value     Json
   isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FeatureFlag {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
