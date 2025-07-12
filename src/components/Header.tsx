@@ -52,7 +52,7 @@ export default function Header() {
           </Link>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <CartButton ref={cartButtonRef} />
+          {user && <CartButton ref={cartButtonRef} />}
           <UserLoginButton />
         </div>
       </nav>

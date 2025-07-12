@@ -38,8 +38,8 @@ export function UserAuthFlow({ onSuccess, initialPhone = "" }: UserAuthFlowProps
         onUserFound={(user: UserType) => {
           setUserId(user.id);
           setUserExists(true);
-          useCartStore.getState().fetchAndMergeCart();
-          onSuccess({ id: user.id, phone: user.phone, fullName: user.fullName || "" });
+          // fetchAndMergeCart removed as per new cart logic
+          onSuccess({ id: user.id, phone: user.phone, fullName: user.fullName || "", role: user.role });
         }}
         onUserNotFound={ () => {
           setUserExists(false);
@@ -54,8 +54,8 @@ export function UserAuthFlow({ onSuccess, initialPhone = "" }: UserAuthFlowProps
     return (
       <UserRegisterStep
         onRegistered={(user) => {
-          userStore.getState().setUser({ id: user.id, phone: user.phone, fullName: user.fullName });
-          onSuccess({ id: user.id, phone: user.phone, fullName: user.fullName || "" });
+          userStore.getState().setUser({ id: user.id, phone: user.phone, fullName: user.fullName, role: user.role });
+          onSuccess({ id: user.id, phone: user.phone, fullName: user.fullName || "", role: user.role });
         }}
         onBack={() => setStep("otp")}
       />

@@ -42,7 +42,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user?.id,
-          address: selectedAddress, // Pass the full address object
+          addressId: selectedAddress?.id, // Pass the full address object
           items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity, price: i.price })),
         }),
       });

@@ -73,6 +73,10 @@ model Order {
   items       OrderItem[]
   status      OrderStatus @default(PENDING)
   total       Decimal     @db.Decimal(10,2)
+  tax         Decimal?    @db.Decimal(10,2)
+  surcharges  Decimal?    @db.Decimal(10,2)
+  deliveryCharges Decimal? @db.Decimal(10,2)
+  discount    Decimal?    @db.Decimal(10,2)
   promoCode   PromoCode?  @relation(fields: [promoCodeId], references: [id])
   promoCodeId String?
   createdAt   DateTime    @default(now())
@@ -130,6 +134,8 @@ model CartItem {
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
 }
 
 model Config {

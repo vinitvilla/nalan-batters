@@ -102,9 +102,8 @@ export default function ProductsPage() {
             if (token) headers["Authorization"] = `Bearer ${token}`;
             const res = await adminApiFetch("/api/admin/products", {
                 method: "DELETE",
-                headers,
-                credentials: "include",
                 body: JSON.stringify({ id }),
+                headers: { "Content-Type": "application/json" },
             });
             if (!res || !res.ok) throw new Error("Failed to delete product");
             toast.success("Product deleted");

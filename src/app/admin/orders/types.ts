@@ -1,18 +1,36 @@
 // Shared types and constants for admin orders
 
+import { UserType } from "@/types/UserType";
+
 export type Order = {
     id: string;
-    customerName: string;
-    customerPhone: string;
+    user: UserType;
+    address?: {
+        street?: string;
+        unit?: string;
+        city?: string;
+        province?: string;
+        postal?: string;
+        country?: string;
+    };
     status: string;
     total: number;
     createdAt: string;
     items: Array<{
         productId: string;
-        name: string;
+        product?: { name: string };
+        name?: string;
         quantity: number;
         price: number;
     }>;
+    tax?: number;
+    surcharges?: number;
+    deliveryCharges?: number;
+    discount?: number;
+    promoCode?: {
+        code: string;
+        discount: number;
+    };
 };
 
 export const ORDER_STATUSES = ["all", "pending", "processing", "completed", "cancelled"];

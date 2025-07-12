@@ -1,0 +1,4 @@
+We should change the cart logic: require the user to log in before they can add items to the cart.
+1. Hide the cart in the header if the user is not logged in.
+2. The "Add to Cart" button should prompt the user to log in.
+3. Whole idea is to remove the fetchAndMerge function

@@ -39,7 +39,8 @@ export default function SignInPage() {
             userStore.getState().setUser({
               id: user.id,
               phone: user.phone,
-              fullName: user.fullName || ""
+              fullName: user.fullName || "",
+              role: user.role
             });
             router.push("/");
           }}

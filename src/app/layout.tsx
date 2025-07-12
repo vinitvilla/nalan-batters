@@ -35,7 +35,7 @@ export default function RootLayout({
         { !(isAdmin || isSiginIn) && <Header />}
         <Toaster />
         {children}
-        <Footer />
+        { !(isAdmin || isSiginIn) && <Footer />}
       </body>
     </html>
   );

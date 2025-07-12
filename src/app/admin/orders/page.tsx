@@ -11,6 +11,9 @@ import { userStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { Order, ORDER_STATUSES } from "./types";
+import { MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { capitalize, formatCurrency, formatPhoneNumber, formatDate } from "@/lib/utils/commonFunctions";
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -24,13 +27,16 @@ export default function OrdersPage() {
     useEffect(() => {
         if (!token) return;
         setLoading(true);
-        adminApiFetch("/api/admin/orders", {
-            headers: { Authorization: `Bearer ${token}` },
-            credentials: "include",
-        })
+        adminApiFetch("/api/admin/orders")
             .then(res => res && res.json())
             .then(data => {
-                setOrders(Array.isArray(data) ? data : data.orders || []);
+                // Map orders to use user.fullName and user.phone
+                const orders = (Array.isArray(data) ? data : data.orders || []).map((order: Order) => ({
+                    ...order,
+                    fullName: order.user?.fullName || "",
+                    phone: order.user?.phone || "",
+                }));
+                setOrders(orders);
             })
             .catch(() => toast.error("Failed to fetch orders"))
             .finally(() => setLoading(false));
@@ -38,8 +44,8 @@ export default function OrdersPage() {
 
     const filteredOrders = orders.filter(order => {
         const matchesSearch =
-            order.customerName.toLowerCase().includes(search.toLowerCase()) ||
-            order.customerPhone.includes(search);
+            order.user.fullName.toLowerCase().includes(search.toLowerCase()) ||
+            order.user.phone.includes(search);
         const matchesStatus = status === "all" || order.status === status;
         return matchesSearch && matchesStatus;
     });
@@ -64,7 +70,7 @@ export default function OrdersPage() {
                         <Tabs value={status} onValueChange={setStatus} className="w-full md:w-auto">
                             <TabsList>
                                 {ORDER_STATUSES.map(s => (
-                                    <TabsTrigger key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</TabsTrigger>
+                                    <TabsTrigger key={s} value={s}>{capitalize(s)}</TabsTrigger>
                                 ))}
                             </TabsList>
                         </Tabs>
@@ -79,30 +85,46 @@ export default function OrdersPage() {
                                     <TableHead>Status</TableHead>
                                     <TableHead>Total</TableHead>
                                     <TableHead>Date</TableHead>
+                                    <TableHead>City</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredOrders.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                                        <TableCell colSpan={8} className="text-center text-muted-foreground">
                                             {loading ? "Loading..." : "No orders found."}
                                         </TableCell>
                                     </TableRow>
                                 )}
                                 {filteredOrders.map(order => (
                                     <TableRow key={order.id}>
-                                        <TableCell>{order.id}</TableCell>
-                                        <TableCell>{order.customerName}</TableCell>
-                                        <TableCell>{order.customerPhone}</TableCell>
-                                        <TableCell>{order.status}</TableCell>
-                                        <TableCell>${order.total.toFixed(2)}</TableCell>
-                                        <TableCell>{new Date(order.createdAt).toLocaleString()}</TableCell>
+                                        <TableCell className="max-w-[120px] truncate">{order.id}</TableCell>
+                                        <TableCell>{order.user.fullName}</TableCell>
+                                        <TableCell>{formatPhoneNumber(order.user.phone)}</TableCell>
+                                        <TableCell>{capitalize(order.status)}</TableCell>
+                                        <TableCell>{formatCurrency(order.total)}</TableCell>
+                                        <TableCell>{formatDate(order.createdAt)}</TableCell>
+                                        <TableCell>{order.address?.city || ""}</TableCell>
                                         <TableCell className="text-right space-x-2">
-                                            <Button size="sm" variant="outline" onClick={() => router.push(`/admin/orders/${order.id}`)}>
-                                                View
-                                            </Button>
-                                            {/* Add status update or delete actions here if needed */}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button size="sm" variant="ghost">
+                                                        <MoreVertical size={18} />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => router.push(`/admin/orders/${order.id}`)}>
+                                                        View
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => {/* TODO: implement edit */}}>
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => {/* TODO: implement delete */}}>
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 ))}

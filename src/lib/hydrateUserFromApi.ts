@@ -1,7 +1,7 @@
 import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
-import { useCartStore } from "@/store/cartStore";
 import { USER_ROLE } from "@/constants/userRole";
+import { useCartStore } from "@/store/cartStore";
 
 export async function hydrateUserFromApi({
   token,
@@ -16,7 +16,7 @@ export async function hydrateUserFromApi({
   try {
     const res = await fetch("/api/public/me", { credentials: "include" });
 
-    if (res.status === 401) {
+    if (res.status === 401 || res.status === 403 || res.status === 404) {
       onUnauthorized && onUnauthorized();
       return;
     }
@@ -30,8 +30,16 @@ export async function hydrateUserFromApi({
       if (data.user.defaultAddress) {
         useAddressStore.getState().setSelectedAddress(data.user.defaultAddress);
       }
-      if (data.user.id) {
-        await useCartStore.getState().fetchAndMergeCart();
+      if (data.user.cart) {
+        useCartStore.getState().setCartItems(
+          data.user.cart.items.map((item: any) => ({
+            id: item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            image: item.product.image,
+          }))
+        );
       }
     }
   } catch {

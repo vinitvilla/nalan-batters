@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { UserType } from "@/types/UserType";
+import { USER_ROLE } from "@/constants/userRole";
 
 interface UserState {
   id: string | null;
@@ -36,6 +37,7 @@ export const userStore = create(
           id: user?.id,
           fullName: user?.fullName || "",
           phone: user?.phone ? (user.phone.startsWith("+1") ? user.phone : "+1" + user.phone.replace(/^\+?1?/, "")) : "",
+          isAdmin: user?.role === USER_ROLE.ADMIN || false,
         }));
       },
       setToken: (token) => {

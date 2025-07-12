@@ -32,7 +32,14 @@ export function UserRegisterStep({ onRegistered, onBack }: UserRegisterStepProps
       });
       const data = await res.json();
       if (!res.ok || !data.user?.id) throw new Error(data.error || "Registration failed");
-      onRegistered({ id: data.user.id, phone: data.user.phone, fullName: data.user.fullName || fullName });
+      onRegistered({
+        id: data.user.id,
+        phone: data.user.phone,
+        fullName: data.user.fullName || fullName,
+        role: data.user.role, // Ensure the backend returns 'role'
+        addresses: data.user.addresses,
+        defaultAddress: data.user.defaultAddress,
+      });
     } catch (err: any) {
       setError(err.message || "Registration failed");
     } finally {

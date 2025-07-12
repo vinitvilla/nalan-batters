@@ -19,11 +19,9 @@ export default function UsersPage() {
 
   useEffect(() => {
     adminApiFetch("/api/admin/users").then(async (res) => {
-      if (res && res.ok) {
-        setUsers(await res.json());
-      } else {
-        setError("Failed to load users");
-      }
+      if (!res) return;
+      const data = await res.json();
+      setUsers(data);
       setLoading(false);
     });
   }, []);
@@ -47,9 +45,9 @@ export default function UsersPage() {
     setSavingRole(userId);
     setRoleEdits((prev) => ({ ...prev, [userId]: newRole }));
     const res = await adminApiFetch("/api/admin/users/role", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: "POST",
       body: JSON.stringify({ userId, role: newRole }),
+      headers: { "Content-Type": "application/json" },
     });
     if (res && res.ok) {
       setUsers((prev) => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));

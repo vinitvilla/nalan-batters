@@ -11,6 +11,7 @@ export type CartItem = {
 
 interface CartState {
   items: CartItem[];
+  setCartItems: (items: CartItem[]) => void;
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
@@ -25,13 +26,13 @@ interface CartState {
   setPromo: (promo: string) => void;
   setPromoApplied: (applied: boolean) => void;
   setDiscount: (discount: number) => void;
-  fetchAndMergeCart: () => Promise<void>;
   syncCartToDB: () => Promise<void>;
 }
 
 export const useCartStore = create(
   devtools<CartState>((set, get) => ({
     items: [],
+    setCartItems: (items) => set({ items }),
     addToCart: (item) => {
       const userId = userStore.getState().id;
       if (!item || !item.id || item.quantity <= 0) return;
@@ -88,37 +89,6 @@ export const useCartStore = create(
     setPromo: (promo) => set({ promo }),
     setPromoApplied: (applied) => set({ promoApplied: applied }),
     setDiscount: (discount) => set({ discount }),
-    // --- Cart persistence/merging ---
-    fetchAndMergeCart: async () => {
-      const userId = userStore.getState().id;
-      if (!userId) return;
-      const localItems = get().items;
-      const res = await fetch(`/api/public/cart?userId=${userId}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const dbItems = (data.cart?.items || []).map((item: any) => ({
-        id: item.productId,
-        name: item.product?.name || '',
-        price: Number(item.product?.price) || 0,
-        quantity: item.quantity,
-      }));
-      // Merge logic: combine quantities for same productId
-      const map = new Map<string, CartItem>();
-      for (const item of [...dbItems, ...localItems]) {
-        if (map.has(item.id)) {
-          map.set(item.id, {
-            ...item,
-            quantity: map.get(item.id)!.quantity + item.quantity,
-          });
-        } else {
-          map.set(item.id, { ...item });
-        }
-      }
-      const merged = Array.from(map.values());
-      set({ items: merged });
-      // Sync merged cart to DB
-      await get().syncCartToDB();
-    },
     syncCartToDB: async () => {
       const userId = userStore.getState().id;
       if (!userId) return;

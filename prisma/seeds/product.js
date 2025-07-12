@@ -1,14 +1,7 @@
 const { PrismaClient } = require("../../src/generated/prisma");
 const prisma = new PrismaClient();
 
-async function seedProducts() {
-  // Create or find the Dosa Batter category
-  const category = await prisma.category.upsert({
-    where: { name: "Dosa Batter" },
-    update: {},
-    create: { name: "Dosa Batter" },
-  });
-
+async function seedProducts(category) {
   await prisma.product.createMany({
     data: [
       {

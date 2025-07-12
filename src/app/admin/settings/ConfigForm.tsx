@@ -15,11 +15,9 @@ export default function ConfigForm() {
 
   useEffect(() => {
     adminApiFetch("/api/admin/config").then(async (res) => {
-      if (res && res.ok) {
-        setConfigs(await res.json());
-      } else {
-        setError("Failed to load config");
-      }
+      if (!res) return;
+      const data = await res.json();
+      setConfigs(data);
       setLoading(false);
     });
   }, []);
@@ -36,9 +34,9 @@ export default function ConfigForm() {
     setSaving(true);
     setError(null);
     const res = await adminApiFetch("/api/admin/config", {
-      method: "PUT",
+      method: "POST",
+      body: JSON.stringify(formData),
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: config.id, value: config.value, isActive: config.isActive }),
     });
     if (!res || !res.ok) setError("Failed to save");
     setSaving(false);

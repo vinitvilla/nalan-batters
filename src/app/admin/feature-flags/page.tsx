@@ -8,17 +8,22 @@ export default function FeatureFlagsPage() {
   const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
   const adminApiFetch = useAdminApi();
+  const adminApiFetchRef = React.useRef(adminApiFetch);
+
+  useEffect(() => {
+    adminApiFetchRef.current = adminApiFetch;
+  }, [adminApiFetch]);
 
   useEffect(() => {
     async function fetchFlags() {
-      const res = await adminApiFetch("/api/admin/feature-flags");
+      const res = await adminApiFetchRef.current("/api/admin/feature-flags");
       if (!res) return;
       const data = await res.json();
       setFlags(data);
       setLoading(false);
     }
     fetchFlags();
-  }, [adminApiFetch]);
+  }, []);
 
   if (loading) return <div>Loading...</div>;
 

@@ -19,6 +19,15 @@ export async function GET() {
     include: {
       addresses: true,
       defaultAddress: true, 
+      cart: {
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      },
     },
   });
 

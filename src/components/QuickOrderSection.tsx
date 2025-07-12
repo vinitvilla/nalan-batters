@@ -6,12 +6,18 @@ import Image from "next/image";
 import { useCartStore } from "@/store/cartStore";
 import { showAddToCartToast } from "@/components/CartToast";
 import { useProductStore } from "@/store/productStore";
+import { userStore } from "@/store/userStore";
+import UserLoginButton from "@/components/UserLoginButton";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function QuickOrderSection() {
 	const products = useProductStore((state) => state.products);
 	const fetchProducts = useProductStore((state) => state.fetchProducts);
 	const [quantities, setQuantities] = useState<{ [id: string]: number }>({});
 	const addToCart = useCartStore((state) => state.addToCart);
+	const user = userStore((state) => state.user);
+	const router = useRouter();
 
 	// Fetch products if not loaded and initialize quantities
 	useEffect(() => {
@@ -29,6 +35,11 @@ export default function QuickOrderSection() {
 		price: number;
 		quantity: number;
 	}) => {
+		if (!user) {
+			toast("Let me pull out your cart, can I know who you are?");
+			router.push("/signin");
+			return;
+		}
 		addToCart(item);
 		showAddToCartToast({
 			onViewCart: () => useCartStore.getState().openCart(),

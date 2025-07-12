@@ -10,12 +10,19 @@ export async function GET(req: NextRequest) {
       include: {
         addresses: true,
         defaultAddress: true,
+        cart: {
+          include: {
+            items: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
       },
     });
     return NextResponse.json({
-      user,
-      addresses: user?.addresses || [],
-      defaultAddress: user?.defaultAddress || null,
+      user
     });
 }
 

@@ -34,13 +34,9 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
         try {
             const method = editing?.id ? "PUT" : "POST";
             const res = await adminApiFetch("/api/admin/categories", {
-                method,
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                credentials: "include",
-                body: JSON.stringify({ id: editing?.id, name }),
+              method: editing?.id ? "PUT" : "POST",
+              body: JSON.stringify({ id: editing?.id, name }),
+              headers: { "Content-Type": "application/json" },
             });
             if (!res || !res.ok) throw new Error("Failed to save category");
             toast.success(editing?.id ? "Category updated" : "Category added");
