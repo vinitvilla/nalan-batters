@@ -11,7 +11,7 @@ import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { Order, ORDER_STATUSES } from "../types";
 import { Separator } from "@radix-ui/react-separator";
-import { Copy } from "lucide-react";
+import { Copy, Calendar } from "lucide-react";
 import { capitalize, formatCurrency, formatPhoneNumber, formatAddress } from "@/lib/utils/commonFunctions";
 
 export default function OrderDetailPage() {
@@ -36,7 +36,7 @@ export default function OrderDetailPage() {
             .then(data => {
                 const orderData = data?.order || data;
                 setOrder(orderData);
-                setStatus(orderData?.status?.toUpperCase() || "");
+                setStatus(orderData?.status?.toLowerCase() || "");
             })
             .catch(() => toast.error("Failed to fetch order details"))
             .finally(() => setLoading(false));
@@ -67,7 +67,7 @@ export default function OrderDetailPage() {
 
     return (
         <div className="max-w-3xl mx-auto space-y-6 p-4">
-            <Button variant="ghost" onClick={() => router.back()} className="mb-2">&larr; Back</Button>
+            <Button variant="ghost" onClick={() => router.back()} className="mb-2 cursor-pointer">&larr; Back</Button>
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-2">
@@ -75,6 +75,7 @@ export default function OrderDetailPage() {
                         <Button
                             variant="outline"
                             size="sm"
+                            className="cursor-pointer"
                             onClick={() => {
                                 navigator.clipboard.writeText(order.id.toString());
                                 toast.success("Order ID copied!");
@@ -102,11 +103,23 @@ export default function OrderDetailPage() {
                             <b>Address:</b>
                             <div className="text-muted-foreground font-semibold">{formatAddress(order.address)}</div>
                         </div>
+                        <div>
+                            <b>Delivery Date:</b>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <span className="inline-flex items-center gap-1">
+                                    <Calendar className="h-4 w-4 text-primary" />
+                                    {order.deliveryDate
+                                        ? new Date(order.deliveryDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+                                        : <span className="italic text-muted">Not set</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     <div className="flex justify-end items-center gap-2">
                         <b>Status:</b>{" "}
                         <Select value={status} onValueChange={handleStatusChange}>
-                            <SelectTrigger className="w-40">
+                            <SelectTrigger className="w-40 cursor-pointer">
                                 <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -115,7 +128,7 @@ export default function OrderDetailPage() {
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Button onClick={handleSave} disabled={saving || status === order.status} className="ml-2">
+                        <Button onClick={handleSave} disabled={saving || status === order.status?.toLowerCase()} className="ml-2 cursor-pointer">
                             {saving ? "Saving..." : "Save"}
                         </Button>
                     </div>
@@ -151,8 +164,8 @@ export default function OrderDetailPage() {
                             <span>{formatCurrency(order.tax)}</span>
                         </div>
                         <div className="flex justify-between mb-2">
-                            <span className="font-medium">Surcharges:</span>
-                            <span>{formatCurrency(order.surcharges)}</span>
+                            <span className="font-medium">convenienceCharges:</span>
+                            <span>{formatCurrency(order.convenienceCharges)}</span>
                         </div>
                         <div className="flex justify-between mb-2">
                             <span className="font-medium">Delivery Charges:</span>

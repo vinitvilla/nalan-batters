@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { DiscountType } from "@/generated/prisma";
 import { requireAdmin } from "@/lib/requireAdmin";
 
 // GET: List all promo codes
@@ -18,10 +19,17 @@ export async function POST(req: NextRequest) {
   try {
     await requireAdmin(req);
     const body = await req.json();
-    const promo = await prisma.promoCode.create({ data: body });
+    const { discountType, code, ...rest } = body;
+    const promo = await prisma.promoCode.create({
+      data: {
+        ...rest,
+        code: code.trim().toUpperCase(),
+        discountType: discountType === DiscountType.PERCENTAGE ? DiscountType.PERCENTAGE : DiscountType.VALUE
+      }
+    });
     return NextResponse.json(promo);
   } catch (err) {
-    return NextResponse.json({ error: "Failed to create promo code" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create promo code" + err }, { status: 500 });
   }
 }
 
@@ -31,7 +39,15 @@ export async function PUT(req: NextRequest) {
     await requireAdmin(req);
     const body = await req.json();
     if (!body.id) return NextResponse.json({ error: "Missing promo code id" }, { status: 400 });
-    const promo = await prisma.promoCode.update({ where: { id: body.id }, data: body });
+    const { discountType, code, ...rest } = body;
+    const promo = await prisma.promoCode.update({
+      where: { id: body.id },
+      data: {
+        ...rest,
+        code: code.trim().toUpperCase(),
+        discountType: discountType === DiscountType.PERCENTAGE ? DiscountType.PERCENTAGE : DiscountType.VALUE
+      }
+    });
     return NextResponse.json(promo);
   } catch (err) {
     return NextResponse.json({ error: "Failed to update promo code" }, { status: 500 });

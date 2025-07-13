@@ -16,6 +16,7 @@ export type Order = {
     status: string;
     total: number;
     createdAt: string;
+    deliveryDate?: string | Date | null;
     items: Array<{
         productId: string;
         product?: { name: string };
@@ -24,7 +25,7 @@ export type Order = {
         price: number;
     }>;
     tax?: number;
-    surcharges?: number;
+    convenienceCharges?: number;
     deliveryCharges?: number;
     discount?: number;
     promoCode?: {

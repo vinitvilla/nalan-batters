@@ -15,7 +15,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     const res = await fetch(`/api/public/config?title=${title}`);
     if (!res.ok) return;
     const data = await res.json();
-    set((state) => ({ configs: { ...state.configs, [title]: data.value } }));
+    set((state) => ({ configs: { ...state.configs, [title]: data[title] } }));
   },
   loadAllConfigs: async () => {
     const res = await fetch("/api/public/config");

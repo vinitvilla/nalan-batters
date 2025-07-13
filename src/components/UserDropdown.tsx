@@ -1,7 +1,8 @@
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { userStore } from "@/store/userStore";
 import { useSignOut } from "@/hooks/useSignOut";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { formatPhoneNumber } from "@/lib/utils/commonFunctions";
 
 export default function UserDropdown({ onClose }: { onClose?: () => void }) {
   const user = userStore((s) => s.user);
@@ -10,40 +11,37 @@ export default function UserDropdown({ onClose }: { onClose?: () => void }) {
   const fullName = userStore((s) => s.fullName);
   const signOut = useSignOut();
   return (
-    <div className="absolute right-0 mt-2 w-56 bg-white border rounded shadow-lg z-50 p-2">
+    <div className="min-w-[180px]">
       <div className="flex items-center gap-3 px-2 py-2 border-b">
         <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-xl font-bold text-green-700">
           {fullName ? fullName[0] : phoneNumber?.slice(-2) || "U"}
         </div>
         <div className="flex flex-col">
-          <span className="font-semibold text-gray-900 text-sm">{fullName || phoneNumber}</span>
-          <span className="text-xs text-gray-500">{phoneNumber}</span>
+          <span className="font-semibold text-gray-900 text-sm">{fullName || formatPhoneNumber(phoneNumber)}</span>
+          <span className="text-xs text-gray-500">{formatPhoneNumber(phoneNumber)}</span>
         </div>
       </div>
-      {
-        isAdmin && (
-          <Link href="/admin" className="block">
-            <Button variant="ghost" className="w-full text-left cursor-pointer px-2 py-2" onClick={onClose}>
-              Admin Dashboard
-            </Button>
-          </Link>
-        )
-      }
-      <Link href="/settings">
-        <Button variant="ghost" className="w-full text-left cursor-pointer px-2 py-2" onClick={onClose}>
-          Settings
-        </Button>
+      {isAdmin && (
+        <Link href="/admin" passHref legacyBehavior>
+          <DropdownMenuItem asChild onClick={onClose} className="cursor-pointer">
+            <a>Admin Dashboard</a>
+          </DropdownMenuItem>
+        </Link>
+      )}
+      <Link href="/settings" passHref legacyBehavior>
+        <DropdownMenuItem asChild onClick={onClose} className="cursor-pointer">
+          <a>Settings</a>
+        </DropdownMenuItem>
       </Link>
-      <Button
-        variant="ghost"
-        className="w-full text-left cursor-pointer px-2 py-2 text-red-600 hover:bg-red-50"
+      <DropdownMenuItem
         onClick={() => {
           onClose && onClose();
           signOut();
         }}
+        className="cursor-pointer text-red-600 hover:bg-red-50"
       >
         Sign Out
-      </Button>
+      </DropdownMenuItem>
     </div>
   );
 }

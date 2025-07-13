@@ -14,13 +14,11 @@ interface CartDropdownProps {
 }
 
 export default function CartDropdown({ open, onClose, anchorRef }: CartDropdownProps) {
+  // --- Store hooks ---
   const cartItems = useCartStore(s => s.items);
   const updateQuantity = useCartStore(s => s.updateQuantity);
   const removeFromCart = useCartStore(s => s.removeFromCart);
-  const router = useRouter();
   const isCartOpen = useCartStore(s => s.isCartOpen);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
   const promo = useOrderStore(s => s.promo);
   const promoApplied = useOrderStore(s => s.promoApplied);
   const discount = useOrderStore(s => s.discount);
@@ -28,11 +26,17 @@ export default function CartDropdown({ open, onClose, anchorRef }: CartDropdownP
   const setPromoApplied = useOrderStore(s => s.setPromoApplied);
   const setDiscount = useOrderStore(s => s.setDiscount);
   const [promoTried, setPromoTried] = useState(false);
+  const router = useRouter();
+
+  // --- UI state ---
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
   const TAX_RATE = 0.13;
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const tax = +(subtotal * TAX_RATE).toFixed(2);
   const total = +(subtotal + tax - discount).toFixed(2);
 
+  // --- Dropdown animation ---
   useEffect(() => {
     if (isCartOpen) setVisible(true);
     else if (dropdownRef.current) {
@@ -44,12 +48,26 @@ export default function CartDropdown({ open, onClose, anchorRef }: CartDropdownP
   const animationClass = isCartOpen ? "animate-cart-in" : "animate-cart-out";
   if (!visible) return null;
 
+  // --- Render ---
   return (
     <Dropdown open onClose={onClose} anchorRef={anchorRef}>
       <div ref={dropdownRef} id="cartDropdown" className={`p-4 ${animationClass}`}>
         <h4 className="font-bold mb-2">Cart</h4>
         {cartItems.length === 0 ? (
-          <div className="text-gray-500 text-sm">Your cart is empty.</div>
+          <>
+            <div className="text-gray-500 text-sm mb-4">Your cart is empty.</div>
+            <Button
+              className="w-full mt-3 cursor-pointer"
+              variant="default"
+              onClick={() => {
+                onClose();
+                const el = document.getElementById("quickOrder");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Order Now
+            </Button>
+          </>
         ) : (
           <>
             <ul className="mb-4 max-h-40 overflow-y-auto">
@@ -88,13 +106,13 @@ export default function CartDropdown({ open, onClose, anchorRef }: CartDropdownP
               {!!discount && (
                 <div className="flex justify-between text-sm text-green-700">
                   <div>Promo Discount
-                    <span className="text-xs ml-2 text-red-700 cursor-pointer" 
-                    onClick={() => {
-                      setPromo("");
-                      setPromoApplied(false);
-                      setDiscount(0);
-                      setPromoTried(false);
-                    }}>
+                    <span className="text-xs ml-2 text-red-700 cursor-pointer"
+                      onClick={() => {
+                        setPromo("");
+                        setPromoApplied(false);
+                        setDiscount(0);
+                        setPromoTried(false);
+                      }}>
                       remove
                     </span>
                   </div>
@@ -146,18 +164,17 @@ export default function CartDropdown({ open, onClose, anchorRef }: CartDropdownP
             {promoTried && promo && !promoApplied && (
               <div className="text-xs text-red-500 mb-1">Invalid or expired promo code.</div>
             )}
+            <Button
+              className="w-full mt-3 cursor-pointer"
+              onClick={() => {
+                onClose();
+                router.push("/checkout");
+              }}
+            >
+              Proceed to Checkout
+            </Button>
           </>
         )}
-        <Button
-          className="w-full mt-3 cursor-pointer"
-          disabled={!cartItems.length}
-          onClick={() => {
-            onClose();
-            router.push("/checkout");
-          }}
-        >
-          Proceed to Checkout
-        </Button>
       </div>
     </Dropdown>
   );

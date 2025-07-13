@@ -46,7 +46,7 @@ export default function OrdersPage() {
         const matchesSearch =
             order.user.fullName.toLowerCase().includes(search.toLowerCase()) ||
             order.user.phone.includes(search);
-        const matchesStatus = status === "all" || order.status === status;
+        const matchesStatus = status === "all" || order.status?.toLowerCase() === status;
         return matchesSearch && matchesStatus;
     });
 
@@ -70,7 +70,7 @@ export default function OrdersPage() {
                         <Tabs value={status} onValueChange={setStatus} className="w-full md:w-auto">
                             <TabsList>
                                 {ORDER_STATUSES.map(s => (
-                                    <TabsTrigger key={s} value={s}>{capitalize(s)}</TabsTrigger>
+                                    <TabsTrigger key={s} value={s} className="cursor-pointer">{capitalize(s)}</TabsTrigger>
                                 ))}
                             </TabsList>
                         </Tabs>
@@ -98,7 +98,11 @@ export default function OrdersPage() {
                                     </TableRow>
                                 )}
                                 {filteredOrders.map(order => (
-                                    <TableRow key={order.id}>
+                                    <TableRow
+                                        key={order.id}
+                                        className="cursor-pointer hover:bg-muted"
+                                        onClick={() => router.push(`/admin/orders/${order.id}`)}
+                                    >
                                         <TableCell className="max-w-[120px] truncate">{order.id}</TableCell>
                                         <TableCell>{order.user.fullName}</TableCell>
                                         <TableCell>{formatPhoneNumber(order.user.phone)}</TableCell>
@@ -106,7 +110,10 @@ export default function OrdersPage() {
                                         <TableCell>{formatCurrency(order.total)}</TableCell>
                                         <TableCell>{formatDate(order.createdAt)}</TableCell>
                                         <TableCell>{order.address?.city || ""}</TableCell>
-                                        <TableCell className="text-right space-x-2">
+                                        <TableCell
+                                            className="text-right space-x-2"
+                                            onClick={e => e.stopPropagation()}
+                                        >
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button size="sm" variant="ghost">

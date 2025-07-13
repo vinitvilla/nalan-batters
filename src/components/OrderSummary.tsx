@@ -10,6 +10,7 @@ import { userStore } from "@/store/userStore";
 import { useOrderStore } from "@/store/orderStore";
 import { useConfigStore } from "@/store/configStore";
 import { AddressFields } from "@/store/addressStore";
+import { DiscountType } from "@/generated/prisma";
 
 export interface OrderSummaryProps {
   cartItems: Array<{ id: string; name: string; price: number; quantity: number }>;
@@ -41,9 +42,11 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const config = useConfigStore(s => s.configs);
   const user = userStore(s => s.user);
   const selectedDeliveryDate = useOrderStore(s => s.selectedDeliveryDate);
+  const promoId = useOrderStore(s => s.promoId);
   const promo = useOrderStore(s => s.promo);
   const promoApplied = useOrderStore(s => s.promoApplied);
   const discount = useOrderStore(s => s.discount);
+  const discountType = useOrderStore(s => s.discountType);
   const setPromo = useOrderStore(s => s.setPromo);
   const setPromoApplied = useOrderStore(s => s.setPromoApplied);
   const setDiscount = useOrderStore(s => s.setDiscount);
@@ -55,12 +58,15 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const [applyingPromo, setApplyingPromo] = useState(false);
 
   // Derived values
-  const TAX_RATE = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0.13;
-  const convenienceCharge = config?.convenienceCharge?.amount || 0.99;
-  const deliveryCharge = config?.deliveryCharge?.amount || 4.99;
+  const TAX_RATE = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0;
+  const convenienceCharge = config?.convenienceCharge?.amount || 0;
+  const deliveryCharge = config?.deliveryCharge?.amount || 0;
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const tax = +(subtotal * TAX_RATE).toFixed(2);
-  const finalTotal = calculateFinalTotal({ subtotal, tax, convenienceCharge, deliveryCharge, discount, config });
+  const appliedDiscount = discountType === DiscountType.PERCENTAGE
+    ? +(subtotal * (discount / 100)).toFixed(2)
+    : discount;
+  const finalTotal = calculateFinalTotal({ subtotal, tax, convenienceCharge, deliveryCharge, discount: appliedDiscount, config });
 
   // Place order handler
   async function handlePlaceOrder() {
@@ -74,6 +80,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
           userId: user?.id,
           addressId: selectedAddress?.id,
           items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity, price: i.price })),
+          promoCodeId: promoApplied && promoId ? promoId : null,
           deliveryDate: selectedDeliveryDate,
         }),
       });
@@ -208,7 +215,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
                 <span>${parseFloat(deliveryCharge).toFixed(2)}</span>
               )}
             </div>
-            {!!discount && (
+            {!!appliedDiscount && (
               <div className="flex justify-between text-xs text-green-700">
                 <div>Promo Discount
                   <span className="text-xs ml-2 text-red-700 cursor-pointer"
@@ -220,7 +227,9 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
                     remove
                   </span>
                 </div>
-                <span>-${discount.toFixed(2)}</span>
+                <span>
+                  -{discountType === "PERCENTAGE" ? `${discount}% ($${appliedDiscount.toFixed(2)})` : `$${appliedDiscount.toFixed(2)}`}
+                </span>
               </div>
             )}
             <div className="flex justify-between font-bold text-base border-t pt-2 mt-2 text-black">

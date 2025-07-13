@@ -27,6 +27,9 @@ export default function RootLayout({
   const isSiginIn = pathname.startsWith("/signin") || pathname.startsWith("/signup");
   return (
     <html lang="en">
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

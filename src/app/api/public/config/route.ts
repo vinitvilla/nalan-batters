@@ -9,7 +9,7 @@ export async function GET(req: Request) {
     if (!config) {
       return NextResponse.json({ error: "Config not found" }, { status: 404 });
     }
-    return NextResponse.json({ value: config.value });
+    return NextResponse.json({ [title]: config.value });
   }
   const configs = await prisma.config.findMany({ where: { isActive: true } });
   const result: Record<string, any> = {};

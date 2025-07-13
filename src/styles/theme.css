@@ -1,0 +1,15 @@
+/* Centralized luxury theme CSS variables for gold/white branding */
+:root {
+  --color-gold: #FFD700;
+  --color-gold-light: #fffbe6;
+  --color-gold-dark: #bfa100;
+  --color-white: #fff;
+  --color-white-off: #fff9e3;
+  --shadow-gold-sm: 0 2px 12px 0 rgba(255, 215, 0, 0.10);
+  --shadow-gold-lg: 0 4px 32px 0 rgba(255,215,0,0.08);
+  --gradient-gold: linear-gradient(90deg, #FFD700 30%, #fff 100%);
+  --gradient-gold-card: linear-gradient(to-br, #fffbe6, #fff9e3, #fff);
+  --gradient-gold-btn: linear-gradient(to-r, #FFD700, #fffbe6);
+  --font-cursive: 'Dancing Script', cursive;
+  --font-sans: 'Geist', 'Inter', sans-serif;
+}
