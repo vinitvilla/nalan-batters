@@ -22,6 +22,7 @@ export default function CheckoutPage() {
   const newAddress = useAddressStore((s) => s.newAddress);
   const addAddress = useAddressStore((s) => s.addAddress);
   const setSelectedAddress = useAddressStore((s) => s.setSelectedAddress);
+  const setDefaultAddress = userStore((s) => s.setDefaultAddress);
 
   // Get selectedAddress from store
   const selectedAddress = useAddressStore((s) => s.selectedAddress);
@@ -39,11 +40,6 @@ export default function CheckoutPage() {
             selectedAddress={selectedAddress}
             updateQuantity={updateQuantity}
           />
-          <div className="mt-8 text-center text-muted-foreground text-xs">
-            <p>
-              All prices are inclusive of taxes. Delivery details and payment coming soon.
-            </p>
-          </div>
         </div>
         {/* Left: UserAuthFlow and delivery/contact */}
         <div className="order-1 md:order-1">
@@ -54,7 +50,8 @@ export default function CheckoutPage() {
                 userStore.getState().setUser({
                   id: user.id,
                   phone: user.phone,
-                  fullName: user.fullName || ""
+                  fullName: user.fullName || "",
+                  role: user.role
                 });
               }}
             />
@@ -78,6 +75,7 @@ export default function CheckoutPage() {
                   const data = await res.json();
                   if (!res.ok || !data.address) throw new Error(data.error || "Failed to add address");
                   addAddress(data.address);
+                  setDefaultAddress(data.address);
                   setSelectedAddress(data.address);
                 } catch (err: any) {
                   setError(err.message || "Failed to add address");

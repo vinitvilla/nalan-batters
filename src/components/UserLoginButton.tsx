@@ -4,6 +4,7 @@ import { User2 } from "lucide-react";
 import Link from "next/link";
 import { userStore } from "@/store/userStore";
 import UserDropdown from "@/components/UserDropdown";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function UserLoginButton() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -20,9 +21,15 @@ export default function UserLoginButton() {
             className="cursor-pointer"
             onClick={() => setShowDropdown((v) => !v)}
           >
-            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-xl font-bold text-green-700">
-              {user.fullName ? user.fullName[0] : user.phone?.slice(-2) || "U"}
-            </div>
+            <Avatar className="w-10 h-10">
+              <AvatarImage
+                src={""}
+                alt={user.fullName || user.phone || "User"}
+              />
+              <AvatarFallback className="bg-green-100 text-green-700 text-xl font-bold">
+                {user.fullName ? user.fullName[0] : user.phone?.slice(-2) || "U"}
+              </AvatarFallback>
+            </Avatar>
           </Button>
           {showDropdown && (
             <UserDropdown onClose={() => setShowDropdown(false)} />

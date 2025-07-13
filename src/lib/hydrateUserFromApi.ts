@@ -2,6 +2,7 @@ import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
 import { USER_ROLE } from "@/constants/userRole";
 import { useCartStore } from "@/store/cartStore";
+import { useConfigStore } from "@/store/configStore";
 
 export async function hydrateUserFromApi({
   token,
@@ -41,6 +42,7 @@ export async function hydrateUserFromApi({
           }))
         );
       }
+      useConfigStore.getState().loadAllConfigs();
     }
   } catch {
     onUnauthorized && onUnauthorized();

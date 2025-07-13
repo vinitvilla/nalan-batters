@@ -11,6 +11,7 @@ interface UserState {
   phone: string;
   isAdmin: boolean;
   loading: boolean;
+  defaultAddress: any | null;
   setId: (id: string) => void;
   setUser: (user: UserType | null) => void;
   setToken: (token: string | null) => void;
@@ -18,6 +19,7 @@ interface UserState {
   setPhone: (phone: string) => void;
   setIsAdmin: (isAdmin: boolean) => void;
   setLoading: (loading: boolean) => void;
+  setDefaultAddress: (address: any | null) => void;
   reset: () => void;
 }
 
@@ -31,6 +33,7 @@ export const userStore = create(
       phone: "",
       isAdmin: false,
       loading: true,
+      defaultAddress: null,
       setUser: (user) => {
         set((state) => ({
           user,
@@ -38,6 +41,7 @@ export const userStore = create(
           fullName: user?.fullName || "",
           phone: user?.phone ? (user.phone.startsWith("+1") ? user.phone : "+1" + user.phone.replace(/^\+?1?/, "")) : "",
           isAdmin: user?.role === USER_ROLE.ADMIN || false,
+          defaultAddress: user?.defaultAddress || null,
         }));
       },
       setToken: (token) => {
@@ -58,6 +62,7 @@ export const userStore = create(
       setPhone: (phone: string) => set({ phone: phone.startsWith("+1") ? phone : "+1" + phone.replace(/^\+?1?/, "") }),
       setIsAdmin: (isAdmin: boolean) => set({ isAdmin }),
       setLoading: (loading: boolean) => set({ loading }),
+      setDefaultAddress: (address) => set({ defaultAddress: address }),
       reset: () => set({ id: null, user: null, token: null, fullName: "", phone: "", isAdmin: false, loading: false }),
     }),
     { name: "UserStore" }

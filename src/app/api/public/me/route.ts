@@ -17,8 +17,12 @@ export async function GET() {
   const user = await prisma.user.findUnique({
     where: { phone: decoded.phone_number },
     include: {
-      addresses: true,
-      defaultAddress: true, 
+      addresses: {
+        where: { isDeleted: false },
+      },
+      defaultAddress: {
+        where: { isDeleted: false },
+      },
       cart: {
         include: {
           items: {

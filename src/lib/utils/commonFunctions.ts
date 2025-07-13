@@ -41,7 +41,7 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-export function formatDate(date: string | number | Date | undefined): string {
+function formatDate(date: string | number | Date | undefined): string {
     if (!date) return "";
     const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
     if (isNaN(d.getTime())) return "Invalid date";
@@ -54,7 +54,7 @@ export function formatDate(date: string | number | Date | undefined): string {
     });
 }
 
-export function formatAddress(address?: {
+function formatAddress(address?: {
     street?: string;
     unit?: string;
     city?: string;
@@ -68,4 +68,13 @@ export function formatAddress(address?: {
         .join(", ");
 }
 
-export { formatCurrency, formatPhoneNumber, capitalize };
+// Converts camelCase or PascalCase to Title Case (e.g., "userName" -> "User Name")
+function camelToTitle(str: string): string {
+  if (!str) return "";
+  // Insert space before all caps and capitalize first letter
+  const result = str.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase());
+  return result.trim();
+}
+
+
+export { formatCurrency, formatPhoneNumber, capitalize, formatDate, formatAddress, camelToTitle };

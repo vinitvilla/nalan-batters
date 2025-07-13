@@ -8,6 +8,33 @@ export async function POST(req: NextRequest) {
   if (!userId || !street || !city || !province || !country || !postal) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
+
+  // Check for existing deleted address
+  const existing = await prisma.address.findFirst({
+    where: {
+      userId,
+      street,
+      city,
+      province,
+      country,
+      postal,
+      isDeleted: true,
+    },
+  });
+  if (existing) {
+    // Restore the address
+    const restored = await prisma.address.update({
+      where: { id: existing.id },
+      data: { isDeleted: false, unit },
+    });
+    // Set as default for user
+    await prisma.user.update({
+      where: { id: userId },
+      data: { defaultAddressId: restored.id },
+    });
+    return NextResponse.json({ address: restored, restored: true });
+  }
+
   // Create address
   const address = await prisma.address.create({
     data: { userId, street, unit, city, province, country, postal },

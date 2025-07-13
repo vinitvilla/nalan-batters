@@ -5,6 +5,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Separator } from "./ui/separator";
+import { useOrderStore } from "@/store/orderStore";
 
 interface CartDropdownProps {
   open: boolean;
@@ -20,12 +21,12 @@ export default function CartDropdown({ open, onClose, anchorRef }: CartDropdownP
   const isCartOpen = useCartStore(s => s.isCartOpen);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-  const promo = useCartStore(s => s.promo);
-  const promoApplied = useCartStore(s => s.promoApplied);
-  const discount = useCartStore(s => s.discount);
-  const setPromo = useCartStore(s => s.setPromo);
-  const setPromoApplied = useCartStore(s => s.setPromoApplied);
-  const setDiscount = useCartStore(s => s.setDiscount);
+  const promo = useOrderStore(s => s.promo);
+  const promoApplied = useOrderStore(s => s.promoApplied);
+  const discount = useOrderStore(s => s.discount);
+  const setPromo = useOrderStore(s => s.setPromo);
+  const setPromoApplied = useOrderStore(s => s.setPromoApplied);
+  const setDiscount = useOrderStore(s => s.setDiscount);
   const [promoTried, setPromoTried] = useState(false);
   const TAX_RATE = 0.13;
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);

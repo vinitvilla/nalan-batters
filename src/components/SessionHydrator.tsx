@@ -1,6 +1,5 @@
 "use client";
 import { useEffect } from "react";
-import { userStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import { useSignOut } from "@/hooks/useSignOut";
 import { hydrateUserFromApi } from "@/lib/hydrateUserFromApi";

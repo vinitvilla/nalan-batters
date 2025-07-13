@@ -46,6 +46,7 @@ model Address {
   postal    String
   orders    Order[]
   defaultForUser User? @relation("DefaultAddress")
+  isDeleted Boolean   @default(false)
 }
 
 model Product {
@@ -81,6 +82,7 @@ model Order {
   promoCodeId String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  deliveryDate DateTime?
 }
 
 enum OrderStatus {
@@ -105,9 +107,16 @@ model PromoCode {
   id          String    @id @default(uuid())
   code        String    @unique
   discount    Decimal   @db.Decimal(5,2)
+  discountType DiscountType @default(PERCENTAGE)
   isActive    Boolean   @default(true)
+  isDeleted   Boolean   @default(false)
   orders      Order[]
   expiresAt   DateTime?
+}
+
+enum DiscountType {
+  PERCENTAGE
+  VALUE
 }
 
 model Category {

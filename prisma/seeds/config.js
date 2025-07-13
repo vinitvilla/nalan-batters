@@ -10,12 +10,12 @@ async function seedConfig() {
         isActive: true,
       },
       {
-        title: "convenience_charge",
+        title: "convenienceCharge",
         value: { amount: 0.99 },
         isActive: true,
       },
       {
-        title: "delivery_charge",
+        title: "deliveryCharge",
         value: { amount: 4.99 },
         isActive: true,
       },
@@ -44,7 +44,7 @@ async function seedConfig() {
         isActive: true,
       },
       {
-        title: "contact_info",
+        title: "contactInfo",
         value: {
           email: "hello@nalanbatters.com",
           phone: "+1 437-215 (4049)",

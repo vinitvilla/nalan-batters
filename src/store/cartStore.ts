@@ -20,12 +20,6 @@ interface CartState {
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  promo: string;
-  promoApplied: boolean;
-  discount: number;
-  setPromo: (promo: string) => void;
-  setPromoApplied: (applied: boolean) => void;
-  setDiscount: (discount: number) => void;
   syncCartToDB: () => Promise<void>;
 }
 
@@ -83,12 +77,6 @@ export const useCartStore = create(
     isCartOpen: false,
     openCart: () => set({ isCartOpen: true }),
     closeCart: () => set({ isCartOpen: false }),
-    promo: "",
-    promoApplied: false,
-    discount: 0,
-    setPromo: (promo) => set({ promo }),
-    setPromoApplied: (applied) => set({ promoApplied: applied }),
-    setDiscount: (discount) => set({ discount }),
     syncCartToDB: async () => {
       const userId = userStore.getState().id;
       if (!userId) return;

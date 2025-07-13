@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
     { label: "Orders", href: "/admin/orders" },
     { label: "Products", href: "/admin/products" },
     { label: "Users", href: "/admin/users" },
+    { label: "Promo Codes", href: "/admin/promo-codes" },
     { label: "Feature Flags", href: "/admin/feature-flags" },
     { label: "Settings", href: "/admin/settings" },
 ];
@@ -30,7 +31,7 @@ export default function AdminSidebar() {
 
 
     return (
-        <aside className="w-60 bg-primary text-primary-foreground flex flex-col py-6">
+        <aside className="w-60 bg-primary text-primary-foreground flex flex-col py-6 sticky top-0 h-screen z-30">
             <div className="font-bold text-2xl text-center mb-8">Admin Panel</div>
             <ScrollArea className="flex-1">
                 <nav>
