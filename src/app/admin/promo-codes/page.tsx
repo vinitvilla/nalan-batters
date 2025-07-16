@@ -18,14 +18,22 @@ import { Trash2, Plus, Pen } from "lucide-react";
 
 // Types
 import { DiscountType } from "@/generated/prisma";
+import { useAdminApi } from "../use-admin-api";
 
-// API hook
-const useAdminApi = () => async (url: string, options?: any) => fetch(url, options);
+interface PromoCode {
+  id: string;
+  code: string;
+  discount: number;
+  discountType: DiscountType;
+  isActive: boolean;
+  isDeleted: boolean;
+  expiresAt: string | null;
+}
 
 export default function PromoCodesPage() {
   // --- State ---
   const adminApiFetch = useAdminApi();
-  const [promoCodes, setPromoCodes] = useState<any[]>([]);
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
@@ -62,29 +70,11 @@ export default function PromoCodesPage() {
       setPromoCodes(data);
       setLoading(false);
     });
-  }, []);
+  }, [adminApiFetch]);
 
   // --- Handlers ---
-  const handleChange = (idx: number, field: string, value: any) => {
-    setPromoCodes((prev) => prev.map((c, i) => (i === idx ? { ...c, [field]: value } : c)));
-  };
-
   const handleToggle = (idx: number) => {
     setPromoCodes((prev) => prev.map((c, i) => (i === idx ? { ...c, isActive: !c.isActive } : c)));
-  };
-
-  const handleSave = async (idx: number) => {
-    setSaving(true);
-    const promo = promoCodes[idx];
-    const res = await adminApiFetch("/api/admin/promoCodes", {
-      method: "PUT",
-      body: JSON.stringify(promo),
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!res || !res.ok) {
-      toast.error("Failed to save promo code");
-    }
-    setSaving(false);
   };
 
   const handleDialogAdd = async () => {
@@ -107,7 +97,7 @@ export default function PromoCodesPage() {
         expiresAt: null,
       });
       setShowDialog(false);
-    } catch (err) {
+    } catch {
       toast.error("Failed to add promo code");
     }
     setSaving(false);
@@ -134,7 +124,7 @@ export default function PromoCodesPage() {
       setEditIdx(null);
       setEditPromo(null);
       setShowDialog(false);
-    } catch (err) {
+    } catch {
       toast.error("Failed to save promo code");
     }
     setSaving(false);
@@ -151,17 +141,18 @@ export default function PromoCodesPage() {
   );
 
   // --- Render ---
-  if (loading) return <div>Loading...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
+  );
 
   return (
-    <div className="mx-auto py-10 px-4">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Promo Codes</h1>
-        </div>
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-10">
+      <div className="space-y-4 sm:space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Promo Code Management</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg sm:text-xl">Promo Code Management</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">

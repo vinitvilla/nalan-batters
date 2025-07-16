@@ -1,0 +1,16 @@
+{
+  "env": {
+    "NEXT_PUBLIC_APP_ENV": "staging",
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_APP_ENV": "staging"
+    }
+  },
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}

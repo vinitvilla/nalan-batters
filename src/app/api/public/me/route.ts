@@ -9,13 +9,16 @@ export async function GET() {
   let decoded;
   try {
     decoded = await adminAuth.verifyIdToken(token);
-  } catch(err) {
+  } catch {
     return Response.json({ error: "Invalid token" }, { status: 401 });
   }
 
   // Fetch user and addresses
-  const user = await prisma.user.findUnique({
-    where: { phone: decoded.phone_number },
+  const user = await prisma.user.findFirst({
+    where: { 
+      phone: decoded.phone_number,
+      isDelete: false 
+    },
     include: {
       addresses: {
         where: { isDeleted: false },
@@ -29,6 +32,9 @@ export async function GET() {
             include: {
               product: true,
             },
+            where: {
+              product: { isDelete: false }
+            }
           },
         },
       },

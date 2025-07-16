@@ -11,7 +11,7 @@ export default function Footer() {
         <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center md:justify-end items-center w-full md:w-auto">
           <a
             href="mailto:hello@nalanbatters.com"
-            className="hover:text-green-600 transition-colors"
+            className="hover:text-green-600 transition-colors cursor-pointer"
           >
             hello@nalanbatters.com
           </a>
@@ -19,7 +19,7 @@ export default function Footer() {
             href="https://www.instagram.com/nalan_batters/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-green-600 transition-colors flex items-center gap-1"
+            className="hover:text-green-600 transition-colors flex items-center gap-1 cursor-pointer"
             aria-label="Instagram"
           >
             <Instagram className="inline-block w-4 h-4" /> Instagram
@@ -28,7 +28,7 @@ export default function Footer() {
             href="https://www.facebook.com/p/Nalan-Batters-61566853659372/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-green-600 transition-colors flex items-center gap-1"
+            className="hover:text-green-600 transition-colors flex items-center gap-1 cursor-pointer"
             aria-label="Facebook"
           >
             <Facebook className="inline-block w-4 h-4" /> Facebook
@@ -37,7 +37,7 @@ export default function Footer() {
             href="https://wa.me/14372154049"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-green-600 transition-colors flex items-center gap-1"
+            className="hover:text-green-600 transition-colors flex items-center gap-1 cursor-pointer"
             aria-label="WhatsApp"
           >
             <Phone className="inline-block w-4 h-4" /> WhatsApp

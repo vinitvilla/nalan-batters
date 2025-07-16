@@ -7,9 +7,11 @@ import { requireAdmin } from "@/lib/requireAdmin";
 export async function GET(req: NextRequest) {
   try {
     await requireAdmin(req);
-    const promos = await prisma.promoCode.findMany();
+    const promos = await prisma.promoCode.findMany({
+      where: { isDeleted: false }
+    });
     return NextResponse.json(promos);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch promo codes" }, { status: 500 });
   }
 }
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(promo);
   } catch (err) {
-    return NextResponse.json({ error: "Failed to create promo code" + err }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create promo code: " + (err instanceof Error ? err.message : 'Unknown error') }, { status: 500 });
   }
 }
 
@@ -49,7 +51,7 @@ export async function PUT(req: NextRequest) {
       }
     });
     return NextResponse.json(promo);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Failed to update promo code" }, { status: 500 });
   }
 }
@@ -62,7 +64,7 @@ export async function DELETE(req: NextRequest) {
     if (!body.id) return NextResponse.json({ error: "Missing promo code id" }, { status: 400 });
     await prisma.promoCode.update({ where: { id: body.id }, data: { isDeleted: true } });
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Failed to delete promo code" }, { status: 500 });
   }
 }

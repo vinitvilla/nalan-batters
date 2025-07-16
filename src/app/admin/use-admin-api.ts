@@ -1,4 +1,5 @@
 import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 import { userStore } from "@/store/userStore";
 
 /**
@@ -9,7 +10,7 @@ export function useAdminApi() {
   const router = useRouter();
   const token = userStore((s) => s.token);
 
-  async function adminApiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response | undefined> {
+  const adminApiFetch = useCallback(async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response | undefined> => {
     if (!token) {
       router.push("/signin");
       return;
@@ -30,7 +31,7 @@ export function useAdminApi() {
     } catch (err) {
       throw err;
     }
-  }
+  }, [token, router]);
 
   return adminApiFetch;
 }

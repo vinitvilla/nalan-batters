@@ -1,11 +1,4 @@
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-interface MainNavProps {
-  mobile?: boolean;
-  onNavigate?: () => void;
-}
 
 const navLinks = [
   { href: "/#hero", label: "Home" },
@@ -13,7 +6,7 @@ const navLinks = [
   { href: "/#contact", label: "Contact" },
 ];
 
-export default function MainNav({ mobile = false, onNavigate }: MainNavProps) {
+export default function MainNav() {
   const router = useRouter();
   // Smooth scroll handler for hash links
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, href: string) => {
@@ -23,39 +16,18 @@ export default function MainNav({ mobile = false, onNavigate }: MainNavProps) {
       const el = document.getElementById(id);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
-        if (onNavigate) onNavigate();
       } else {
         router.push(href);
       }
-    } else if (onNavigate) {
-      onNavigate();
     }
   };
   return (
-    <ul
-      className={
-        mobile
-          ? "flex flex-col gap-4 text-lg font-medium bg-white p-4 rounded-lg shadow-md relative"
-          : "flex gap-6 text-base font-medium"
-      }
-    >
-      {mobile && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2"
-          aria-label="Close menu"
-          type="button"
-          onClick={onNavigate}
-        >
-          <X className="w-6 h-6 text-gray-700" />
-        </Button>
-      )}
+    <ul className="flex gap-6 text-base font-medium">
       {navLinks.map((link) => (
         <li key={link.href}>
           <a
             href={link.href}
-            className="hover:text-green-700 transition-colors"
+            className="hover:text-orange-600 transition-colors text-gray-700 cursor-pointer font-medium px-3 py-2 rounded-lg hover:bg-orange-50"
             onClick={e => handleSmoothScroll(e, link.href)}
           >
             {link.label}

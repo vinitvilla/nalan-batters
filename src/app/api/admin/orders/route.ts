@@ -7,8 +7,8 @@ export async function GET(req: NextRequest) {
         await requireAdmin(req);
         const orders = await getAllOrders();
         return NextResponse.json({ orders });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 401 });
+    } catch (err: unknown) {
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 401 });
     }
 }
 
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         const data = await req.json();
         const order = await createOrder(data);
         return NextResponse.json({ order });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 400 });
+    } catch (err: unknown) {
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 400 });
     }
 }

@@ -74,7 +74,7 @@ export default function ProductForm({ initial, onSave, onCancel, categories }: P
             const url = await getDownloadURL(storageRef);
             form.setValue("imageUrl", url, { shouldValidate: true });
             toast.success("Image uploaded successfully!");
-        } catch (err) {
+        } catch {
             toast.error("Failed to upload image.");
         } finally {
             setUploading(false);

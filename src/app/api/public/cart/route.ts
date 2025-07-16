@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+interface CartItem {
+  productId?: string;
+  id?: string;
+  quantity: number;
+}
+
 // Fetch cart for a user
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -8,7 +14,14 @@ export async function GET(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   const cart = await prisma.cart.findUnique({
     where: { userId },
-    include: { items: { include: { product: true } } },
+    include: { 
+      items: { 
+        include: { product: true },
+        where: {
+          product: { isDelete: false }
+        }
+      } 
+    },
   });
   return NextResponse.json({ cart });
 }
@@ -47,8 +60,8 @@ export async function POST(req: NextRequest) {
     update: {
       items: {
         deleteMany: {},
-        create: mergedItems.map((item: any) => ({
-          productId: item.productId || item.id,
+        create: mergedItems.map((item: CartItem) => ({
+          productId: item.productId || item.id!,
           quantity: item.quantity,
         })),
       },
@@ -56,13 +69,20 @@ export async function POST(req: NextRequest) {
     create: {
       userId,
       items: {
-        create: mergedItems.map((item: any) => ({
-          productId: item.productId || item.id,
+        create: mergedItems.map((item: CartItem) => ({
+          productId: item.productId || item.id!,
           quantity: item.quantity,
         })),
       },
     },
-    include: { items: { include: { product: true } } },
+    include: { 
+      items: { 
+        include: { product: true },
+        where: {
+          product: { isDelete: false }
+        }
+      } 
+    },
   });
   return NextResponse.json({ cart });
 }

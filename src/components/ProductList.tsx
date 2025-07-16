@@ -1,11 +1,11 @@
 import React from "react";
+import Image from "next/image";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 
 export default function ProductList({ products }: { products: any[] }) {
@@ -20,9 +20,11 @@ export default function ProductList({ products }: { products: any[] }) {
           </CardHeader>
           <CardContent>
             {product.imageUrl && (
-              <img
+              <Image
                 src={product.imageUrl}
                 alt={product.name}
+                width={400}
+                height={160}
                 className="w-full h-40 object-cover rounded mb-2"
               />
             )}

@@ -1,92 +1,172 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { 
+    X, 
+    LayoutDashboard,
+    ShoppingCart,
+    Truck,
+    Package,
+    Users,
+    Tag,
+    Flag,
+    Settings,
+    Crown
+} from "lucide-react";
 
 type NavItem = {
     label: string;
     href: string;
-    subItems?: NavItem[];
+    icon: React.ComponentType<{ className?: string }>;
+};
+
+type AdminSidebarProps = {
+    isOpen: boolean;
+    onClose: () => void;
 };
 
 const navItems: NavItem[] = [
-    { label: "Dashboard", href: "/admin/dashboard" },
-    { label: "Orders", href: "/admin/orders" },
-    { label: "Products", href: "/admin/products" },
-    { label: "Users", href: "/admin/users" },
-    { label: "Promo Codes", href: "/admin/promo-codes" },
-    { label: "Feature Flags", href: "/admin/feature-flags" },
-    { label: "Settings", href: "/admin/settings" },
+    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
+    { label: "Delivery", href: "/admin/delivery", icon: Truck },
+    { label: "Products", href: "/admin/products", icon: Package },
+    { label: "Users", href: "/admin/users", icon: Users },
+    { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
+    { label: "Feature Flags", href: "/admin/feature-flags", icon: Flag },
+    { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
-    const [open, setOpen] = useState<{ [key: string]: boolean }>({});
 
-    const handleToggle = (key: string) => {
-        setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
+    const handleNavClick = () => {
+        onClose(); // Close sidebar on mobile after navigation
     };
 
-
     return (
-        <aside className="w-60 bg-primary text-primary-foreground flex flex-col py-6 sticky top-0 h-screen z-30">
-            <div className="font-bold text-2xl text-center mb-8">Admin Panel</div>
-            <ScrollArea className="flex-1">
-                <nav>
-                    <ul className="space-y-2 px-4">
-                        {navItems.map((item) => (
-                            <li key={item.href}>
-                                <div className="flex items-center w-full">
-                                    <Link href={item.href} className="w-full">
-                                        <Button
-                                            variant={pathname === item.href ? "secondary" : "ghost"}
-                                            className="w-full justify-start"
-                                            style={{ cursor: "pointer" }}
-                                            onClick={item.subItems ? (e) => { e.preventDefault(); handleToggle(item.href); } : undefined}
-                                        >
-                                            {item.label}
-                                        </Button>
-                                    </Link>
-                                    {item.subItems && item.subItems.length != 0 && (
-                                        <button
-                                            type="button"
-                                            aria-label={open[item.href] ? "Collapse" : "Expand"}
-                                            className="ml-1 text-xs text-primary-foreground flex items-center"
-                                            style={{ cursor: "pointer", background: "none", border: "none" }}
-                                            onClick={() => handleToggle(item.href)}
-                                        >
-                                            {open[item.href] ? (
-                                                <ChevronUpIcon size={16} />
-                                            ) : (
-                                                <ChevronDownIcon size={16} />
+        <>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 h-full lg:hidden"
+                    onClick={onClose}
+                />
+            )}
+            
+            {/* Redesigned Sidebar */}
+            <aside className={`
+                fixed lg:static top-0 left-0 h-100vh w-64 bg-primary
+                flex flex-col z-50 transition-all duration-300 ease-in-out
+                ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                shadow-xl border-r border-primary-foreground/10
+            `}>
+                {/* Header Section */}
+                <div className="relative">
+                    {/* Background Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary-foreground/5 to-transparent"></div>
+                    
+                    {/* Mobile Close Button */}
+                    <div className="relative flex items-center justify-between p-6 lg:hidden">
+                        <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-primary-foreground/10 rounded-xl">
+                                <Crown className="h-6 w-6 text-primary-foreground" />
+                            </div>
+                            <div>
+                                <div className="font-bold text-lg text-primary-foreground">Admin Panel</div>
+                                <div className="text-xs text-primary-foreground/70">Management Console</div>
+                            </div>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onClose}
+                            className="text-primary-foreground hover:bg-primary-foreground/10 rounded-xl"
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
+                    </div>
+                    
+                    {/* Desktop Header */}
+                    <div className="relative hidden lg:block p-6 pb-8">
+                        <div className="flex items-center space-x-3 mb-2">
+                            <div className="p-3 bg-primary-foreground/10 rounded-2xl">
+                                <Crown className="h-8 w-8 text-primary-foreground" />
+                            </div>
+                            <div>
+                                <div className="font-bold text-xl text-primary-foreground">Admin Panel</div>
+                                <div className="text-sm text-primary-foreground/70">Management Console</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Navigation Section */}
+                <ScrollArea className="flex-1 px-3">
+                    <nav className="space-y-1">
+                        {navItems.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = pathname === item.href;
+                            
+                            return (
+                                <div key={item.href} className="relative">
+                                    <Link href={item.href} onClick={handleNavClick}>
+                                        <div className={`
+                                            group flex items-center space-x-3 px-4 py-3 rounded-xl
+                                            transition-all duration-200 cursor-pointer
+                                            ${isActive 
+                                                ? 'bg-primary-foreground/15 border border-primary-foreground/20 shadow-sm' 
+                                                : 'hover:bg-primary-foreground/8 hover:translate-x-1'
+                                            }
+                                        `}>
+                                            <div className={`
+                                                p-2 rounded-lg transition-all duration-200
+                                                ${isActive 
+                                                    ? 'bg-primary-foreground/20 shadow-md' 
+                                                    : 'bg-primary-foreground/5 group-hover:bg-primary-foreground/15'
+                                                }
+                                            `}>
+                                                <Icon className={`
+                                                    h-5 w-5 transition-colors duration-200
+                                                    ${isActive 
+                                                        ? 'text-primary-foreground' 
+                                                        : 'text-primary-foreground/70 group-hover:text-primary-foreground'
+                                                    }
+                                                `} />
+                                            </div>
+                                            
+                                            <div className="flex-1">
+                                                <div className={`
+                                                    font-medium transition-colors duration-200
+                                                    ${isActive 
+                                                        ? 'text-primary-foreground' 
+                                                        : 'text-primary-foreground/80 group-hover:text-primary-foreground'
+                                                    }
+                                                `}>
+                                                    {item.label}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Active Indicator */}
+                                            {isActive && (
+                                                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-primary-foreground/60 rounded-l-full"></div>
                                             )}
-                                        </button>
-                                    )}
+                                            
+                                            {/* Hover Indicator */}
+                                            <div className={`
+                                                absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-primary-foreground/40 rounded-r-full
+                                                transition-all duration-200 group-hover:h-6
+                                                ${isActive ? 'opacity-0' : ''}
+                                            `}></div>
+                                        </div>
+                                    </Link>
                                 </div>
-                                {item.subItems && open[item.href] && (
-                                    <ul className="ml-4 mt-1 space-y-1">
-                                        {item.subItems.map((sub) => (
-                                            <li key={sub.href}>
-                                                <Link href={sub.href} className="w-full">
-                                                    <Button
-                                                        variant={pathname === sub.href ? "secondary" : "ghost"}
-                                                        className="w-full justify-start text-sm"
-                                                        style={{ cursor: "pointer" }}
-                                                    >
-                                                        {sub.label}
-                                                    </Button>
-                                                </Link>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                </nav>
-            </ScrollArea>
-        </aside>
+                            );
+                        })}
+                    </nav>
+                </ScrollArea>
+            </aside>
+        </>
     );
 }

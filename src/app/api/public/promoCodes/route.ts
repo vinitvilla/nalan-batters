@@ -14,6 +14,7 @@ export async function POST(req: Request) {
       where: {
         code: code.trim().toUpperCase(),
         isActive: true,
+        isDeleted: false,
         expiresAt: { gte: now.toISOString() },
       },
     });
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ valid: false, discount: 0, discountType: undefined }, { status: 200 });
     }
     return NextResponse.json({ valid: true, id: promo.id, discount: Number(promo.discount), discountType: promo.discountType }, { status: 200 });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ valid: false, discount: 0, error: "Server error" }, { status: 500 });
   }
 }

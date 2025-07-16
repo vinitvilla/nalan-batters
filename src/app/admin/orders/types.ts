@@ -34,4 +34,8 @@ export type Order = {
     };
 };
 
-export const ORDER_STATUSES = ["all", "pending", "processing", "completed", "cancelled"];
+// Valid order statuses that match the Prisma OrderStatus enum
+export const ORDER_STATUSES = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
+
+// For filtering, we include "all" as well
+export const ORDER_STATUS_FILTERS = ["all", "PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];

@@ -10,7 +10,7 @@ export async function PUT(req: Request) {
       data: { role },
     });
     return NextResponse.json({ user });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to update role" }, { status: 500 });
   }
 }

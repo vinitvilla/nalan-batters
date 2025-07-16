@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // DELETE /api/public/addresses/[id]
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   if (!id) {
     return NextResponse.json({ error: "Missing address id" }, { status: 400 });
   }
@@ -23,7 +23,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       data: { isDeleted: true },
     });
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Failed to delete address" }, { status: 500 });
   }
 }

@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: "Missing product id" }, { status: 400 });
     }
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       name,
       description,
       price,
@@ -80,6 +80,7 @@ export async function PUT(req: NextRequest) {
   }
 }
 
+// Delete product (soft delete)
 export async function DELETE(req: NextRequest) {
   // Admin check
   const adminCheck = await requireAdmin(req);
@@ -90,7 +91,10 @@ export async function DELETE(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: "Missing product id" }, { status: 400 });
     }
-    await prisma.product.delete({ where: { id } });
+    await prisma.product.update({ 
+      where: { id },
+      data: { isDelete: true }
+    });
     return NextResponse.json({ message: "Product deleted" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete product", details: error }, { status: 500 });

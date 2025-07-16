@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { GoldButton } from "@/components/GoldButton";
 import Image from "next/image";
 import { useCartStore } from "@/store/cartStore";
 import { showAddToCartToast } from "@/components/CartToast";
@@ -10,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useConfigStore } from "@/store/configStore";
 import FreeDeliverySchedule from "@/components/FreeDeliverySchedule";
-import { GoldButton } from "@/components/GoldButton";
 import OpeningHours from "./OpeningHours";
 import "../styles/theme.css";
 
@@ -90,105 +91,126 @@ export default function QuickOrderSection() {
 	return (
 		<section
 			id="quickOrder"
-			className="max-w-9xl mx-auto py-8 px-2 sm:px-8 text-center bg-gold-card  border-gold-light rounded-3xl shadow-gold-lg"
+			className="py-16 sm:py-20 rounded-lg shadow-lg"
 		>
-			<h2
-				className="text-4xl sm:text-5xl font-extrabold mb-3 sm:mb-6 font-cursive"
-				style={{
-					background: "var(--gradient-gold)",
-					WebkitBackgroundClip: "text",
-					WebkitTextFillColor: "transparent",
-					letterSpacing: "0.04em",
-				}}
-			>
-				Quick Order
-			</h2>
-			<p className="text-gray-700 mb-8 text-lg sm:text-xl font-light max-w-2xl mx-auto">
-				Get your favorite batters delivered to your doorstep!
-			</p>
-			<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-12">
-				{products.map((item) => (
-					<Card
-						className="shadow-gold-lg flex pt-0 flex-col border-0 bg-white/95 rounded-2xl transition-transform hover:scale-[1.04] hover:shadow-gold-lg duration-200 group relative overflow-hidden"
-						key={item.id}
-					>
-						<div className="relative w-full h-44 sm:h-56 rounded-t-2xl overflow-hidden">
-							{item.imageUrl && (
-								<Image
-									src={item.imageUrl}
-									alt={item.name}
-									fill
-									className="object-cover rounded-t-2xl group-hover:scale-105 transition-transform duration-300"
-									style={{ objectPosition: "center" }}
-									sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-									priority
-								/>
-							)}
-							<div className="absolute top-2 right-2 bg-gold-light/80 text-gold-dark text-xs font-semibold px-3 py-1 rounded-full shadow-gold-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none select-none">
-								Bestseller
+			<div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
+				{/* Section Header */}
+				<div className="text-center mb-16">
+					<div className="inline-flex items-center justify-center p-2 bg-orange-100 rounded-full mb-6">
+						<span className="text-2xl">🛒</span>
+					</div>
+					<h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent"
+						style={{ fontFamily: "'Dancing Script', cursive" }}>
+						Quick Order
+					</h2>
+					<p className="text-gray-600 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
+						Fresh batters made with love, delivered to your doorstep. Order now for same-day delivery!
+					</p>
+				</div>
+
+				{/* Products Grid */}
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+					{products.map((item) => (
+						<div
+							className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden border border-gray-100"
+							key={item.id}
+						>
+							{/* Product Image */}
+							<div className="relative w-full h-64 overflow-hidden">
+								{item.imageUrl && (
+									<Image
+										src={item.imageUrl}
+										alt={item.name}
+										fill
+										className="object-cover group-hover:scale-105 transition-transform duration-300"
+										style={{ objectPosition: "center" }}
+										sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+										priority
+									/>
+								)}
+
+								{/* Overlay gradient */}
+								<div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+								{/* Popular badge */}
+								<div className="absolute top-4 left-4 bg-orange-500 text-white text-sm font-semibold px-3 py-1 rounded-full shadow-lg">
+									Popular
+								</div>
+
+								{/* Price tag */}
+								<div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-gray-900 text-lg font-bold px-3 py-2 rounded-xl shadow-lg">
+									${item.price}
+								</div>
+							</div>
+
+							{/* Product Content */}
+							<div className="p-6">
+								<h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+									{item.name}
+								</h3>
+
+								<p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2">
+									{item.description}
+								</p>
+
+								{/* Quantity and Add to Cart */}
+								<div className="flex items-center gap-3">
+									<div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+										<button
+											type="button"
+											onClick={() => handleQuantityChange(item.id, Math.max(1, (quantities[item.id] || 1) - 1))}
+											className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold transition-colors cursor-pointer"
+										>
+											-
+										</button>
+										<input
+											id={`quantity-${item.id}`}
+											type="number"
+											min={1}
+											value={quantities[item.id] || 1}
+											onChange={(e) =>
+												handleQuantityChange(
+													item.id,
+													Number(e.target.value) || 1
+												)
+											}
+											className="w-16 text-center py-2 border-0 focus:ring-0 focus:outline-none font-semibold text-gray-900 cursor-pointer"
+										/>
+										<button
+											type="button"
+											onClick={() => handleQuantityChange(item.id, (quantities[item.id] || 1) + 1)}
+											className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold transition-colors cursor-pointer"
+										>
+											+
+										</button>
+									</div>
+									<GoldButton
+										className="flex-1 py-3 text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl"
+										onClick={() =>
+											handleAddToCart({
+												id: item.id,
+												name: item.name,
+												price: item.price,
+												quantity: quantities[item.id] || 1,
+											})
+										}
+									>
+										Add to Cart
+									</GoldButton>
+								</div>
 							</div>
 						</div>
-						<CardHeader>
-							<CardTitle
-								className="text-xl sm:text-2xl font-bold mb-1 font-cursive"
-								style={{
-									background: "var(--gradient-gold)",
-									WebkitBackgroundClip: "text",
-									WebkitTextFillColor: "transparent",
-									letterSpacing: "0.04em",
-								}}
-							>
-								{item.name}
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="text-center flex-1 flex flex-col">
-							<p className="mb-3 sm:mb-4 text-gray-700 text-base sm:text-lg font-light min-h-[48px] line-clamp-2">
-								{item.description}
-							</p>
-							<div className="font-bold text-gold-dark mb-2 text-lg tracking-wide">
-								₹{item.price}
-							</div>
-							<div className="flex items-center justify-center gap-2 mt-auto">
-								<input
-									type="number"
-									min={1}
-									value={quantities[item.id] || 1}
-									onChange={(e) =>
-										handleQuantityChange(
-											item.id,
-											Number(e.target.value) || 1
-										)
-									}
-									className="w-14 sm:w-20 border border-gold-light rounded px-2 py-1 text-center text-base bg-white/80 focus:border-gold focus:ring-gold-light shadow-sm transition-all duration-200 hover:border-gold"
-									aria-label={`Quantity for ${item.name}`}
-								/>
-								<GoldButton
-									className="text-sm sm:text-base shadow-gold-sm group-hover:scale-105 transition-transform duration-200"
-									onClick={() =>
-										handleAddToCart({
-											id: item.id,
-											name: item.name,
-											price: item.price,
-											quantity: quantities[item.id] || 1,
-										})
-									}
-								>
-									Add to Cart
-								</GoldButton>
-							</div>
-						</CardContent>
-					</Card>
-				))}
-			</div>
-
-			{/* Unified luxury info section */}
-			<div className="w-full flex flex-col sm:flex-row items-stretch justify-between gap-6 sm:gap-8 mx-auto bg-white/70 rounded-2xl shadow-gold-lg px-2 sm:px-6 py-6 sm:py-8">
-				<div className="flex-1 flex items-stretch">
-					<OpeningHours />
+					))}
 				</div>
-				<div className="hidden sm:block w-px bg-gold-light mx-2 my-2 rounded-full" />
-				<div className="flex-[2] flex items-stretch">
-					<FreeDeliverySchedule deliverySchedule={deliverySchedule} />
+
+				{/* Enhanced info section */}
+				<div className="flex flex-col lg:flex-row items-stretch justify-between gap-8">
+					<div className="flex-1">
+						<OpeningHours />
+					</div>
+					<div className="flex-[2]">
+						<FreeDeliverySchedule deliverySchedule={deliverySchedule} />
+					</div>
 				</div>
 			</div>
 		</section>

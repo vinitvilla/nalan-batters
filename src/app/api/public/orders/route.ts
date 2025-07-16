@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
 
         const order = await createOrder({ userId, addressId, items, promoCodeId, deliveryDate });
         return NextResponse.json({ order });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 400 });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'An error occurred';
+        return NextResponse.json({ error: message }, { status: 400 });
     }
 }

@@ -12,136 +12,191 @@ import {
 import "../styles/theme.css";
 
 export default function ContactSection() {
-  const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${CONTACT_LNG-0.01}%2C${CONTACT_LAT-0.01}%2C${CONTACT_LNG+0.01}%2C${CONTACT_LAT+0.01}&layer=mapnik&marker=${CONTACT_LAT},${CONTACT_LNG}`;
+  const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${CONTACT_LNG - 0.01}%2C${CONTACT_LAT - 0.01}%2C${CONTACT_LNG + 0.01}%2C${CONTACT_LAT + 0.01}&layer=mapnik&marker=${CONTACT_LAT},${CONTACT_LNG}`;
 
   return (
-    <section id="contact" className="relative py-20 bg-gradient-to-br from-gold-light/60 via-white/90 to-gold-light/60 overflow-hidden">
-      <div
-        className="absolute inset-0 pointer-events-none select-none opacity-20"
-        aria-hidden
-      >
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 800 400"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <ellipse
-            cx="400"
-            cy="200"
-            rx="380"
-            ry="120"
-            fill="#FFD700"
-            fillOpacity="0.08"
-          />
-        </svg>
-      </div>
-      <div className="container mx-auto px-4 sm:px-0 relative z-10">
+    <section id="contact" className="py-12 sm:py-16 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
         <div className="text-center mb-12">
-          <h2
-            className="text-4xl sm:text-5xl font-extrabold mb-4 font-cursive drop-shadow"
-            style={{
-              background: "var(--gradient-gold)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              letterSpacing: "0.04em",
-            }}
-          >
+          <div className="inline-flex items-center justify-center p-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-full mb-4">
+            <span className="text-2xl">📞</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent"
+            style={{ fontFamily: "'Dancing Script', cursive" }}>
             Contact Us
           </h2>
-          <p className="text-gold-dark text-lg font-medium">
-            Have questions or feedback? Reach out to us!
+          <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+            Have questions or feedback? We&apos;d love to hear from you!
           </p>
         </div>
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8">
-          {/* Form (Left) */}
-          <Card className="flex-1 bg-white/95 border-2 border-gold-light shadow-gold-lg rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-gold font-cursive text-2xl">Send us a message</CardTitle>
+
+        {/* Contact Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Contact Form */}
+          <Card className="bg-white shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 h-full">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-bold text-gray-900">
+                Send us a Message
+              </CardTitle>
+              <p className="text-gray-600 text-sm">We&apos;ll get back to you within 24 hours</p>
             </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-gold-dark" htmlFor="name">Name</label>
+
+            <CardContent className="flex-1 flex flex-col">
+              <form className="flex flex-col h-full">
+                <div className="space-y-3 flex-1">
                   <Input
-                    id="name"
                     type="text"
                     required
-                    placeholder="Your Name"
-                    className="border-gold-light focus:border-gold focus:ring-gold/50"
+                    placeholder="Your full name"
+                    className="border border-orange-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 rounded-lg h-9 text-sm"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-gold-dark" htmlFor="email">Email</label>
                   <Input
-                    id="email"
                     type="email"
                     required
-                    placeholder="you@email.com"
-                    className="border-gold-light focus:border-gold focus:ring-gold/50"
+                    placeholder="your.email@example.com"
+                    className="border border-orange-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 rounded-lg h-9 text-sm"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-gold-dark" htmlFor="message">Message</label>
                   <Textarea
-                    id="message"
-                    rows={4}
+                    rows={5}
                     required
-                    placeholder="Type your message here..."
-                    className="border-gold-light focus:border-gold focus:ring-gold/50"
+                    placeholder="Tell us how we can help you..."
+                    className="border border-orange-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 rounded-lg text-sm flex-1 max-h-60 "
                   />
                 </div>
-                <GoldButton 
-                  type="submit" 
-                  className="w-full"
-                >
-                  Send Message
-                </GoldButton>
+                <div className="mt-4">
+                  <GoldButton
+                    type="submit"
+                    className="w-full h-9 text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    Send Message
+                  </GoldButton>
+                </div>
               </form>
             </CardContent>
           </Card>
-          {/* Contact Info (Right) */}
-          <Card className="flex-1 flex flex-col justify-center bg-white/95 border-2 border-gold-light shadow-gold-lg rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-gold font-cursive text-2xl">Get in Touch</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <h3 className="font-semibold text-lg mb-2 text-gold">Location</h3>
-                  <div className="w-full h-40 rounded-lg overflow-hidden mb-3 border-2 border-gold-light">
-                  <iframe
-                    title="Nalan Batters Location"
-                    src={mapSrc}
-                    className="w-full h-full border-0"
-                    loading="lazy"
-                  />
+
+          {/* Contact Information */}
+          <div className="space-y-6">
+            {/* Contact Details */}
+            <Card className="bg-white shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold text-gray-900">
+                  Get in Touch
+                </CardTitle>
+                <p className="text-gray-600 text-sm">Multiple ways to reach us</p>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* Phone */}
+                <Card className="border border-orange-100 bg-orange-50">
+                  <CardContent className="flex items-start gap-3 p-3">
+                    <div className="p-2 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg shadow-lg">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1">Phone</h4>
+                      <a
+                        href={`tel:${CONTACT_PHONE.replace(/[^+\d]/g, "")}`}
+                        className="text-orange-600 hover:text-orange-800 transition-colors text-sm font-medium cursor-pointer"
+                      >
+                        {CONTACT_PHONE}
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Email */}
+                <Card className="border border-amber-100 bg-amber-50">
+                  <CardContent className="flex items-start gap-3 p-3">
+                    <div className="p-2 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg shadow-lg">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 7.89a2 2 0 002.83 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1">Email</h4>
+                      <a href={`mailto:${CONTACT_EMAIL}`} className="text-amber-600 hover:text-amber-800 transition-colors text-sm font-medium cursor-pointer">
+                        {CONTACT_EMAIL}
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Address */}
+                <Card className="border border-yellow-100 bg-yellow-50">
+                  <CardContent className="flex items-start gap-3 p-3">
+                    <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg shadow-lg">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1">Location</h4>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CONTACT_ADDRESS)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-yellow-600 hover:text-yellow-800 transition-colors text-sm font-medium cursor-pointer"
+                      >
+                        {CONTACT_ADDRESS}
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Map - Full Width */}
+        <div className="mt-8">
+          <Card className="py-0 bg-white shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden">
+            <CardContent className="p-0">
+              <div className="w-full h-64">
+                <iframe
+                  title="Nalan Batters Location"
+                  src={mapSrc}
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Call to Action - Simplified */}
+        <div className="text-center mt-10">
+          <Card className="bg-white/80 backdrop-blur-sm border border-orange-200/50 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-600">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                <div className="text-gold-dark text-sm">
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CONTACT_ADDRESS)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gold hover:text-gold-dark hover:underline transition-colors"
-                  >
-                    {CONTACT_ADDRESS}
-                  </a>
+                  <span className="text-sm font-semibold">24/7 Support</span>
                 </div>
-              </div>
-              <div className="mb-4">
-                <h3 className="font-semibold text-lg mb-1 text-gold">Email</h3>
-                <a href={`mailto:${CONTACT_EMAIL}`} className="text-gold hover:text-gold-dark hover:underline text-sm transition-colors">
-                  {CONTACT_EMAIL}
-                </a>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1 text-gold">Phone</h3>
-                <a
-                  href={`tel:${CONTACT_PHONE.replace(/[^+\d]/g, "")}`}
-                  className="text-gold hover:text-gold-dark hover:underline text-sm transition-colors"
-                >
-                  {CONTACT_PHONE}
-                </a>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold">Quick Response</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold">Dedicated Care</span>
+                </div>
               </div>
             </CardContent>
           </Card>

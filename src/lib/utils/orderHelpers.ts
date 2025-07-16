@@ -4,6 +4,7 @@ import { DiscountType, OrderStatus } from "@/generated/prisma";
 // --- Order Queries ---
 export async function getAllOrders() {
     return prisma.order.findMany({
+        where: { isDelete: false },
         include: {
             user: true,
             address: true,
@@ -14,8 +15,11 @@ export async function getAllOrders() {
 }
 
 export async function getOrderById(orderId: string) {
-    return prisma.order.findUnique({
-        where: { id: orderId },
+    return prisma.order.findFirst({
+        where: { 
+            id: orderId,
+            isDelete: false 
+        },
         include: {
             user: true,
             address: true,
@@ -38,7 +42,11 @@ export async function updateOrderStatus(orderId: string, status: string) {
 async function validateOrderItems(items: Array<{ productId: string; quantity: number; price: number }>) {
     const productIds = items.map(i => i.productId);
     const products = await prisma.product.findMany({
-        where: { id: { in: productIds }, isActive: true },
+        where: { 
+            id: { in: productIds }, 
+            isActive: true,
+            isDelete: false 
+        },
     });
     if (products.length !== items.length) throw new Error("Invalid or inactive product(s)");
     for (const item of items) {
@@ -54,7 +62,9 @@ async function validateOrderItems(items: Array<{ productId: string; quantity: nu
  * Returns config object mapped by title.
  */
 async function getConfigObject() {
-    const configArr = await prisma.config.findMany();
+    const configArr = await prisma.config.findMany({
+        where: { isDelete: false }
+    });
     return configArr.reduce((acc, curr) => {
         acc[curr.title] = curr;
         return acc;
@@ -92,7 +102,12 @@ async function calculateDiscount(subtotal: number, promoCodeId?: string) {
     let discount = 0;
     let discountType: DiscountType | undefined;
     if (promoCodeId) {
-        const promo = await prisma.promoCode.findUnique({ where: { id: promoCodeId } });
+        const promo = await prisma.promoCode.findFirst({ 
+            where: { 
+                id: promoCodeId,
+                isDeleted: false 
+            } 
+        });
         if (promo && promo.isActive && (!promo.expiresAt || new Date(promo.expiresAt) >= new Date())) {
             discountType = promo.discountType;
             if (promo.discountType === DiscountType.PERCENTAGE) {
@@ -129,13 +144,16 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
     deliveryDate?: Date | string;
 }) {
     // Validate delivery date
+    let validDeliveryDate: Date | undefined;
     if (deliveryDate) {
-        const date = new Date(deliveryDate);
+        // Convert string date to proper Date object with time set to start of day
+        const date = typeof deliveryDate === 'string' ? new Date(deliveryDate + 'T00:00:00.000Z') : new Date(deliveryDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (isNaN(date.getTime()) || date < today) {
             throw new Error("Delivery date must be today or in the future");
         }
+        validDeliveryDate = date;
     }
 
     // Validate items
@@ -164,7 +182,7 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
             }))
         }
     };
-    if (deliveryDate) orderData.deliveryDate = deliveryDate;
+    if (validDeliveryDate) orderData.deliveryDate = validDeliveryDate;
 
     // Create order and update stock
     const order = await prisma.order.create({
@@ -173,4 +191,14 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
     });
     await reduceProductStock(items);
     return order;
+}
+
+/**
+ * Soft deletes an order by marking it as deleted.
+ */
+export async function softDeleteOrder(orderId: string) {
+    return prisma.order.update({
+        where: { id: orderId },
+        data: { isDelete: true }
+    });
 }

@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import ProductForm from "./ProductForm";
 import CategoryModal from "./CategoryModal";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 
 // --- Types ---
@@ -46,7 +45,6 @@ export default function ProductsPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-    const router = useRouter();
     const adminApiFetch = useAdminApi();
 
     // --- Effects ---
@@ -64,7 +62,7 @@ export default function ProductsPage() {
                 setProducts(arr);
             })
             .catch(() => {});
-    }, [token]);
+    }, [token, adminApiFetch]);
 
     // --- Derived Data ---
     const filteredProducts = products.filter((product) => {
@@ -130,21 +128,20 @@ export default function ProductsPage() {
 
     // --- Render ---
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Products</h1>
-                <div className="flex gap-2">
-                    <Button variant="default" size="sm" className="cursor-pointer" onClick={handleAdd}>
-                        <Plus className="w-4 h-4 mr-2 cursor-pointer" /> Add Product
-                    </Button>
-                    <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setCategoryModalOpen(true)}>
-                        Manage Categories
-                    </Button>
-                </div>
-            </div>
+        <div className="space-y-4 sm:space-y-6">
             <Card>
-                <CardHeader>
-                    <CardTitle>Product Management</CardTitle>
+                <CardHeader className="pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <CardTitle className="text-lg sm:text-xl">Product Management</CardTitle>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <Button variant="default" size="sm" className="cursor-pointer" onClick={handleAdd}>
+                                <Plus className="w-4 h-4 mr-2 cursor-pointer" /> Add Product
+                            </Button>
+                            <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setCategoryModalOpen(true)}>
+                                Manage Categories
+                            </Button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
@@ -163,7 +160,71 @@ export default function ProductsPage() {
                             </TabsList>
                         </Tabs>
                     </div>
-                    <div className="overflow-x-auto">
+                    
+                    {/* Mobile Card View */}
+                    <div className="block lg:hidden space-y-4">
+                        {filteredProducts.length === 0 ? (
+                            <div className="text-center text-muted-foreground py-8">
+                                No products found.
+                            </div>
+                        ) : (
+                            filteredProducts.map((product) => (
+                                <div key={product.id} className="bg-white border rounded-lg p-4 space-y-3">
+                                    <div className="flex gap-3">
+                                        <Image
+                                            src={product.imageUrl || "/vercel.svg"}
+                                            alt={product.name}
+                                            width={60}
+                                            height={60}
+                                            className="w-15 h-15 rounded object-cover flex-shrink-0"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-semibold text-sm text-gray-900 truncate">
+                                                {product.name}
+                                            </h3>
+                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                                {product.description}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                                    {product.category}
+                                                </span>
+                                                <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                                                    Stock: {product.stock}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t">
+                                        <span className="font-bold text-lg text-green-600">
+                                            ₹{Number(product.price).toFixed(2)}
+                                        </span>
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="cursor-pointer text-xs"
+                                                onClick={() => handleEdit(product)}
+                                            >
+                                                Edit
+                                            </Button>
+                                            <Button 
+                                                size="sm" 
+                                                variant="destructive" 
+                                                className="cursor-pointer text-xs"
+                                                onClick={() => handleDelete(product.id)}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    
+                    {/* Desktop Table View */}
+                    <div className="hidden lg:block overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -177,37 +238,70 @@ export default function ProductsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredProducts.map((product) => (
-                                    <TableRow key={product.id}>
-                                        <TableCell>
-                                            <Image
-                                                src={product.imageUrl || "/vercel.svg"}
-                                                alt={product.name}
-                                                width={40}
-                                                height={40}
-                                                className="w-10 h-10 rounded object-cover"
-                                            />
-                                        </TableCell>
-                                        <TableCell>{product.name}</TableCell>
-                                        <TableCell>{product.description}</TableCell>
-                                        <TableCell>{product.category}</TableCell>
-                                        <TableCell>${Number(product.price).toFixed(2)}</TableCell>
-                                        <TableCell>{product.stock}</TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Button size="sm" variant="outline" className="cursor-pointer" onClick={() => handleEdit(product)}>
-                                                Edit
-                                            </Button>
-                                            <Button size="sm" variant="destructive" className="cursor-pointer" onClick={() => handleDelete(product.id)}>
-                                                Delete
-                                            </Button>
+                                {filteredProducts.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                                            No products found.
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                ) : (
+                                    filteredProducts.map((product) => (
+                                        <TableRow key={product.id}>
+                                            <TableCell>
+                                                <Image
+                                                    src={product.imageUrl || "/vercel.svg"}
+                                                    alt={product.name}
+                                                    width={40}
+                                                    height={40}
+                                                    className="w-10 h-10 rounded object-cover"
+                                                />
+                                            </TableCell>
+                                            <TableCell className="font-medium">{product.name}</TableCell>
+                                            <TableCell className="max-w-xs truncate">{product.description}</TableCell>
+                                            <TableCell>
+                                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                                    {product.category}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="font-semibold text-green-600">
+                                                ₹{Number(product.price).toFixed(2)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={`px-2 py-1 rounded text-xs ${
+                                                    product.stock && product.stock > 0 
+                                                        ? 'bg-green-100 text-green-800' 
+                                                        : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                    {product.stock}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right space-x-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="cursor-pointer" 
+                                                    onClick={() => handleEdit(product)}
+                                                >
+                                                    Edit
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="destructive" 
+                                                    className="cursor-pointer" 
+                                                    onClick={() => handleDelete(product.id)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
                     </div>
                 </CardContent>
             </Card>
+            
             <Modal
                 open={modalOpen}
                 onClose={() => setModalOpen(false)}
@@ -220,6 +314,7 @@ export default function ProductsPage() {
                     categories={categories}
                 />
             </Modal>
+            
             <CategoryModal
                 open={categoryModalOpen}
                 onClose={() => setCategoryModalOpen(false)}

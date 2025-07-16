@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { usePathname } from "next/navigation";
 import { SessionHydrator } from "@/components/SessionHydrator";
 import Footer from "@/components/Footer";
+import EnvironmentBadge from "@/components/EnvironmentBadge";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionHydrator />
+        <EnvironmentBadge />
         <div id="recaptcha-container" style={{ position: "absolute", zIndex: -1 }} />
         { !(isAdmin || isSiginIn) && <Header />}
         <Toaster />

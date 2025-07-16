@@ -20,13 +20,13 @@ const CartButton = forwardRef<{ openDropdown: () => void }>((_, ref) => {
       <Button
         ref={cartBtnRef}
         variant="ghost"
-        className="relative p-2 rounded-full hover:bg-green-100 cursor-pointer"
+        className="relative p-2 rounded-full hover:bg-yellow-100/50 cursor-pointer border-2 border-yellow-200 hover:border-yellow-300 hover:scale-105 transition-all duration-200"
         aria-label="View cart"
         onClick={openCart}
       >
-        <ShoppingBasket className="w-10 h-10 text-lg text-green-500" />
+        <ShoppingBasket className="w-6 h-6 text-yellow-600 hover:text-yellow-700" />
         {cartCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full text-xs font-bold px-1.5 py-0.5 min-w-[20px] text-center border-2 border-white">
+          <span className="absolute -top-1 -right-1 bg-yellow-500 text-white rounded-full text-xs font-bold px-1.5 py-0.5 min-w-[20px] text-center border-2 border-white shadow-lg">
             {cartCount}
           </span>
         )}
@@ -35,5 +35,7 @@ const CartButton = forwardRef<{ openDropdown: () => void }>((_, ref) => {
     </div>
   );
 });
+
+CartButton.displayName = 'CartButton';
 
 export default CartButton;

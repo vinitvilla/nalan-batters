@@ -32,7 +32,6 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
         if (!name.trim()) return toast.error("Category name required");
         setLoading(true);
         try {
-            const method = editing?.id ? "PUT" : "POST";
             const res = await adminApiFetch("/api/admin/categories", {
               method: editing?.id ? "PUT" : "POST",
               body: JSON.stringify({ id: editing?.id, name }),
@@ -43,7 +42,7 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
             onCategoryChange();
             setEditing(null);
             setName("");
-        } catch (e) {
+        } catch {
             toast.error("Error saving category");
         } finally {
             setLoading(false);
@@ -69,7 +68,7 @@ export default function CategoryModal({ open, onClose, categories, onCategoryCha
             if (!res || !res.ok) throw new Error("Failed to delete category");
             toast.success("Category deleted");
             onCategoryChange();
-        } catch (e) {
+        } catch {
             toast.error("Error deleting category");
         } finally {
             setLoading(false);

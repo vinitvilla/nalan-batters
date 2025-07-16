@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
   const adminCheck = await requireAdmin(req);
   if (adminCheck instanceof NextResponse) return adminCheck;
   try {
-    const categories = await prisma.category.findMany();
+    const categories = await prisma.category.findMany({
+      where: { isDelete: false }
+    });
     return NextResponse.json(categories, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch categories", details: error }, { status: 500 });
@@ -42,14 +44,17 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// Delete category
+// Delete category (soft delete)
 export async function DELETE(req: NextRequest) {
   const adminCheck = await requireAdmin(req);
   if (adminCheck instanceof NextResponse) return adminCheck;
   try {
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
-    await prisma.category.delete({ where: { id } });
+    await prisma.category.update({ 
+      where: { id },
+      data: { isDelete: true }
+    });
     return NextResponse.json({ message: "Category deleted" }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete category", details: error }, { status: 500 });

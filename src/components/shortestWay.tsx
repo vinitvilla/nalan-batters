@@ -6,18 +6,18 @@ import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
-const libraries = ["places"];
+const libraries: ("places")[] = ["places"];
 
 export default function Home() {
-  const [origin, setOrigin] = useState(null);
-  const [destination, setDestination] = useState(null);
-  const [waypoints, setWaypoints] = useState([]);
-  const [inputValue, setInputValue] = useState("");
-  const [fieldType, setFieldType] = useState("waypoint");
+  const [origin, setOrigin] = useState<google.maps.places.PlaceResult | null>(null);
+  const [destination, setDestination] = useState<google.maps.places.PlaceResult | null>(null);
+  const [waypoints, setWaypoints] = useState<google.maps.places.PlaceResult[]>([]);
+  const [inputValue, setInputValue] = useState<string>("");
+  const [fieldType, setFieldType] = useState<"origin" | "destination" | "waypoint">("waypoint");
 
-  const [originAuto, setOriginAuto] = useState(null);
-  const [destAuto, setDestAuto] = useState(null);
-  const [wpAuto, setWpAuto] = useState(null);
+  const [originAuto, setOriginAuto] = useState<google.maps.places.Autocomplete | null>(null);
+  const [destAuto, setDestAuto] = useState<google.maps.places.Autocomplete | null>(null);
+  const [wpAuto, setWpAuto] = useState<google.maps.places.Autocomplete | null>(null);
 
 	const router = useRouter();
 
@@ -27,17 +27,17 @@ export default function Home() {
   });
 
   const handlePlaceChanged = () => {
-    let place;
+    let place: google.maps.places.PlaceResult | undefined;
     if (fieldType === "origin" && originAuto) {
       place = originAuto.getPlace();
-      if (place && place.geometry) setOrigin(place);
+      if (place && place.geometry && place.geometry.location) setOrigin(place);
     } else if (fieldType === "destination" && destAuto) {
       place = destAuto.getPlace();
-      if (place && place.geometry) setDestination(place);
+      if (place && place.geometry && place.geometry.location) setDestination(place);
     } else if (fieldType === "waypoint" && wpAuto) {
       place = wpAuto.getPlace();
-      if (place && place.geometry) {
-        setWaypoints((prev) => [...prev, place]);
+      if (place && place.geometry && place.geometry.location) {
+        setWaypoints((prev) => [...prev, place as google.maps.places.PlaceResult]);
         setInputValue("");
       }
     }

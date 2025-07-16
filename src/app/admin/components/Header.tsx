@@ -1,28 +1,81 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Home } from "lucide-react";
+import { LogOut, Home, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { userStore } from "@/store/userStore";
 import { useSignOut } from "@/hooks/useSignOut";
 
-const Header: React.FC = () => {
+type HeaderProps = {
+  onMenuToggle?: () => void;
+};
+
+const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const router = useRouter();
   const signOut = useSignOut();
   const user = userStore((state) => state.user);
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 border-b bg-white sticky top-0 z-30 shadow-sm">
-      <h2 className="text-xl font-bold">Admin Dashboard</h2>
-      <div className="gap-2 flex items-center">
-        <Button className="cursor-pointer" variant="outline" onClick={() => router.push("/")}>
-          <Home className="h-4 w-4" />
-          Back to Home
+    <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b bg-white sticky top-0 z-30 shadow-sm">
+      <div className="flex items-center gap-4">
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden p-2 hover:bg-gray-100"
+          onClick={onMenuToggle}
+          aria-label="Toggle menu"
+        >
+          <Menu className="h-5 w-5" />
         </Button>
+        
+        <h2 className="text-lg sm:text-xl font-bold truncate">Admin Dashboard</h2>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Button 
+          className="cursor-pointer hidden sm:flex" 
+          variant="outline" 
+          onClick={() => router.push("/")}
+        >
+          <Home className="h-4 w-4 mr-2" />
+          <span className="hidden md:inline">Back to Home</span>
+          <span className="md:hidden">Home</span>
+        </Button>
+        
+        {/* Mobile Home Button */}
+        <Button 
+          className="cursor-pointer sm:hidden" 
+          variant="outline" 
+          size="icon"
+          onClick={() => router.push("/")}
+          aria-label="Back to Home"
+        >
+          <Home className="h-4 w-4" />
+        </Button>
+        
         {user && (
-          <Button className="cursor-pointer" variant="outline" onClick={signOut}>
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
+          <>
+            <Button 
+              className="cursor-pointer hidden sm:flex" 
+              variant="outline" 
+              onClick={signOut}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              <span className="hidden md:inline">Sign Out</span>
+              <span className="md:hidden">Sign Out</span>
+            </Button>
+            
+            {/* Mobile Sign Out Button */}
+            <Button 
+              className="cursor-pointer sm:hidden" 
+              variant="outline" 
+              size="icon"
+              onClick={signOut}
+              aria-label="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </>
         )}
       </div>
     </header>
