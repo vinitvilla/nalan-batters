@@ -8,6 +8,7 @@
       "NEXT_PUBLIC_APP_ENV": "staging"
     }
   },
+  "buildCommand": "npm run build:staging",
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30

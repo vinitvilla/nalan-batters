@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
-    "build:staging": "NEXT_PUBLIC_APP_ENV=staging NODE_ENV=production next build",
+    "build": "prisma generate && next build",
+    "build:staging": "prisma generate && NEXT_PUBLIC_APP_ENV=staging NODE_ENV=production next build",
     "start": "next start",
     "start:staging": "NEXT_PUBLIC_APP_ENV=staging NODE_ENV=production next start",
     "lint": "next lint",
@@ -15,7 +15,8 @@
     "seed:staging": "NODE_ENV=staging node prisma/seed.js",
     "db:setup": "npm run migrate && npm run seed",
     "db:setup:staging": "npm run migrate:staging && npm run seed:staging",
-    "deploy:staging": "npm run build:staging && npm run start:staging"
+    "deploy:staging": "npm run build:staging && npm run start:staging",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
