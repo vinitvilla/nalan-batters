@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GoldButton } from "@/components/GoldButton";
+import { useState } from "react";
 import {
   CONTACT_EMAIL,
   CONTACT_PHONE,
@@ -12,7 +13,65 @@ import {
 import "../styles/theme.css";
 
 export default function ContactSection() {
+  const [formData, setFormData] = useState({
+    name: "",
+    mobile: "",
+    message: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
+
   const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${CONTACT_LNG - 0.01}%2C${CONTACT_LAT - 0.01}%2C${CONTACT_LNG + 0.01}%2C${CONTACT_LAT + 0.01}&layer=mapnik&marker=${CONTACT_LAT},${CONTACT_LNG}`;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: "" });
+
+    try {
+      const response = await fetch("/api/public/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus({
+          type: "success",
+          message: result.message || "Thank you for your message! We'll get back to you within 24 hours.",
+        });
+        // Clear form
+        setFormData({ name: "", mobile: "", message: "" });
+      } else {
+        setSubmitStatus({
+          type: "error",
+          message: result.error || "Failed to send message. Please try again.",
+        });
+      }
+    } catch (error) {
+      setSubmitStatus({
+        type: "error",
+        message: "Network error. Please check your connection and try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section id="contact" className="py-12 sm:py-16 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
@@ -43,33 +102,75 @@ export default function ContactSection() {
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col">
-              <form className="flex flex-col h-full">
+              {/* Status Message */}
+              {submitStatus.type && (
+                <div className={`mb-4 p-3 rounded-lg ${
+                  submitStatus.type === "success" 
+                    ? "bg-green-50 border border-green-200 text-green-800" 
+                    : "bg-red-50 border border-red-200 text-red-800"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {submitStatus.type === "success" ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                    <p className="text-sm font-medium">{submitStatus.message}</p>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="flex flex-col h-full">
                 <div className="space-y-3 flex-1">
                   <Input
                     type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
                     required
                     placeholder="Your full name"
                     className="border border-orange-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 rounded-lg h-9 text-sm"
+                    disabled={isSubmitting}
                   />
                   <Input
-                    type="email"
+                    type="tel"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleInputChange}
                     required
-                    placeholder="your.email@example.com"
+                    placeholder="+1 (555) 123-4567"
                     className="border border-orange-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 rounded-lg h-9 text-sm"
+                    disabled={isSubmitting}
                   />
                   <Textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
                     rows={5}
                     required
                     placeholder="Tell us how we can help you..."
-                    className="border border-orange-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 rounded-lg text-sm flex-1 max-h-60 "
+                    className="border border-orange-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 rounded-lg text-sm flex-1 max-h-60"
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className="mt-4">
                   <GoldButton
                     type="submit"
-                    className="w-full h-9 text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="w-full h-9 text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting}
                   >
-                    Send Message
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                        <span>Sending...</span>
+                      </div>
+                    ) : (
+                      "Send Message"
+                    )}
                   </GoldButton>
                 </div>
               </form>
