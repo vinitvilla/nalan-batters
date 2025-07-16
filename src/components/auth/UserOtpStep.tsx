@@ -18,7 +18,7 @@ export interface UserOtpStepProps {
 
 export function UserOtpStep({ onUserFound, onUserNotFound, onBack, confirmationResult }: UserOtpStepProps) {
   const phone = userStore((s) => s.phone);
-  const [otp, setOtp] = useState("123456");
+  const [otp, setOtp] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
