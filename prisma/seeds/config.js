@@ -20,7 +20,7 @@ async function seedConfig() {
         isActive: true,
       },
       {
-        title: "social_links",
+        title: "socialLinks",
         value: {
           facebook: "https://www.facebook.com/p/Nalan-Batters-61566853659372/",
           instagram: "https://www.instagram.com/nalan_batters/",
@@ -29,12 +29,12 @@ async function seedConfig() {
         isActive: true,
       },
       {
-        title: "logo_url",
+        title: "logoUrl",
         value: { url: "https://yourdomain.com/logo.png" },
         isActive: true,
       },
       {
-        title: "free_delivery",
+        title: "freeDelivery",
         value: {
           "Thursday": ["Mississauga", "Brampton", "Downtown Toronto"],
           "Friday": ["Pickering", "Ajax", "Whitby", "Oshawa"],
