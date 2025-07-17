@@ -1,8 +1,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useNewMessagesCount } from "@/hooks/useNewMessagesCount";
 import { 
     X, 
     LayoutDashboard,
@@ -13,7 +15,8 @@ import {
     Tag,
     Flag,
     Settings,
-    Crown
+    Crown,
+    MessageSquare
 } from "lucide-react";
 
 type NavItem = {
@@ -30,6 +33,7 @@ type AdminSidebarProps = {
 const navItems: NavItem[] = [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
+    { label: "Contact Messages", href: "/admin/contact-messages", icon: MessageSquare },
     { label: "Delivery", href: "/admin/delivery", icon: Truck },
     { label: "Products", href: "/admin/products", icon: Package },
     { label: "Users", href: "/admin/users", icon: Users },
@@ -40,6 +44,7 @@ const navItems: NavItem[] = [
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
+    const { newMessagesCount } = useNewMessagesCount();
 
     const handleNavClick = () => {
         onClose(); // Close sidebar on mobile after navigation
@@ -108,6 +113,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                         {navItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = pathname === item.href;
+                            const isContactMessages = item.href === "/admin/contact-messages";
+                            const showBadge = isContactMessages && newMessagesCount > 0;
                             
                             return (
                                 <div key={item.href} className="relative">
@@ -136,7 +143,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                                 `} />
                                             </div>
                                             
-                                            <div className="flex-1">
+                                            <div className="flex-1 flex items-center justify-between">
                                                 <div className={`
                                                     font-medium transition-colors duration-200
                                                     ${isActive 
@@ -146,6 +153,13 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                                 `}>
                                                     {item.label}
                                                 </div>
+                                                
+                                                {/* New Messages Badge */}
+                                                {showBadge && (
+                                                    <Badge className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center animate-pulse">
+                                                        {newMessagesCount > 99 ? "99+" : newMessagesCount}
+                                                    </Badge>
+                                                )}
                                             </div>
                                             
                                             {/* Active Indicator */}

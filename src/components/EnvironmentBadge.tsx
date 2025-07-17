@@ -7,7 +7,6 @@ export default function EnvironmentBadge() {
   
   // For debugging - you can remove this console.log later
   console.log('Environment Badge - NEXT_PUBLIC_APP_ENV:', process.env.NEXT_PUBLIC_APP_ENV);
-  console.log('Environment Badge - environment:', environment);
   
   if (environment === 'production') {
     return null; // Don't show badge in production
