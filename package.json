@@ -9,13 +9,15 @@
     "start": "next start --port 3000",
     "start:staging": "NEXT_PUBLIC_APP_ENV=staging NODE_ENV=production next start --port 8080",
     "lint": "next lint",
-    "migrate": "prisma migrate dev --name init",
+    "migrate": "prisma migrate dev",
     "migrate:staging": "prisma migrate deploy",
+    "migrate:staging:interactive": "./scripts/migrate-staging.sh",
     "seed": "node seed.js",
     "seed:staging": "NODE_ENV=staging node seed.js",
     "db:setup": "npm run migrate && npm run seed",
     "db:setup:staging": "npm run migrate:staging && npm run seed:staging",
-    "deploy:staging": "npm run build:staging && npm run start:staging",
+    "deploy:staging": "./scripts/deploy-staging.sh",
+    "deploy:staging:full": "npm run migrate:staging:interactive && npm run build:staging && npm run start:staging",
     "postinstall": "prisma generate"
   },
   "dependencies": {

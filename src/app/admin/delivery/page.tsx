@@ -144,15 +144,6 @@ export default function DeliveryPage() {
     const todayString = getDateString(today);
     const tomorrowString = getDateString(tomorrow);
 
-    // Debug logging to verify dates
-    console.log('Date calculations:', {
-        today: today.toLocaleDateString(),
-        todayString,
-        tomorrow: tomorrow.toLocaleDateString(), 
-        tomorrowString,
-        currentTime: new Date().toLocaleString()
-    });
-
     // Filter orders by delivery date
     const todayOrders = orders.filter(order => {
         if (!order.deliveryDate) return false;
