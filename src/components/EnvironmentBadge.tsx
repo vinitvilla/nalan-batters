@@ -5,9 +5,6 @@ import { Badge } from "@/components/ui/badge";
 export default function EnvironmentBadge() {
   const environment = process.env.NEXT_PUBLIC_APP_ENV || 'development';
   
-  // For debugging - you can remove this console.log later
-  console.log('Environment Badge - NEXT_PUBLIC_APP_ENV:', process.env.NEXT_PUBLIC_APP_ENV);
-  
   if (environment === 'production') {
     return null; // Don't show badge in production
   }

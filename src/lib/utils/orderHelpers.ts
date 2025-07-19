@@ -84,13 +84,44 @@ function getConfigField(configObj: any, key: string, field: string, fallback: nu
 }
 
 /**
- * Calculates charges (tax, convenience, delivery) from config and subtotal.
+ * Checks if an address qualifies for free delivery on a given date
  */
-function calculateCharges(config: any, subtotal: number) {
+function isEligibleForFreeDelivery(address: any, deliveryDate: Date, freeDeliveryConfig: any): boolean {
+    if (!address?.city || !freeDeliveryConfig || !deliveryDate) return false;
+    
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = daysOfWeek[deliveryDate.getDay()];
+    
+    const areasForDay = freeDeliveryConfig[dayName];
+    if (!Array.isArray(areasForDay)) return false;
+    
+    return areasForDay.some((area: string) => 
+        area.toLowerCase().includes(address.city.toLowerCase()) ||
+        address.city.toLowerCase().includes(area.toLowerCase())
+    );
+}
+
+/**
+ * Calculates charges (tax, convenience, delivery) from config and subtotal.
+ * Applies waive logic and free delivery eligibility.
+ */
+function calculateCharges(config: any, subtotal: number, address: any = null, deliveryDate: Date | null = null) {
+    // Get base rates with waive logic
     const taxPercentValue = getConfigField(config, 'taxPercent', 'percent', 13);
     const TAX_RATE = taxPercentValue ? taxPercentValue / 100 : 0;
-    const convenienceCharges = getConfigField(config, 'convenienceCharge', 'amount', 0);
-    const deliveryCharges = getConfigField(config, 'deliveryCharge', 'amount', 0);
+    let convenienceCharges = getConfigField(config, 'convenienceCharge', 'amount', 0);
+    let deliveryCharges = getConfigField(config, 'deliveryCharge', 'amount', 0);
+    
+    // Apply free delivery logic
+    if (address && deliveryDate && deliveryCharges > 0) {
+        const freeDeliveryConfig = config.freeDelivery?.value;
+        if (isEligibleForFreeDelivery(address, deliveryDate, freeDeliveryConfig)) {
+            deliveryCharges = 0;
+            // Also waive convenience charge for free delivery areas
+            convenienceCharges = 0;
+        }
+    }
+    
     const tax = +(subtotal * TAX_RATE).toFixed(2);
     return { TAX_RATE, convenienceCharges, deliveryCharges, tax };
 }
@@ -136,12 +167,14 @@ async function reduceProductStock(items: Array<{ productId: string; quantity: nu
 /**
  * Creates an order, calculates charges, applies promo, and updates stock.
  */
-export async function createOrder({ userId, addressId, items, promoCodeId, deliveryDate }: {
+export async function createOrder({ userId, addressId, items, promoCodeId, deliveryDate, orderType, paymentMethod }: {
     userId: string;
     addressId: string;
     items: Array<{ productId: string; quantity: number; price: number }>;
     promoCodeId?: string;
     deliveryDate?: Date | string;
+    orderType?: 'PICKUP' | 'DELIVERY';
+    paymentMethod?: 'CASH' | 'CARD' | 'ONLINE';
 }) {
     // Validate delivery date
     let validDeliveryDate: Date | undefined;
@@ -160,7 +193,13 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
     const products = await validateOrderItems(items);
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const config = await getConfigObject();
-    const { TAX_RATE, convenienceCharges, deliveryCharges, tax } = calculateCharges(config, subtotal);
+    
+    // Get address information for free delivery calculation
+    const address = await prisma.address.findFirst({
+        where: { id: addressId }
+    });
+    
+    const { TAX_RATE, convenienceCharges, deliveryCharges, tax } = calculateCharges(config, subtotal, address, validDeliveryDate);
     const { discount } = await calculateDiscount(subtotal, promoCodeId);
 
     // Prepare order data
@@ -174,6 +213,8 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
         deliveryCharges,
         discount,
         status: OrderStatus.PENDING,
+        orderType: orderType || 'DELIVERY', // Default to DELIVERY for online orders
+        paymentMethod: paymentMethod || 'ONLINE', // Default to ONLINE for web orders
         items: {
             create: items.map(item => ({
                 productId: item.productId,

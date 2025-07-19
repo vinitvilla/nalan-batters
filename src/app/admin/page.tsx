@@ -2,24 +2,27 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getDefaultRoute } from "@/lib/permissions";
 import { Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const AdminPage: React.FC = () => {
   const router = useRouter();
-  const { user, isAdmin, loading } = useAdminAuth();
+  const { user, hasAdminAccess, userRole, loading } = useAdminAuth();
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
         router.push("/signin");
-      } else if (!isAdmin) {
+      } else if (!hasAdminAccess) {
         router.push("/");
       } else {
-        router.push("/admin/dashboard");
+        // Redirect to appropriate default route based on role
+        const defaultRoute = getDefaultRoute(userRole);
+        router.push(defaultRoute);
       }
     }
-  }, [user, isAdmin, loading, router]);
+  }, [user, hasAdminAccess, userRole, loading, router]);
 
   if (loading) {
     return (
@@ -34,7 +37,7 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user || !hasAdminAccess) {
     return null;
   }
 

@@ -58,7 +58,7 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
   // Refs
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Calculations using orderStore with config
+  // Calculations using orderStore with config  
   const calculations = getOrderCalculations(cartItems, config);
   const { subtotal, tax, convenienceCharge, deliveryCharge, appliedDiscount, finalTotal } = calculations;
   const taxRate = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0.13;

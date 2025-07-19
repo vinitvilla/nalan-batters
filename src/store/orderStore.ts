@@ -12,6 +12,7 @@ interface Config {
   taxPercent?: { percent?: number; waive?: boolean };
   convenienceCharge?: { amount?: number; waive?: boolean };
   deliveryCharge?: { amount?: number; waive?: boolean };
+  freeDelivery?: Record<string, string[]>;
 }
 
 interface OrderCalculations {
@@ -21,6 +22,14 @@ interface OrderCalculations {
   deliveryCharge: number;
   appliedDiscount: number;
   finalTotal: number;
+  // Original amounts (before waiving)
+  originalTax: number;
+  originalConvenienceCharge: number;
+  originalDeliveryCharge: number;
+  // Waive flags
+  isTaxWaived: boolean;
+  isConvenienceWaived: boolean;
+  isDeliveryWaived: boolean;
 }
 
 interface OrderStore {
@@ -38,7 +47,7 @@ interface OrderStore {
   applyPromo: (code: string) => Promise<{ success: boolean }>;
   
   // Calculation getters
-  getOrderCalculations: (cartItems: CartItem[], config?: Config) => OrderCalculations;
+  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: any, deliveryDate?: string) => OrderCalculations;
 }
 
 export const useOrderStore = create<OrderStore>((set, get) => ({
@@ -75,15 +84,35 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
   },
   
   // Calculation getters
-  getOrderCalculations: (cartItems: CartItem[], config?: Config): OrderCalculations => {
+  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: any, deliveryDate?: string): OrderCalculations => {
     const state = get();
     
     // Basic calculations
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const taxRate = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0.13; // Default 13%
     const tax = +(subtotal * taxRate).toFixed(2);
-    const convenienceCharge = config?.convenienceCharge?.amount || 0;
-    const deliveryCharge = config?.deliveryCharge?.amount || 0;
+    let convenienceCharge = config?.convenienceCharge?.amount || 0;
+    let deliveryCharge = config?.deliveryCharge?.amount || 0;
+    
+    // Check for free delivery eligibility
+    if (address && deliveryDate && deliveryCharge > 0 && config?.freeDelivery) {
+      const deliveryDateObj = new Date(deliveryDate + 'T00:00:00.000Z');
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayName = daysOfWeek[deliveryDateObj.getDay()];
+      
+      const areasForDay = config.freeDelivery[dayName];
+      if (Array.isArray(areasForDay) && address.city) {
+        const isEligible = areasForDay.some((area: string) => 
+          area.toLowerCase().includes(address.city.toLowerCase()) ||
+          address.city.toLowerCase().includes(area.toLowerCase())
+        );
+        
+        if (isEligible) {
+          deliveryCharge = 0;
+          convenienceCharge = 0; // Also waive convenience charge for free delivery areas
+        }
+      }
+    }
     
     // Apply discount
     const appliedDiscount = state.discountType === DiscountType.PERCENTAGE
@@ -102,7 +131,15 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       convenienceCharge,
       deliveryCharge,
       appliedDiscount,
-      finalTotal
+      finalTotal,
+      // Original amounts (before waiving)
+      originalTax: tax,
+      originalConvenienceCharge: config?.convenienceCharge?.amount || 0,
+      originalDeliveryCharge: config?.deliveryCharge?.amount || 0,
+      // Waive flags
+      isTaxWaived: config?.taxPercent?.waive || false,
+      isConvenienceWaived: config?.convenienceCharge?.waive || false,
+      isDeliveryWaived: config?.deliveryCharge?.waive || false,
     };
   },
 }));

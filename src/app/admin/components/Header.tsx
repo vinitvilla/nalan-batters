@@ -12,7 +12,7 @@ type HeaderProps = {
 const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const router = useRouter();
   const signOut = useSignOut();
-  const user = userStore((state) => state.user);
+  const { user, userRole, isManager } = userStore();
 
   return (
     <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b bg-white sticky top-0 z-30 shadow-sm">
@@ -28,7 +28,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           <Menu className="h-5 w-5" />
         </Button>
         
-        <h2 className="text-lg sm:text-xl font-bold truncate">Admin Dashboard</h2>
+        <div className="flex flex-col">
+          <h2 className="text-lg sm:text-xl font-bold truncate">
+            {isManager ? 'Manager Dashboard' : 'Admin Dashboard'}
+          </h2>
+          {user && (
+            <span className="text-xs text-gray-500 hidden sm:block">
+              Welcome back, {user.fullName} ({userRole})
+            </span>
+          )}
+        </div>
       </div>
       
       <div className="flex items-center gap-2">

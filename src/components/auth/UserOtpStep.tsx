@@ -106,6 +106,7 @@ export function UserOtpStep({ onUserFound, onUserNotFound, onBack, confirmationR
           </Label>
           <div className="flex justify-center">
             <InputOTP
+              autoFocus
               value={otp}
               onChange={setOtp}
               maxLength={6}

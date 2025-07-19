@@ -5,7 +5,7 @@ import { userStore } from "@/store/userStore";
 import { hydrateUserFromApi } from "@/lib/hydrateUserFromApi";
 
 export function useAdminAuth() {
-  const { setUser, setIsAdmin, setLoading, user, isAdmin, loading } = userStore();
+  const { setUser, setIsAdmin, setLoading, user, isAdmin, isManager, hasAdminAccess, userRole, loading } = userStore();
 
   useEffect(() => {
     const auth = getAuth(app);
@@ -21,5 +21,5 @@ export function useAdminAuth() {
     return () => unsubscribe();
   }, [setUser, setIsAdmin, setLoading]);
 
-  return { user, isAdmin, loading };
+  return { user, isAdmin, isManager, hasAdminAccess, userRole, loading };
 }

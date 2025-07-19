@@ -63,7 +63,7 @@ export function UserPhoneStep({ onOtpSent }: UserPhoneStepProps) {
           </Label>
           <div className="flex items-center gap-3">
             <div className="flex items-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 font-medium">
-              <span className="text-sm">🇺🇸</span>
+              <span className="text-sm">🇨🇦</span>
               <span className="ml-2 text-sm">+1</span>
             </div>
             <Input

@@ -75,6 +75,8 @@ model Order {
   addressId   String
   items       OrderItem[]
   status      OrderStatus @default(PENDING)
+  orderType   OrderType   @default(DELIVERY)
+  paymentMethod PaymentMethod @default(ONLINE)
   total       Decimal     @db.Decimal(10,2)
   tax         Decimal?    @db.Decimal(10,2)
   convenienceCharges  Decimal?    @db.Decimal(10,2)
@@ -94,6 +96,17 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+enum OrderType {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE
 }
 
 model OrderItem {

@@ -43,7 +43,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const [applyingPromo, setApplyingPromo] = useState(false);
 
   // Derived values using orderStore calculations
-  const calculations = getOrderCalculations(cartItems, config);
+  const calculations = getOrderCalculations(cartItems, config, selectedAddress, selectedDeliveryDate);
   const { subtotal, tax, convenienceCharge, deliveryCharge, appliedDiscount, finalTotal } = calculations;
   const taxRate = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0.13;
 

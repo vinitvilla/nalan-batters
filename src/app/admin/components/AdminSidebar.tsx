@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNewMessagesCount } from "@/hooks/useNewMessagesCount";
+import { userStore } from "@/store/userStore";
+import { hasPermission, Permission } from "@/lib/permissions";
 import { 
     X, 
     LayoutDashboard,
@@ -16,13 +18,16 @@ import {
     Flag,
     Settings,
     Crown,
-    MessageSquare
+    MessageSquare,
+    CreditCard,
+    Receipt
 } from "lucide-react";
 
 type NavItem = {
     label: string;
     href: string;
     icon: React.ComponentType<{ className?: string }>;
+    permission: Permission;
 };
 
 type AdminSidebarProps = {
@@ -31,20 +36,26 @@ type AdminSidebarProps = {
 };
 
 const navItems: NavItem[] = [
-    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
-    { label: "Contact Messages", href: "/admin/contact-messages", icon: MessageSquare },
-    { label: "Delivery", href: "/admin/delivery", icon: Truck },
-    { label: "Products", href: "/admin/products", icon: Package },
-    { label: "Users", href: "/admin/users", icon: Users },
-    { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
-    { label: "Feature Flags", href: "/admin/feature-flags", icon: Flag },
-    { label: "Settings", href: "/admin/settings", icon: Settings },
+    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, permission: "dashboard" },
+    { label: "Live Billing (POS)", href: "/admin/billing-pos", icon: CreditCard, permission: "billing" },
+    { label: "POS Orders", href: "/admin/pos-orders", icon: Receipt, permission: "billing" },
+    { label: "Orders", href: "/admin/orders", icon: ShoppingCart, permission: "orders" },
+    { label: "Contact Messages", href: "/admin/contact-messages", icon: MessageSquare, permission: "contact-messages" },
+    { label: "Delivery", href: "/admin/delivery", icon: Truck, permission: "delivery" },
+    { label: "Products", href: "/admin/products", icon: Package, permission: "products" },
+    { label: "Users", href: "/admin/users", icon: Users, permission: "users" },
+    { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag, permission: "promo-codes" },
+    { label: "Feature Flags", href: "/admin/feature-flags", icon: Flag, permission: "feature-flags" },
+    { label: "Settings", href: "/admin/settings", icon: Settings, permission: "settings" },
 ];
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
     const { newMessagesCount } = useNewMessagesCount();
+    const { userRole, isManager } = userStore();
+
+    // Filter nav items based on user permissions
+    const allowedNavItems = navItems.filter(item => hasPermission(userRole, item.permission));
 
     const handleNavClick = () => {
         onClose(); // Close sidebar on mobile after navigation
@@ -79,8 +90,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                 <Crown className="h-6 w-6 text-primary-foreground" />
                             </div>
                             <div>
-                                <div className="font-bold text-lg text-primary-foreground">Admin Panel</div>
-                                <div className="text-xs text-primary-foreground/70">Management Console</div>
+                                <div className="font-bold text-lg text-primary-foreground">
+                                    {isManager ? 'Manager Panel' : 'Admin Panel'}
+                                </div>
+                                <div className="text-xs text-primary-foreground/70">
+                                    {isManager ? 'Billing Console' : 'Management Console'}
+                                </div>
                             </div>
                         </div>
                         <Button
@@ -100,8 +115,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                 <Crown className="h-8 w-8 text-primary-foreground" />
                             </div>
                             <div>
-                                <div className="font-bold text-xl text-primary-foreground">Admin Panel</div>
-                                <div className="text-sm text-primary-foreground/70">Management Console</div>
+                                <div className="font-bold text-xl text-primary-foreground">
+                                    {isManager ? 'Manager Panel' : 'Admin Panel'}
+                                </div>
+                                <div className="text-sm text-primary-foreground/70">
+                                    {isManager ? 'Billing Console' : 'Management Console'}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -110,7 +129,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 {/* Navigation Section */}
                 <ScrollArea className="flex-1 px-3">
                     <nav className="space-y-1">
-                        {navItems.map((item) => {
+                        {allowedNavItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = pathname === item.href;
                             const isContactMessages = item.href === "/admin/contact-messages";

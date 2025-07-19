@@ -39,22 +39,34 @@ export const useProductStore = create(
       }
     },
     upsertProduct: async (product, token) => {
-      const method = product.id ? "PUT" : "POST";
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch("/api/admin/products", {
-        method,
-        headers,
-        credentials: "include",
-        body: JSON.stringify(product),
-      });
-      if (!res.ok) throw new Error("Failed to save product");
-      const updatedProduct = await res.json();
-      set((state) => ({
-        products: state.products.some(p => p.id === updatedProduct.id)
-          ? state.products.map(p => p.id === updatedProduct.id ? updatedProduct : p)
-          : [updatedProduct, ...state.products],
-      }));
+      try {
+        const method = product.id ? "PUT" : "POST";
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        
+        const res = await fetch("/api/admin/products", {
+          method,
+          headers,
+          credentials: "include",
+          body: JSON.stringify(product),
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.text();
+          throw new Error(`Failed to save product: ${res.status} ${errorData}`);
+        }
+        
+        const updatedProduct = await res.json();
+        
+        set((state) => ({
+          products: state.products.some(p => p.id === updatedProduct.id)
+            ? state.products.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+            : [updatedProduct, ...state.products],
+        }));
+      } catch (error) {
+        console.error('Store: upsertProduct error:', error);
+        throw error;
+      }
     },
     categories: [],
     setCategories: (categories) => set({ categories }),

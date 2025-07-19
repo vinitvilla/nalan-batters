@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
       } 
     });
     if (!user) {
-      console.log("Creating new user", { phone, fullName, uid });
       user = await prisma.user.create({ data: { phone, fullName, id: uid } });
     }
     return NextResponse.json({ user });

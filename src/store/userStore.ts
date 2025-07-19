@@ -10,6 +10,9 @@ interface UserState {
   fullName: string;
   phone: string;
   isAdmin: boolean;
+  isManager: boolean;
+  hasAdminAccess: boolean; // Helper for admin or manager access
+  userRole: string | null;
   loading: boolean;
   defaultAddress: any | null;
   setId: (id: string) => void;
@@ -32,15 +35,26 @@ export const userStore = create(
       fullName: "",
       phone: "",
       isAdmin: false,
+      isManager: false,
+      hasAdminAccess: false,
+      userRole: null,
       loading: true,
       defaultAddress: null,
       setUser: (user) => {
+        const isAdmin = user?.role === USER_ROLE.ADMIN;
+        const isManager = user?.role === USER_ROLE.MANAGER;
+        const hasAdminAccess = isAdmin || isManager;
+        const userRole = user?.role || null;
+        
         set((state) => ({
           user,
           id: user?.id,
           fullName: user?.fullName || "",
           phone: user?.phone ? (user.phone.startsWith("+1") ? user.phone : "+1" + user.phone.replace(/^\+?1?/, "")) : "",
-          isAdmin: user?.role === USER_ROLE.ADMIN || false,
+          isAdmin,
+          isManager,
+          hasAdminAccess,
+          userRole,
           defaultAddress: user?.defaultAddress || null,
         }));
       },
@@ -63,7 +77,18 @@ export const userStore = create(
       setIsAdmin: (isAdmin: boolean) => set({ isAdmin }),
       setLoading: (loading: boolean) => set({ loading }),
       setDefaultAddress: (address) => set({ defaultAddress: address }),
-      reset: () => set({ id: null, user: null, token: null, fullName: "", phone: "", isAdmin: false, loading: false }),
+      reset: () => set({ 
+        id: null, 
+        user: null, 
+        token: null, 
+        fullName: "", 
+        phone: "", 
+        isAdmin: false, 
+        isManager: false, 
+        hasAdminAccess: false, 
+        userRole: null, 
+        loading: false 
+      }),
     }),
     { name: "UserStore" }
   )
