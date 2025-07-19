@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -51,11 +51,11 @@ export async function GET(request: NextRequest) {
     });
 
     const metrics = {
-      totalRevenue: totalRevenue._sum.total || 0,
-      monthlyRevenue: monthlyRevenue._sum.total || 0,
-      pendingPayments: pendingOrders._sum.total || 0,
-      refundsIssued: cancelledOrders._sum.total || 0,
-      averageOrderValue: totalOrders > 0 ? (totalRevenue._sum.total || 0) / totalOrders : 0,
+      totalRevenue: totalRevenue._sum.total ? Number(totalRevenue._sum.total) : 0,
+      monthlyRevenue: monthlyRevenue._sum.total ? Number(monthlyRevenue._sum.total) : 0,
+      pendingPayments: pendingOrders._sum.total ? Number(pendingOrders._sum.total) : 0,
+      refundsIssued: cancelledOrders._sum.total ? Number(cancelledOrders._sum.total) : 0,
+      averageOrderValue: totalOrders > 0 ? (totalRevenue._sum.total ? Number(totalRevenue._sum.total) / totalOrders : 0) : 0,
       totalOrders
     };
 

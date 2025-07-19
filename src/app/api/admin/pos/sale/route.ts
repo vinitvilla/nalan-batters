@@ -1,53 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
+import { formatPhoneNumber, getPhoneVariations } from '@/lib/utils/phoneUtils';
+import type { PosSaleRequest, PosSaleResponse } from '@/types';
 
 const prisma = new PrismaClient();
-
-interface PosSaleRequest {
-  items: {
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-    total: number;
-  }[];
-  customer?: {
-    phone?: string;
-    name?: string;
-    email?: string;
-  };
-  subtotal: number;
-  tax: number;
-  discount: number;
-  total: number;
-  paymentMethod: 'cash' | 'card';
-  receivedAmount?: number;
-  change?: number;
-}
 
 export async function POST(request: NextRequest) {
   try {
     const saleData: PosSaleRequest = await request.json();
 
-    // For walk-in customers, we'll create a special user or use anonymous order
+    // Determine user ID based on whether we have an existing user
     let userId: string;
     
-    if (saleData.customer?.phone) {
-      // Try to find existing user by phone
-      let user = await prisma.user.findUnique({
-        where: { phone: saleData.customer.phone }
+    if (saleData.customer?.userId && saleData.customer?.isExistingUser) {
+      // Use the existing user ID that was found during lookup
+      userId = saleData.customer.userId;
+    } else if (saleData.customer?.phone) {
+      // Standardize the phone number format
+      const standardizedPhone = formatPhoneNumber(saleData.customer.phone);
+      
+      if (!standardizedPhone) {
+        throw new Error('Invalid phone number format');
+      }
+      
+      // Try to find existing user by any phone number variation
+      const phoneVariations = getPhoneVariations(saleData.customer.phone);
+      let user = await prisma.user.findFirst({
+        where: { 
+          phone: {
+            in: phoneVariations
+          }
+        }
       });
 
       if (!user) {
-        // Create new user for walk-in customer
+        // Create new user for walk-in customer with standardized phone
         user = await prisma.user.create({
           data: {
-            phone: saleData.customer.phone,
-            fullName: saleData.customer.name || `Walk-in Customer ${saleData.customer.phone}`,
+            phone: standardizedPhone,
+            fullName: saleData.customer.name || `Walk-in Customer ${standardizedPhone}`,
             role: 'USER'
           }
         });
+      } else if (user.phone !== standardizedPhone) {
+        // Update existing user's phone to standardized format
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { phone: standardizedPhone }
+        });
       }
+      
       userId = user.id;
     } else {
       // For anonymous walk-in customers, use a special system user or create one
@@ -134,12 +136,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    return NextResponse.json<PosSaleResponse>({
       success: true,
       data: {
         orderId: order.id,
         orderNumber: order.id.slice(-8).toUpperCase(),
-        total: order.total,
+        total: Number(order.total),
         paymentMethod: saleData.paymentMethod,
         timestamp: order.createdAt
       }
@@ -147,7 +149,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('POS sale creation error:', error);
-    return NextResponse.json({
+    return NextResponse.json<PosSaleResponse>({
       success: false,
       error: 'Failed to process POS sale'
     }, { status: 500 });

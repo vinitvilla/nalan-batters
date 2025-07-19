@@ -11,6 +11,8 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RequirePermission } from "@/components/PermissionWrapper";
 import { usePosData } from '@/hooks/usePosData';
+import { formatPhoneNumber, displayPhoneNumber } from '@/lib/utils/phoneUtils';
+import type { PosCartItem, PosCustomerData, PosSaleRequest, UserLookupResponse } from '@/types';
 import { 
   ShoppingCart, 
   Plus, 
@@ -26,29 +28,16 @@ import {
   Loader2
 } from 'lucide-react';
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  total: number;
-}
-
-interface Customer {
-  phone?: string;
-  name?: string;
-  email?: string;
-}
-
 export default function BillingPage() {
   const { data: posData, loading, error } = usePosData();
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [customer, setCustomer] = useState<Customer>({});
+  const [cart, setCart] = useState<PosCartItem[]>([]);
+  const [customer, setCustomer] = useState<PosCustomerData>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [receivedAmount, setReceivedAmount] = useState('');
   const [discount, setDiscount] = useState(0);
+  const [lookingUpUser, setLookingUpUser] = useState(false); // Loading state for user lookup
 
   // Get products and categories from API data
   const products = posData?.products || [];
@@ -108,13 +97,106 @@ export default function BillingPage() {
             : { ...item, quantity: newQuantity, total: newQuantity * item.price };
         }
         return item;
-      }).filter(Boolean) as CartItem[]
+      }).filter(Boolean) as PosCartItem[]
     );
   };
 
   // Remove item from cart
   const removeFromCart = (id: string) => {
     setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Function to look up user by phone number
+  const lookupUserByPhone = async (phone: string) => {
+    // Validate and format phone number
+    const standardizedPhone = formatPhoneNumber(phone);
+    if (!standardizedPhone) {
+      alert('Please enter a valid phone number (10 digits minimum)');
+      return;
+    }
+    
+    setLookingUpUser(true);
+    try {
+      const response = await fetch('/api/admin/users/lookup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone: phone })
+      });
+
+      const result: UserLookupResponse = await response.json();
+      
+      if (result.success && result.user) {
+        // User found - auto-populate customer info
+        setCustomer((prev: PosCustomerData) => ({
+          ...prev,
+          name: result.user!.fullName,
+          userId: result.user!.id,
+          isExistingUser: true,
+          phone: standardizedPhone // Store in standardized format
+        }));
+        
+        // Show success feedback if phone was standardized
+        if (result.message.includes('standardized')) {
+          console.log('Phone number was updated to standard format');
+        }
+      } else {
+        // User not found - show feedback and clear auto-populated data
+        setCustomer((prev: PosCustomerData) => ({
+          ...prev,
+          name: '',
+          userId: undefined,
+          isExistingUser: false,
+          phone: standardizedPhone // Still store in standardized format
+        }));
+        alert('Customer not found. You can enter their name manually to create a new customer account.');
+      }
+    } catch (error) {
+      console.error('Error looking up user:', error);
+      // Reset user data on error
+      setCustomer((prev: PosCustomerData) => ({
+        ...prev,
+        name: '',
+        userId: undefined,
+        isExistingUser: false
+      }));
+      alert('Error looking up customer. Please try again.');
+    } finally {
+      setLookingUpUser(false);
+    }
+  };
+
+  // Handle phone number change (without automatic lookup)
+  const handlePhoneChange = (phone: string) => {
+    setCustomer((prev: PosCustomerData) => ({ 
+      ...prev, 
+      phone,
+      // Reset user data when phone changes
+      name: '',
+      userId: undefined,
+      isExistingUser: false
+    }));
+  };
+
+  // Manual lookup function triggered by button
+  const handleManualLookup = () => {
+    if (customer.phone) {
+      lookupUserByPhone(customer.phone);
+    }
+  };
+
+  // Get display format for phone number
+  const getPhoneDisplayValue = () => {
+    if (!customer.phone) return '';
+    
+    // If it's a standardized phone number, show formatted version
+    const standardized = formatPhoneNumber(customer.phone);
+    if (standardized && customer.isExistingUser) {
+      return displayPhoneNumber(standardized);
+    }
+    
+    return customer.phone;
   };
 
   // Clear cart
@@ -129,7 +211,7 @@ export default function BillingPage() {
   const processPayment = async () => {
     if (cart.length === 0) return;
     
-    const saleData = {
+    const saleData: PosSaleRequest = {
       items: cart,
       customer,
       subtotal,
@@ -155,7 +237,11 @@ export default function BillingPage() {
 
       if (result.success) {
         // Show success message with order details
-        alert(`Payment processed successfully!\nOrder #${result.data.orderNumber}\nTotal: $${finalTotal.toFixed(2)}\nChange: $${changeAmount.toFixed(2)}`);
+        const successMessage = customer.isExistingUser 
+          ? `Payment processed successfully!\nOrder #${result.data.orderNumber}\nCustomer: ${customer.name}\nTotal: $${finalTotal.toFixed(2)}\nChange: $${changeAmount.toFixed(2)}`
+          : `Payment processed successfully!\nOrder #${result.data.orderNumber}\nTotal: $${finalTotal.toFixed(2)}\nChange: $${changeAmount.toFixed(2)}`;
+        
+        alert(successMessage);
         
         // Print receipt with order number
         printReceipt(result.data.orderNumber);
@@ -180,7 +266,7 @@ export default function BillingPage() {
       ${orderNumber ? `Order #${orderNumber}` : ''}
       Date: ${new Date().toLocaleString()}
       ${customer.name ? `Customer: ${customer.name}` : ''}
-      ${customer.phone ? `Phone: ${customer.phone}` : ''}
+      ${customer.phone ? `Phone: ${displayPhoneNumber(customer.phone)}` : ''}
       
       -----------------------------
       ${cart.map(item => `${item.name}\n  ${item.quantity} x $${item.price.toFixed(2)} = $${item.total.toFixed(2)}`).join('\n')}
@@ -297,17 +383,62 @@ export default function BillingPage() {
             </div>
 
             {/* Customer Info */}
-            <div className="space-y-2">
-              <Input
-                placeholder="Customer phone (optional)"
-                value={customer.phone || ''}
-                onChange={(e) => setCustomer(prev => ({ ...prev, phone: e.target.value }))}
-              />
-              <Input
-                placeholder="Customer name (optional)"
-                value={customer.name || ''}
-                onChange={(e) => setCustomer(prev => ({ ...prev, name: e.target.value }))}
-              />
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder="Customer phone number"
+                    value={getPhoneDisplayValue()}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    className={`${customer.isExistingUser ? 'border-green-500 bg-green-50' : ''}`}
+                  />
+                  {lookingUpUser && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualLookup}
+                  disabled={!customer.phone || customer.phone.length < 10 || lookingUpUser}
+                  className="px-3 flex items-center gap-1 whitespace-nowrap"
+                  title="Look up existing customer by phone number"
+                >
+                  <Search className="h-4 w-4" />
+                  Look Up
+                </Button>
+              </div>
+              
+              <div className="relative">
+                <Input
+                  placeholder="Customer name"
+                  value={customer.name || ''}
+                  onChange={(e) => setCustomer((prev: PosCustomerData) => ({ ...prev, name: e.target.value }))}
+                  className={`${customer.isExistingUser ? 'border-green-500 bg-green-50' : ''}`}
+                  disabled={customer.isExistingUser}
+                />
+                {customer.isExistingUser && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <User className="h-4 w-4 text-green-600" />
+                  </div>
+                )}
+              </div>
+              
+              {customer.isExistingUser && (
+                <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
+                  <User className="h-4 w-4" />
+                  <span>Existing customer found and linked to order</span>
+                </div>
+              )}
+              
+              {customer.phone && !customer.isExistingUser && !lookingUpUser && customer.phone.length >= 10 && (
+                <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-2 rounded-md">
+                  <span>New customer - will be added to system</span>
+                </div>
+              )}
             </div>
           </div>
 

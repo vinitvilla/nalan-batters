@@ -7,19 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { USER_ROLE } from "@/constants/userRole";
-
-interface User {
-  id: string;
-  email: string;
-  role: USER_ROLE;
-  fullName?: string;
-  phone?: string;
-  createdAt: string;
-}
+import type { UserResponse } from "@/types";
 
 export default function UsersPage() {
   const adminApiFetch = useAdminApi();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");

@@ -14,6 +14,7 @@
     "migrate:staging:interactive": "./scripts/migrate-staging.sh",
     "seed": "node seed.js",
     "seed:staging": "NODE_ENV=staging node seed.js",
+    "standardize-phones": "node scripts/standardize-phone-numbers.js",
     "db:setup": "npm run migrate && npm run seed",
     "db:setup:staging": "npm run migrate:staging && npm run seed:staging",
     "deploy:staging": "./scripts/deploy-staging.sh",
