@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RequirePermission } from "@/components/PermissionWrapper";
 import { usePosData } from '@/hooks/usePosData';
 import { formatPhoneNumber, displayPhoneNumber } from '@/lib/utils/phoneUtils';
@@ -25,7 +26,10 @@ import {
   User,
   Search,
   Scan,
-  Loader2
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 export default function BillingPage() {
@@ -38,6 +42,34 @@ export default function BillingPage() {
   const [receivedAmount, setReceivedAmount] = useState('');
   const [discount, setDiscount] = useState(0);
   const [lookingUpUser, setLookingUpUser] = useState(false); // Loading state for user lookup
+  
+  // Alert state management
+  const [alerts, setAlerts] = useState<Array<{
+    id: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+  }>>([]);
+
+  // Helper functions for alerts
+  const addAlert = (type: 'success' | 'error' | 'warning' | 'info', title: string, message: string) => {
+    const id = Date.now().toString();
+    setAlerts(prev => [...prev, { id, type, title, message }]);
+    // Auto-dismiss success and info alerts after 5 seconds
+    if (type === 'success' || type === 'info') {
+      setTimeout(() => {
+        setAlerts(prev => prev.filter(alert => alert.id !== id));
+      }, 5000);
+    }
+  };
+
+  const removeAlert = (id: string) => {
+    setAlerts(prev => prev.filter(alert => alert.id !== id));
+  };
+
+  const clearAllAlerts = () => {
+    setAlerts([]);
+  };
 
   // Get products and categories from API data
   const products = posData?.products || [];
@@ -113,7 +145,7 @@ export default function BillingPage() {
     // Validate and format phone number
     const standardizedPhone = formatPhoneNumber(phone);
     if (!standardizedPhone) {
-      alert('Please enter a valid phone number (10 digits minimum)');
+      addAlert('error', 'Invalid Phone Number', 'Please enter a valid phone number (10 digits minimum)');
       return;
     }
     
@@ -141,8 +173,9 @@ export default function BillingPage() {
         
         // Show success feedback if phone was standardized
         if (result.message.includes('standardized')) {
-          console.log('Phone number was updated to standard format');
+          addAlert('info', 'Phone Number Updated', 'Phone number was updated to standard format');
         }
+        addAlert('success', 'Customer Found', `Found existing customer: ${result.user!.fullName}`);
       } else {
         // User not found - show feedback and clear auto-populated data
         setCustomer((prev: PosCustomerData) => ({
@@ -152,7 +185,7 @@ export default function BillingPage() {
           isExistingUser: false,
           phone: standardizedPhone // Still store in standardized format
         }));
-        alert('Customer not found. You can enter their name manually to create a new customer account.');
+        addAlert('warning', 'Customer Not Found', 'Customer not found. You can enter their name manually to create a new customer account.');
       }
     } catch (error) {
       console.error('Error looking up user:', error);
@@ -163,7 +196,7 @@ export default function BillingPage() {
         userId: undefined,
         isExistingUser: false
       }));
-      alert('Error looking up customer. Please try again.');
+      addAlert('error', 'Lookup Error', 'Error looking up customer. Please try again.');
     } finally {
       setLookingUpUser(false);
     }
@@ -207,6 +240,7 @@ export default function BillingPage() {
     setCustomer({});
     setReceivedAmount('');
     setDiscount(0);
+    clearAllAlerts(); // Clear alerts when cart is cleared
   };
 
   // Process payment
@@ -239,23 +273,24 @@ export default function BillingPage() {
 
       if (result.success) {
         // Show success message with order details
+        const successTitle = 'Payment Processed Successfully!';
         const successMessage = customer.isExistingUser 
-          ? `Payment processed successfully!\nOrder #${result.data.orderNumber}\nCustomer: ${customer.name}\nTotal: $${finalTotal.toFixed(2)}\nChange: $${changeAmount.toFixed(2)}`
-          : `Payment processed successfully!\nOrder #${result.data.orderNumber}\nTotal: $${finalTotal.toFixed(2)}\nChange: $${changeAmount.toFixed(2)}`;
+          ? `Order #${result.data.orderNumber}\nCustomer: ${customer.name}\nTotal: $${finalTotal.toFixed(2)}\nChange: $${changeAmount.toFixed(2)}`
+          : `Order #${result.data.orderNumber}\nTotal: $${finalTotal.toFixed(2)}\nChange: $${changeAmount.toFixed(2)}`;
         
-        alert(successMessage);
+        addAlert('success', successTitle, successMessage);
         
         // Print receipt with order number
-        printReceipt(result.data.orderNumber);
+        // printReceipt(result.data.orderNumber);
         
         // Clear cart after successful payment
         clearCart();
       } else {
-        alert(`Error processing payment: ${result.error}`);
+        addAlert('error', 'Payment Error', `Error processing payment: ${result.error}`);
       }
     } catch (error) {
       console.error('Payment processing error:', error);
-      alert('Error processing payment. Please try again.');
+      addAlert('error', 'Payment Error', 'Error processing payment. Please try again.');
     }
   };
 
@@ -315,11 +350,80 @@ export default function BillingPage() {
         </div>
       ) : (
       <div className="flex h-full max-h-screen bg-gray-50">
+        
+        {/* Alert Container - Fixed position at top */}
+        {alerts.length > 0 && (
+          <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+            {alerts.map((alert) => (
+              <Alert 
+                key={alert.id} 
+                variant={alert.type === 'error' ? 'destructive' : 'default'}
+                className={`shadow-lg border-l-4 ${
+                  alert.type === 'success' ? 'border-l-green-500 bg-green-50' :
+                  alert.type === 'error' ? 'border-l-red-500' :
+                  alert.type === 'warning' ? 'border-l-yellow-500 bg-yellow-50' :
+                  'border-l-blue-500 bg-blue-50'
+                }`}
+              >
+                <div className="flex items-start justify-between w-full">
+                  <div className="flex items-start gap-2">
+                    {alert.type === 'success' && <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />}
+                    {alert.type === 'error' && <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />}
+                    {alert.type === 'warning' && <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />}
+                    {alert.type === 'info' && <Search className="h-4 w-4 text-blue-600 mt-0.5" />}
+                    <div>
+                      <AlertTitle className={`text-sm font-semibold ${
+                        alert.type === 'success' ? 'text-green-800' :
+                        alert.type === 'error' ? 'text-red-800' :
+                        alert.type === 'warning' ? 'text-yellow-800' :
+                        'text-blue-800'
+                      }`}>
+                        {alert.title}
+                      </AlertTitle>
+                      <AlertDescription className={`text-xs whitespace-pre-line ${
+                        alert.type === 'success' ? 'text-green-700' :
+                        alert.type === 'error' ? 'text-red-700' :
+                        alert.type === 'warning' ? 'text-yellow-700' :
+                        'text-blue-700'
+                      }`}>
+                        {alert.message}
+                      </AlertDescription>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeAlert(alert.id)}
+                    className="h-6 w-6 p-0 hover:bg-transparent"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </Alert>
+            ))}
+          </div>
+        )}
+
         {/* Product Selection Area */}
         <div className="flex-1 p-6 overflow-hidden">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Live Billing (POS)</h1>
-            <p className="text-gray-600">Point of Sale system for walk-in customers</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Live Billing (POS)</h1>
+                <p className="text-gray-600">Point of Sale system for walk-in customers</p>
+              </div>
+              {alerts.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllAlerts}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Clear Alerts ({alerts.length})
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Search and Filters */}

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         user = await prisma.user.create({
           data: {
             phone: standardizedPhone,
-            fullName: saleData.customer.name || `Walk-in Customer ${standardizedPhone}`,
+            fullName: saleData.customer.name || `${standardizedPhone}`,
             role: 'USER'
           }
         });
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         total: saleData.total,
         tax: saleData.tax,
         discount: saleData.discount > 0 ? saleData.discount : null,
-        status: 'CONFIRMED', // POS sales are immediately confirmed
+        status: 'DELIVERED', // POS sales are immediately confirmed
         convenienceCharges: 0, // No convenience charges for in-store pickup
         deliveryCharges: 0,    // No delivery charges for in-store pickup
         items: {
