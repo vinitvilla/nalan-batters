@@ -60,6 +60,71 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
     isConvenienceWaived,
     isDeliveryWaived
   } = calculations;
+  // Check what's missing for order completion
+  const getOrderValidationMessage = () => {
+    if (cartItems.length === 0) return "Your cart is empty";
+    if (orderType === 'DELIVERY' && !selectedAddress) return "Please select a delivery address";
+    if (orderType === 'DELIVERY' && !selectedDeliveryDate) return "Please select a delivery date";
+    
+    // Check if delivery is available for the selected address
+    if (orderType === 'DELIVERY' && selectedAddress && config.freeDelivery) {
+      const deliveryDates = getNextDeliveryDates(selectedAddress.city || '', config.freeDelivery);
+      if (deliveryDates.length === 0) {
+        return "Delivery is not available for this location";
+      }
+    }
+    
+    return null;
+  };
+
+  // Helper function to calculate delivery dates (copied from CheckoutContactDelivery)
+  const getNextDeliveryDates = (city: string, freeDeliveryConfig: Record<string, unknown>): Array<{ date: string, day: string }> => {
+    if (!city || !freeDeliveryConfig) return [];
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = new Date();
+    const utcToday = new Date(today.toISOString());
+    const estOffset = -5 * 60;
+    const estToday = new Date(utcToday.getTime() + (estOffset * 60 * 1000));
+    estToday.setHours(0, 0, 0, 0);
+    const todayDay = estToday.getDay();
+    const count = 4;
+
+    // Find all delivery days for the city
+    const matchedDays = Object.entries(freeDeliveryConfig)
+      .filter(([, cities]) => Array.isArray(cities) && cities.some((c: string) => c.toLowerCase().includes(city.toLowerCase())))
+      .map(([day]) => day);
+    if (matchedDays.length === 0) return [];
+
+    // For each matched day, get the next 4 dates
+    let allDates: Array<{ date: string, day: string }> = [];
+    matchedDays.forEach(dayName => {
+      if (!daysOfWeek.includes(dayName)) return;
+      const targetDay = daysOfWeek.indexOf(dayName);
+      let daysUntilNextDay = (targetDay - todayDay + 7) % 7;
+      if (daysUntilNextDay === 0) daysUntilNextDay = 7;
+      for (let i = 0; i < count; i++) {
+        const nextDayDate = new Date(estToday);
+        nextDayDate.setDate(estToday.getDate() + daysUntilNextDay);
+        allDates.push({ date: nextDayDate.toISOString().split('T')[0], day: dayName });
+        daysUntilNextDay += 7;
+      }
+    });
+    allDates = allDates.sort((a, b) => a.date.localeCompare(b.date));
+    // Only keep unique dates, up to 4
+    const uniqueDates: Array<{ date: string, day: string }> = [];
+    const seen = new Set();
+    for (const d of allDates) {
+      if (!seen.has(d.date)) {
+        uniqueDates.push(d);
+        seen.add(d.date);
+      }
+      if (uniqueDates.length === 4) break;
+    }
+    return uniqueDates;
+  };
+
+  const validationMessage = getOrderValidationMessage();
+  const isOrderReady = !validationMessage && !placing;
   const taxRate = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0.13;
 
   // Place order handler
@@ -297,10 +362,19 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
             </span>
           </div>
           
+          {/* Validation Message */}
+          {validationMessage && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3 mb-2">
+              <span className="text-sm text-amber-700 flex items-center gap-2">
+                ⚠️ {validationMessage}
+              </span>
+            </div>
+          )}
+          
           <Button
-            className="w-full mt-3 cursor-pointer bg-yellow-500 text-white font-bold text-base py-2 rounded-xl shadow-lg hover:bg-yellow-600 hover:scale-105 transition-all border border-yellow-500 hover:border-yellow-600"
+            className="w-full mt-3 cursor-pointer bg-yellow-500 text-white font-bold text-base py-2 rounded-xl shadow-lg hover:bg-yellow-600 hover:scale-105 transition-all border border-yellow-500 hover:border-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             size="lg"
-            disabled={cartItems.length === 0 || (orderType === 'DELIVERY' && !selectedAddress) || placing}
+            disabled={!isOrderReady}
             onClick={handlePlaceOrder}
           >
             {placing ? "Placing..." : "Place Order"}

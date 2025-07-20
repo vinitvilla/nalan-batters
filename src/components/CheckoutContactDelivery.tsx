@@ -361,17 +361,36 @@ export function CheckoutContactDelivery({
               </div>
             </div>
             <div className={STEP_CONTENT_STYLES}>
-              <ChooseDeliveryDate
-                deliveryDates={deliveryDates}
-                selectedDeliveryDate={selectedDeliveryDate}
-                setSelectedDeliveryDate={setSelectedDeliveryDate}
-              />
+              {deliveryDates.length > 0 ? (
+                <ChooseDeliveryDate
+                  deliveryDates={deliveryDates}
+                  selectedDeliveryDate={selectedDeliveryDate}
+                  setSelectedDeliveryDate={setSelectedDeliveryDate}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-3xl flex items-center justify-center shadow-lg border border-red-300">
+                      <Calendar className="w-8 h-8 text-red-700" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-red-900 mb-3">
+                    No Delivery Available
+                  </h3>
+                  <p className="text-red-700 text-base mb-4 max-w-md mx-auto leading-relaxed">
+                    Unfortunately, we don&apos;t currently deliver to <strong>{selectedAddress.city}</strong> or there are no delivery slots available for this area.
+                  </p>
+                  <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
+                    Please select a different address or contact us to inquire about delivery to your area.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {/* Completion Indicator */}
-        {((orderType === 'DELIVERY' && hasAddresses && selectedAddress && selectedDeliveryDate) || 
+        {((orderType === 'DELIVERY' && hasAddresses && selectedAddress && selectedDeliveryDate && deliveryDates.length > 0) || 
           (orderType === 'PICKUP' && name.trim().length > 0)) && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-8 text-center shadow-lg">
             <div className="flex justify-center mb-6">

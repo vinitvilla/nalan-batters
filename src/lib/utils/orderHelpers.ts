@@ -84,6 +84,32 @@ function getConfigField(configObj: any, key: string, field: string, fallback: nu
 }
 
 /**
+ * Validates if delivery is available for the given address and date
+ */
+function validateDeliveryAvailability(address: any, deliveryDate: Date, freeDeliveryConfig: any, orderType: string): boolean {
+    // For pickup orders, no delivery validation needed
+    if (orderType === 'PICKUP') return true;
+    
+    // For delivery orders, check if the date and location are supported
+    if (!address?.city || !freeDeliveryConfig || !deliveryDate) {
+        return false;
+    }
+    
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = daysOfWeek[deliveryDate.getDay()];
+    
+    const areasForDay = freeDeliveryConfig[dayName];
+    if (!Array.isArray(areasForDay) || areasForDay.length === 0) {
+        return false;
+    }
+    
+    return areasForDay.some((area: string) => 
+        area.toLowerCase().includes(address.city.toLowerCase()) ||
+        address.city.toLowerCase().includes(area.toLowerCase())
+    );
+}
+
+/**
  * Checks if an address qualifies for free delivery on a given date
  */
 function isEligibleForFreeDelivery(address: any, deliveryDate: Date, freeDeliveryConfig: any): boolean {
@@ -194,10 +220,22 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const config = await getConfigObject();
     
-    // Get address information for free delivery calculation
+    // Get address information for delivery validation and free delivery calculation
     const address = await prisma.address.findFirst({
         where: { id: addressId }
     });
+    
+    // For delivery orders, validate that delivery is available
+    if (orderType === 'DELIVERY') {
+        if (!validDeliveryDate) {
+            throw new Error("Delivery date is required for delivery orders");
+        }
+        
+        const freeDeliveryConfig = config.freeDelivery?.value;
+        if (!validateDeliveryAvailability(address, validDeliveryDate, freeDeliveryConfig, orderType || 'DELIVERY')) {
+            throw new Error("Delivery is not available for the selected date and location. Please choose a different date or location.");
+        }
+    }
     
     const { TAX_RATE, convenienceCharges, deliveryCharges, tax } = calculateCharges(config, subtotal, address, validDeliveryDate);
     const { discount } = await calculateDiscount(subtotal, promoCodeId);
