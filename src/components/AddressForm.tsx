@@ -10,7 +10,7 @@ const libraries = ["places"];
 // Clean, modern styling classes for form inputs
 const inputClassName = "border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-gray-900 placeholder:text-gray-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-all duration-200 hover:border-gray-300 shadow-sm";
 
-export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () => void }) {
+export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; onAdd?: () => void; onCancel?: () => void }) {
   const autocompleteRef = useRef<HTMLInputElement | null>(null);
   const newAddress = useAddressStore((s) => s.newAddress);
   const setNewAddress = useAddressStore((s) => s.setNewAddress);
@@ -201,8 +201,8 @@ export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () 
   const handleCancel = useCallback(() => {
     clearNewAddress();
     setError("");
-    onAdd?.(); // This will close the dialog
-  }, [clearNewAddress, onAdd]);
+    onCancel?.(); // This will close the dialog without adding address
+  }, [clearNewAddress, onCancel]);
 
   const FormField = ({ 
     label, 

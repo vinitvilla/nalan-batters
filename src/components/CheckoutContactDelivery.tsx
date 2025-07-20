@@ -167,7 +167,11 @@ export function CheckoutContactDelivery({
                         </p>
                       </DialogHeader>
                       <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
-                        <AddressForm loading={loading} onAdd={handleAddressAdded} />
+                        <AddressForm 
+                          loading={loading} 
+                          onAdd={handleAddressAdded} 
+                          onCancel={() => setDialogOpen(false)}
+                        />
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -328,7 +332,11 @@ export function CheckoutContactDelivery({
                       </p>
                     </DialogHeader>
                     <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
-                      <AddressForm loading={loading} onAdd={handleAddressAdded} />
+                      <AddressForm 
+                        loading={loading} 
+                        onAdd={handleAddressAdded} 
+                        onCancel={() => setDialogOpen(false)}
+                      />
                     </div>
                   </DialogContent>
                 </Dialog>
