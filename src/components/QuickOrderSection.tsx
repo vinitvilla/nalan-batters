@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useConfigStore } from "@/store/configStore";
 import FreeDeliverySchedule from "@/components/FreeDeliverySchedule";
 import OpeningHours from "./OpeningHours";
+import AvailableStores from "./AvailableStores";
 import "../styles/theme.css";
 
 export default function QuickOrderSection() {
@@ -206,11 +207,14 @@ export default function QuickOrderSection() {
 				</div>
 
 				{/* Enhanced info section */}
-				<div className="flex flex-col lg:flex-row items-stretch justify-between gap-8">
+				<div className="flex flex-col xl:flex-row items-stretch justify-between gap-8">
 					<div className="flex-1">
 						<OpeningHours />
 					</div>
-					<div className="flex-[2]">
+					<div className="flex-1">
+						<AvailableStores />
+					</div>
+					<div className="flex-[1.5]">
 						<FreeDeliverySchedule deliverySchedule={deliverySchedule} />
 					</div>
 				</div>
