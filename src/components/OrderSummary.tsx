@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar, ShoppingCart, Trash2 } from "lucide-react";
+import { Calendar, ShoppingCart, Trash2, Edit2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { userStore } from "@/store/userStore";
 import { useOrderStore } from "@/store/orderStore";
@@ -26,6 +26,8 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const config = useConfigStore(s => s.configs);
   const user = userStore(s => s.user);
   const selectedDeliveryDate = useOrderStore(s => s.selectedDeliveryDate);
+  const orderType = useOrderStore(s => s.orderType);
+  const setOrderType = useOrderStore(s => s.setOrderType);
   const promoId = useOrderStore(s => s.promoId);
   const promo = useOrderStore(s => s.promo);
   const promoApplied = useOrderStore(s => s.promoApplied);
@@ -43,7 +45,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const [applyingPromo, setApplyingPromo] = useState(false);
 
   // Derived values using orderStore calculations
-  const calculations = getOrderCalculations(cartItems, config, selectedAddress, selectedDeliveryDate);
+  const calculations = getOrderCalculations(cartItems, config, selectedAddress, selectedDeliveryDate, orderType);
   const { 
     subtotal, 
     tax, 
@@ -74,6 +76,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
           items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity, price: i.price })),
           promoCodeId: promoApplied && promoId ? promoId : null,
           deliveryDate: selectedDeliveryDate,
+          orderType: orderType,
         }),
       });
       const data = await res.json();
@@ -92,7 +95,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
     <Card className="mb-8 pt-0 shadow-2xl rounded-2xl border-2 border-yellow-300 bg-yellow-25 max-w-md mx-auto">
       <CardHeader className="bg-yellow-50 rounded-t-2xl p-4 border-b border-yellow-200">
         <CardTitle className="text-xl font-extrabold text-yellow-800 tracking-tight flex items-center gap-2">
-            <span className="flex w-7 h-7 bg-yellow-200 rounded-full text-yellow-800 flex items-center justify-center">
+            <span className="w-7 h-7 bg-yellow-200 rounded-full text-yellow-800 flex items-center justify-center">
             <ShoppingCart className="w-5 h-5" />
             </span>
           Order Summary
@@ -239,9 +242,33 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
               <span>Total</span>
               <span>${finalTotal.toFixed(2)}</span>
             </div>
-            {/* Show selected delivery date with improved UI */}
-            {selectedDeliveryDate && (
-              <div className="flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mt-3 shadow-sm">
+          {/* Order Type and Date/Pickup Info */}
+          <div className="space-y-2">
+            {/* Order Type Display */}
+            {orderType && (
+              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 shadow-sm">
+                <span className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+                  {orderType === 'PICKUP' ? '🏪' : '🚚'} Order Type: <span className="text-blue-800 font-bold">{orderType === 'PICKUP' ? 'Store Pickup' : 'Home Delivery'}</span>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-1 h-auto cursor-pointer"
+                  onClick={() => {
+                    setOrderType(null); // Reset order type to force re-selection
+                    // Also clear delivery date when changing order type
+                    useOrderStore.getState().setSelectedDeliveryDate("");
+                  }}
+                  title="Change order type"
+                >
+                  <Edit2 className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Date/Pickup Info */}
+            {orderType === 'DELIVERY' && selectedDeliveryDate && (
+              <div className="flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 shadow-sm">
                 <span className="text-xs font-semibold text-yellow-700 flex items-center gap-2">
                   <span className="flex w-5 h-5 bg-yellow-500 text-white rounded-full flex items-center justify-center mr-1">
                     <Calendar className="w-4 h-4" />
@@ -253,25 +280,35 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
                 </span>
               </div>
             )}
+            
+            {orderType === 'PICKUP' && (
+              <div className="flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-sm">
+                <span className="text-xs font-semibold text-green-700 flex items-center gap-2">
+                  📞 We'll contact you when your order is ready for pickup
+                </span>
+              </div>
+            )}
           </div>
           
           {/* Payment Method Info */}
           <div className="flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 mt-3 mb-2 shadow-sm">
             <span className="text-sm font-semibold text-green-700 flex items-center gap-2">
-              💰 Payment Method: <span className="text-green-800 font-bold">Cash on Delivery</span>
+              💰 Payment Method: <span className="text-green-800 font-bold">{orderType === 'PICKUP' ? 'Pay at Store' : 'Cash on Delivery'}</span>
             </span>
           </div>
           
           <Button
             className="w-full mt-3 cursor-pointer bg-yellow-500 text-white font-bold text-base py-2 rounded-xl shadow-lg hover:bg-yellow-600 hover:scale-105 transition-all border border-yellow-500 hover:border-yellow-600"
             size="lg"
-            disabled={cartItems.length === 0 || !selectedAddress || placing}
+            disabled={cartItems.length === 0 || (orderType === 'DELIVERY' && !selectedAddress) || placing}
             onClick={handlePlaceOrder}
           >
             {placing ? "Placing..." : "Place Order"}
           </Button>
           {orderError && <div className="text-red-600 text-xs mt-2 text-center font-semibold">{orderError}</div>}
+        </div>
         </>}
+        
         <Button
           variant="ghost"
           className="w-full cursor-pointer mt-2 text-yellow-700 hover:text-yellow-800 font-semibold text-xs hover:bg-yellow-50"

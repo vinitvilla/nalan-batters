@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import type { UserType } from "@/types/UserType";
+import type { UserResponse } from "@/types/user";
 import { USER_ROLE } from "@/constants/userRole";
 
 interface UserState {
   id: string | null;
-  user: UserType | null;
+  user: UserResponse | null;
   token: string | null;
   fullName: string;
   phone: string;
@@ -16,7 +16,7 @@ interface UserState {
   loading: boolean;
   defaultAddress: any | null;
   setId: (id: string) => void;
-  setUser: (user: UserType | null) => void;
+  setUser: (user: UserResponse | null) => void;
   setToken: (token: string | null) => void;
   setFullName: (name: string) => void;
   setPhone: (phone: string) => void;
@@ -55,7 +55,7 @@ export const userStore = create(
           isManager,
           hasAdminAccess,
           userRole,
-          defaultAddress: user?.defaultAddress || null,
+          // Keep existing defaultAddress, it's managed separately
         }));
       },
       setToken: (token) => {

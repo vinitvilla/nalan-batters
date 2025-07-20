@@ -35,6 +35,8 @@ interface OrderCalculations {
 interface OrderStore {
   selectedDeliveryDate: string;
   setSelectedDeliveryDate: (date: string) => void;
+  orderType: 'PICKUP' | 'DELIVERY' | null;
+  setOrderType: (type: 'PICKUP' | 'DELIVERY' | null) => void;
   promoId: string | null;
   promo: string;
   promoApplied: boolean;
@@ -47,12 +49,14 @@ interface OrderStore {
   applyPromo: (code: string) => Promise<{ success: boolean }>;
   
   // Calculation getters
-  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: any, deliveryDate?: string) => OrderCalculations;
+  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: any, deliveryDate?: string, orderType?: 'PICKUP' | 'DELIVERY' | null) => OrderCalculations;
 }
 
 export const useOrderStore = create<OrderStore>((set, get) => ({
   selectedDeliveryDate: "",
   setSelectedDeliveryDate: (date) => set({ selectedDeliveryDate: date }),
+  orderType: null, // Start with no selection, user must choose
+  setOrderType: (type) => set({ orderType: type }),
   promoId: null,
   promo: "",
   promoApplied: false,
@@ -84,8 +88,9 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
   },
   
   // Calculation getters
-  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: any, deliveryDate?: string): OrderCalculations => {
+  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: any, deliveryDate?: string, orderType?: 'PICKUP' | 'DELIVERY' | null): OrderCalculations => {
     const state = get();
+    const currentOrderType = orderType || state.orderType || 'DELIVERY'; // Default to DELIVERY if null
     
     // Basic calculations
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -94,22 +99,28 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     let convenienceCharge = config?.convenienceCharge?.amount || 0;
     let deliveryCharge = config?.deliveryCharge?.amount || 0;
     
-    // Check for free delivery eligibility
-    if (address && deliveryDate && deliveryCharge > 0 && config?.freeDelivery) {
-      const deliveryDateObj = new Date(deliveryDate + 'T00:00:00.000Z');
-      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const dayName = daysOfWeek[deliveryDateObj.getDay()];
-      
-      const areasForDay = config.freeDelivery[dayName];
-      if (Array.isArray(areasForDay) && address.city) {
-        const isEligible = areasForDay.some((area: string) => 
-          area.toLowerCase().includes(address.city.toLowerCase()) ||
-          address.city.toLowerCase().includes(area.toLowerCase())
-        );
+    // For pickup orders, waive delivery and convenience charges
+    if (currentOrderType === 'PICKUP') {
+      deliveryCharge = 0;
+      convenienceCharge = 0;
+    } else {
+      // Check for free delivery eligibility (only for delivery orders)
+      if (address && deliveryDate && deliveryCharge > 0 && config?.freeDelivery) {
+        const deliveryDateObj = new Date(deliveryDate + 'T00:00:00.000Z');
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = daysOfWeek[deliveryDateObj.getDay()];
         
-        if (isEligible) {
-          deliveryCharge = 0;
-          convenienceCharge = 0; // Also waive convenience charge for free delivery areas
+        const areasForDay = config.freeDelivery[dayName];
+        if (Array.isArray(areasForDay) && address.city) {
+          const isEligible = areasForDay.some((area: string) => 
+            area.toLowerCase().includes(address.city.toLowerCase()) ||
+            address.city.toLowerCase().includes(area.toLowerCase())
+          );
+          
+          if (isEligible) {
+            deliveryCharge = 0;
+            convenienceCharge = 0; // Also waive convenience charge for free delivery areas
+          }
         }
       }
     }
@@ -121,15 +132,15 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     
     // Calculate final total with waivers
     const taxAmount = config?.taxPercent?.waive ? 0 : tax;
-    const convenienceAmount = config?.convenienceCharge?.waive ? 0 : convenienceCharge;
-    const deliveryAmount = config?.deliveryCharge?.waive ? 0 : deliveryCharge;
+    const convenienceAmount = config?.convenienceCharge?.waive || currentOrderType === 'PICKUP' ? 0 : convenienceCharge;
+    const deliveryAmount = config?.deliveryCharge?.waive || currentOrderType === 'PICKUP' ? 0 : deliveryCharge;
     const finalTotal = +(subtotal + taxAmount + convenienceAmount + deliveryAmount - appliedDiscount).toFixed(2);
     
     return {
       subtotal,
-      tax,
-      convenienceCharge,
-      deliveryCharge,
+      tax: taxAmount, // Use the waived tax amount
+      convenienceCharge: convenienceAmount, // Use the waived convenience amount
+      deliveryCharge: deliveryAmount, // Use the waived delivery amount
       appliedDiscount,
       finalTotal,
       // Original amounts (before waiving)
@@ -138,8 +149,8 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       originalDeliveryCharge: config?.deliveryCharge?.amount || 0,
       // Waive flags
       isTaxWaived: config?.taxPercent?.waive || false,
-      isConvenienceWaived: config?.convenienceCharge?.waive || false,
-      isDeliveryWaived: config?.deliveryCharge?.waive || false,
+      isConvenienceWaived: config?.convenienceCharge?.waive || currentOrderType === 'PICKUP',
+      isDeliveryWaived: config?.deliveryCharge?.waive || currentOrderType === 'PICKUP',
     };
   },
 }));

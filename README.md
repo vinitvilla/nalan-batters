@@ -14,6 +14,7 @@ Nalan Batters is a full-stack web application built with Next.js 15, TypeScript,
 - **Firebase Admin SDK**: For secure admin operations and authentication
 - **Modern UI Components**: Located in `/src/components` and `/src/components/ui`
 - **Cart & Checkout**: Cart state managed in `/src/store/cartStore.ts`, with checkout flow
+- **Pickup & Delivery Orders**: Dual order types with conditional checkout flow and charge management
 - **Admin Dashboard**: Complete admin interface with analytics and management
 - **POS System**: Point-of-sale system with customer lookup and order management
 - **Phone Number Standardization**: Automatic phone number formatting to +1XXXXXXXXXX format
@@ -339,6 +340,36 @@ public/
 - **Payment Methods**: Cash and card payment support
 - **Role-Based Access**: USER, ADMIN, and MANAGER roles
 - **Inventory Tracking**: Real-time stock management
+
+## Configuration Management
+
+### Application Configuration
+The application uses a flexible configuration system stored in the database:
+
+- **Config Model**: Key-value pairs for application settings
+- **Runtime Updates**: Configurations can be updated without deployment
+- **Type Safety**: Configurations are type-checked and validated
+- **Admin Interface**: Manage configurations through admin dashboard
+
+### Charge Configuration
+Control which charges are applied to orders:
+
+```typescript
+// Example configuration values
+{
+  "taxWaived": true,           // Waives tax for all orders
+  "deliveryWaived": true,      // Waives delivery charges (also auto-waived for pickup)
+  "convenienceWaived": true    // Waives convenience charges (also auto-waived for pickup)
+}
+```
+
+### Order Type Behavior
+- **PICKUP Orders**: Automatically waive delivery and convenience charges
+- **DELIVERY Orders**: Apply charges based on configuration
+- **Waived Charges**: Display with strikethrough and $0.00 in UI
+- **Applied Charges**: Show normal styling with actual amounts
+
+For detailed information about pickup and delivery features, see [PICKUP_DELIVERY_GUIDE.md](./PICKUP_DELIVERY_GUIDE.md).
 
 ## Phone Number Standardization
 

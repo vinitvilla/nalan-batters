@@ -46,9 +46,11 @@ export function CheckoutContactDelivery({
   const [deliveryDates, setDeliveryDates] = useState<Array<{ date: string, day: string }>>([]);
   const selectedDeliveryDate = useOrderStore(s => s.selectedDeliveryDate);
   const setSelectedDeliveryDate = useOrderStore(s => s.setSelectedDeliveryDate);
+  const orderType = useOrderStore(s => s.orderType);
 
   useEffect(() => {
-    if (!selectedAddress?.city || !freeDeliveryConfig) {
+    // Only calculate delivery dates for delivery orders
+    if (orderType !== 'DELIVERY' || !selectedAddress?.city || !freeDeliveryConfig) {
       setDeliveryDates([]);
       setSelectedDeliveryDate("");
       return;
@@ -56,7 +58,7 @@ export function CheckoutContactDelivery({
     const dates = getNextDeliveryDates(selectedAddress.city, freeDeliveryConfig);
     setDeliveryDates(dates);
     setSelectedDeliveryDate(dates[0]?.date || "");
-  }, [selectedAddress, freeDeliveryConfig, setSelectedDeliveryDate]);
+  }, [selectedAddress, freeDeliveryConfig, setSelectedDeliveryDate, orderType]);
 
   const handleAddressAdded = useCallback(() => {
     onAddAddress();
@@ -89,7 +91,12 @@ export function CheckoutContactDelivery({
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
-                <p className="text-gray-600">We need your name for delivery confirmation</p>
+                <p className="text-gray-600">
+                  {orderType === 'PICKUP' 
+                    ? 'We need your name for pickup confirmation'
+                    : 'We need your name for delivery confirmation'
+                  }
+                </p>
               </div>
             </div>
           </div>
@@ -106,19 +113,20 @@ export function CheckoutContactDelivery({
           </div>
         </div>
 
-        {/* Delivery Address */}
-        <div className={STEP_CARD_STYLES}>
-          <div className={STEP_HEADER_STYLES}>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <MapPin className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Delivery Address</h2>
-                <p className="text-gray-600">Choose where you want your order delivered</p>
+        {/* Delivery Address - Only show for delivery orders */}
+        {orderType === 'DELIVERY' && (
+          <div className={STEP_CARD_STYLES}>
+            <div className={STEP_HEADER_STYLES}>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <MapPin className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Delivery Address</h2>
+                  <p className="text-gray-600">Choose where you want your order delivered</p>
+                </div>
               </div>
             </div>
-          </div>
           <div className={STEP_CONTENT_STYLES}>
             {hasAddresses ? (
               <div className="space-y-6">
@@ -328,9 +336,10 @@ export function CheckoutContactDelivery({
             )}
           </div>
         </div>
+        )}
 
-        {/* Delivery Date */}
-        {hasAddresses && selectedAddress && (
+        {/* Delivery Date - Only show for delivery orders */}
+        {orderType === 'DELIVERY' && hasAddresses && selectedAddress && (
           <div className={STEP_CARD_STYLES}>
             <div className={STEP_HEADER_STYLES}>
               <div className="flex items-center gap-4">
@@ -354,7 +363,8 @@ export function CheckoutContactDelivery({
         )}
 
         {/* Completion Indicator */}
-        {hasAddresses && selectedAddress && selectedDeliveryDate && (
+        {((orderType === 'DELIVERY' && hasAddresses && selectedAddress && selectedDeliveryDate) || 
+          (orderType === 'PICKUP' && name.trim().length > 0)) && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-8 text-center shadow-lg">
             <div className="flex justify-center mb-6">
               <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 text-white rounded-3xl flex items-center justify-center shadow-lg">
@@ -363,7 +373,10 @@ export function CheckoutContactDelivery({
             </div>
             <h3 className="text-2xl font-bold text-green-900 mb-3">Ready to Place Order!</h3>
             <p className="text-green-700 text-lg leading-relaxed max-w-md mx-auto">
-              All information complete. You can now proceed to payment and finalize your delicious batter order.
+              {orderType === 'PICKUP' 
+                ? 'All information complete. You can now proceed to payment and finalize your pickup order.'
+                : 'All information complete. You can now proceed to payment and finalize your delicious batter order.'
+              }
             </p>
           </div>
         )}
