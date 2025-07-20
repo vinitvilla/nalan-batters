@@ -2,6 +2,34 @@ import { prisma } from "@/lib/prisma";
 import { DiscountType, OrderStatus } from "@/generated/prisma";
 import moment from 'moment';
 
+// --- Order Number Generation ---
+/**
+ * Generates a unique 5-character alphanumeric order number
+ */
+async function generateUniqueOrderNumber(): Promise<string> {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let orderNumber: string;
+    let isUnique = false;
+    
+    while (!isUnique) {
+        orderNumber = '';
+        for (let i = 0; i < 5; i++) {
+            orderNumber += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        
+        // Check if this order number already exists
+        const existingOrder = await prisma.order.findUnique({
+            where: { orderNumber }
+        });
+        
+        if (!existingOrder) {
+            isUnique = true;
+        }
+    }
+    
+    return orderNumber!;
+}
+
 // --- Order Queries ---
 export async function getAllOrders() {
     return prisma.order.findMany({
@@ -241,8 +269,12 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
     const { TAX_RATE, convenienceCharges, deliveryCharges, tax } = calculateCharges(config, subtotal, address, validDeliveryDate);
     const { discount } = await calculateDiscount(subtotal, promoCodeId);
 
+    // Generate unique order number
+    const orderNumber = await generateUniqueOrderNumber();
+
     // Prepare order data
     const orderData: any = {
+        orderNumber,
         userId,
         addressId,
         promoCodeId,
