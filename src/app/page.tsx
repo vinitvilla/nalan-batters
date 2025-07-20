@@ -6,6 +6,7 @@ import QuickOrderSection from "@/components/QuickOrderSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
 import FeaturesSection from "@/components/FeaturesSection";
+import DeliveryPartnerSection from "@/components/DeliveryPartnerSection";
 import { useProductStore } from "@/store/productStore";
 import { useConfigStore } from "@/store/configStore";
 
@@ -51,6 +52,11 @@ export default function HomePage() {
           {/* Testimonials Section - Enhanced spacing */}
           <section className="py-12 lg:py-16">
             <TestimonialsSection />
+          </section>
+
+          {/* Delivery Partner Section - New recruitment section */}
+          <section className="py-12 lg:py-16">
+            <DeliveryPartnerSection />
           </section>
 
           {/* Contact Section - Enhanced spacing */}
