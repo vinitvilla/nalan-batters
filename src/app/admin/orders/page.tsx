@@ -20,6 +20,8 @@ export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("all");
+    const [orderType, setOrderType] = useState("all");
+    const [paymentMethod, setPaymentMethod] = useState("all");
     const [loading, setLoading] = useState(false);
     const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
     const token = userStore((s) => s.token);
@@ -83,9 +85,12 @@ export default function OrdersPage() {
     const filteredOrders = orders.filter(order => {
         const matchesSearch =
             order.user.fullName.toLowerCase().includes(search.toLowerCase()) ||
-            order.user.phone.includes(search);
+            order.user.phone.includes(search) ||
+            (order.orderNumber && order.orderNumber.toLowerCase().includes(search.toLowerCase()));
         const matchesStatus = status === "all" || order.status?.toUpperCase() === status.toUpperCase();
-        return matchesSearch && matchesStatus;
+        const matchesOrderType = orderType === "all" || (order as any).orderType?.toUpperCase() === orderType.toUpperCase();
+        const matchesPaymentMethod = paymentMethod === "all" || (order as any).paymentMethod?.toUpperCase() === paymentMethod.toUpperCase();
+        return matchesSearch && matchesStatus && matchesOrderType && matchesPaymentMethod;
     });
 
     return (
@@ -99,26 +104,59 @@ export default function OrdersPage() {
                     <CardTitle className="text-lg sm:text-xl">Order Management</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-                        <Input
-                            placeholder="Search by customer name or phone..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="max-w-xs"
-                        />
-                        <Tabs value={status} onValueChange={setStatus} className="w-full md:w-auto">
-                            <TabsList>
-                                {ORDER_STATUS_FILTERS.map(s => (
-                                    <TabsTrigger 
-                                        key={s} 
-                                        value={s} 
-                                        className="cursor-pointer text-xs sm:text-sm"
-                                    >
-                                        {capitalize(s)}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
+                    <div className="flex flex-col gap-4 mb-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <Input
+                                placeholder="Search by customer name, phone, or order number..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="max-w-xs"
+                            />
+                            <Tabs value={status} onValueChange={setStatus} className="w-full md:w-auto">
+                                <TabsList>
+                                    {ORDER_STATUS_FILTERS.map(s => (
+                                        <TabsTrigger 
+                                            key={s} 
+                                            value={s} 
+                                            className="cursor-pointer text-xs sm:text-sm"
+                                        >
+                                            {capitalize(s)}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
+                        
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex flex-col">
+                                <label className="text-sm font-medium mb-2">Order Type</label>
+                                <Select value={orderType} onValueChange={setOrderType}>
+                                    <SelectTrigger className="w-full md:w-32">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Types</SelectItem>
+                                        <SelectItem value="delivery">Delivery</SelectItem>
+                                        <SelectItem value="pickup">Pickup</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            
+                            <div className="flex flex-col">
+                                <label className="text-sm font-medium mb-2">Payment Method</label>
+                                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                    <SelectTrigger className="w-full md:w-32">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Methods</SelectItem>
+                                        <SelectItem value="online">Online</SelectItem>
+                                        <SelectItem value="cash">Cash</SelectItem>
+                                        <SelectItem value="card">Card</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                     </div>
                     
                     {/* Mobile Card View */}
@@ -167,12 +205,24 @@ export default function OrdersPage() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 text-xs">
                                         <div>
-                                            <span className="text-gray-500">Order ID:</span>
-                                            <p className="font-mono truncate">{order.id}</p>
+                                            <span className="text-gray-500">Order Number:</span>
+                                            <p className="font-mono font-semibold">{order.orderNumber || "N/A"}</p>
                                         </div>
                                         <div>
                                             <span className="text-gray-500">Total:</span>
                                             <p className="font-semibold">{formatCurrency(order.total)}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-500">Type:</span>
+                                            <p className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                                {capitalize((order as any).orderType || "N/A")}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-500">Payment:</span>
+                                            <p className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                                {capitalize((order as any).paymentMethod || "N/A")}
+                                            </p>
                                         </div>
                                         <div>
                                             <span className="text-gray-500">Date:</span>
@@ -193,10 +243,12 @@ export default function OrdersPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Order ID</TableHead>
+                                    <TableHead>Order #</TableHead>
                                     <TableHead>Customer</TableHead>
                                     <TableHead>Phone</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Payment</TableHead>
                                     <TableHead>Total</TableHead>
                                     <TableHead>Order Date</TableHead>
                                     <TableHead>Delivery Date</TableHead>
@@ -207,7 +259,7 @@ export default function OrdersPage() {
                             <TableBody>
                                 {filteredOrders.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={9} className="text-center text-muted-foreground">
+                                        <TableCell colSpan={11} className="text-center text-muted-foreground">
                                             {loading ? "Loading..." : "No orders found."}
                                         </TableCell>
                                     </TableRow>
@@ -225,7 +277,9 @@ export default function OrdersPage() {
                                             router.push(`/admin/orders/${order.id}`);
                                         }}
                                     >
-                                        <TableCell className="max-w-[120px] truncate font-mono text-sm">{order.id}</TableCell>
+                                        <TableCell className="font-mono text-sm font-semibold">
+                                            {order.orderNumber || "N/A"}
+                                        </TableCell>
                                         <TableCell>{order.user.fullName}</TableCell>
                                         <TableCell>{formatPhoneNumber(order.user.phone)}</TableCell>
                                         <TableCell>
@@ -245,6 +299,16 @@ export default function OrdersPage() {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                                {capitalize((order as any).orderType || "N/A")}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                                {capitalize((order as any).paymentMethod || "N/A")}
+                                            </span>
                                         </TableCell>
                                         <TableCell className="font-semibold">{formatCurrency(order.total)}</TableCell>
                                         <TableCell>{formatDate(order.createdAt)}</TableCell>

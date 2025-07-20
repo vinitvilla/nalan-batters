@@ -148,7 +148,14 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Order failed");
       useCartStore.getState().clearCart();
-      router.push("/order-success");
+      
+      // Redirect to success page with orderNumber if available
+      const orderNumber = data.order?.orderNumber;
+      if (orderNumber) {
+        router.push(`/order-success?orderNumber=${encodeURIComponent(orderNumber)}`);
+      } else {
+        router.push("/order-success");
+      }
     } catch (err: any) {
       setOrderError(err.message || "Order failed");
     } finally {

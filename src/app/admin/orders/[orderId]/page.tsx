@@ -200,25 +200,32 @@ export default function OrderDetailPage() {
                     {/* Main Header Content */}
                     <div className="p-4 lg:p-6">
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                            {/* Order ID and Info */}
+                            {/* Order Number and Info */}
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3">
                                     <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-                                        Order #{order.id}
+                                        {order.orderNumber ? `Order #${order.orderNumber}` : `Order #${order.id}`}
                                     </h1>
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         className="cursor-pointer hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400 text-xs"
                                         onClick={() => {
-                                            navigator.clipboard.writeText(order.id.toString());
-                                            toast.success("Order ID copied!");
+                                            const textToCopy = order.orderNumber || order.id;
+                                            navigator.clipboard.writeText(textToCopy.toString());
+                                            toast.success("Order number copied!");
                                         }}
                                     >
                                         <Copy className="w-3 h-3 mr-1.5" />
-                                        Copy ID
+                                        Copy {order.orderNumber ? 'Number' : 'ID'}
                                     </Button>
                                 </div>
+                                
+                                {order.orderNumber && (
+                                    <div className="text-sm text-gray-600">
+                                        <span className="font-medium">Order ID:</span> {order.id}
+                                    </div>
+                                )}
                                 
                                 <div className="flex flex-wrap items-center gap-4 lg:gap-6 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">

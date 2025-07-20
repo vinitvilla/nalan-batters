@@ -1,10 +1,11 @@
 // Shared types and constants for admin orders
 
-import { UserType } from "@/types/UserType";
+import { User } from "@/types/user";
 
 export type Order = {
     id: string;
-    user: UserType;
+    orderNumber?: string; // Add the orderNumber field
+    user: User;
     address?: {
         street?: string;
         unit?: string;
@@ -14,6 +15,8 @@ export type Order = {
         country?: string;
     };
     status: string;
+    orderType?: string; // Add orderType field
+    paymentMethod?: string; // Add paymentMethod field
     total: number;
     createdAt: string;
     deliveryDate?: string | Date | null;
