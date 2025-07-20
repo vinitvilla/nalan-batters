@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { DiscountType, OrderStatus } from "@/generated/prisma";
+import moment from 'moment';
 
 // --- Order Queries ---
 export async function getAllOrders() {
@@ -165,7 +166,7 @@ async function calculateDiscount(subtotal: number, promoCodeId?: string) {
                 isDeleted: false 
             } 
         });
-        if (promo && promo.isActive && (!promo.expiresAt || new Date(promo.expiresAt) >= new Date())) {
+        if (promo && promo.isActive && (!promo.expiresAt || moment(promo.expiresAt).isSameOrAfter(moment()))) {
             discountType = promo.discountType;
             if (promo.discountType === DiscountType.PERCENTAGE) {
                 discount = +(subtotal * (Number(promo.discount) / 100)).toFixed(2);
@@ -205,14 +206,14 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
     // Validate delivery date
     let validDeliveryDate: Date | undefined;
     if (deliveryDate) {
-        // Convert string date to proper Date object with time set to start of day
-        const date = typeof deliveryDate === 'string' ? new Date(deliveryDate + 'T00:00:00.000Z') : new Date(deliveryDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (isNaN(date.getTime()) || date < today) {
+        // Use moment.js for date validation
+        const date = moment(deliveryDate);
+        const today = moment().startOf('day');
+        
+        if (!date.isValid() || date.isBefore(today)) {
             throw new Error("Delivery date must be today or in the future");
         }
-        validDeliveryDate = date;
+        validDeliveryDate = date.toDate();
     }
 
     // Validate items

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
+import moment from 'moment';
 
 const prisma = new PrismaClient();
 
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
         isActive: true,
         OR: [
           { expiresAt: null },
-          { expiresAt: { gt: new Date() } }
+          { expiresAt: { gt: moment().toDate() } }
         ]
       },
       orderBy: { code: 'asc' }

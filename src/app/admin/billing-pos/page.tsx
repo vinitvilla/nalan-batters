@@ -14,6 +14,7 @@ import { RequirePermission } from "@/components/PermissionWrapper";
 import { usePosData } from '@/hooks/usePosData';
 import { formatPhoneNumber, displayPhoneNumber } from '@/lib/utils/phoneUtils';
 import type { PosCartItem, PosCustomerData, PosSaleRequest, UserLookupResponse } from '@/types';
+import moment from 'moment';
 import { 
   ShoppingCart, 
   Plus, 
@@ -301,7 +302,7 @@ export default function BillingPage() {
            RECEIPT
       =============================
       ${orderNumber ? `Order #${orderNumber}` : ''}
-      Date: ${new Date().toLocaleString()}
+      Date: ${moment().format('MMMM Do YYYY, h:mm:ss a')}
       ${customer.name ? `Customer: ${customer.name}` : ''}
       ${customer.phone ? `Phone: ${displayPhoneNumber(customer.phone)}` : ''}
       

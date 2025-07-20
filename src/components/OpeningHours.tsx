@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Calendar } from "lucide-react";
+import moment from 'moment';
 import "../styles/theme.css";
 
 const hours = [
@@ -16,7 +17,7 @@ const hours = [
 // Get current day to highlight today's hours
 const getCurrentDay = () => {
 	const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-	return days[new Date().getDay()];
+	return days[moment().day()];
 };
 
 export default function OpeningHours() {
@@ -28,10 +29,8 @@ export default function OpeningHours() {
 
 	// Check if currently open
 	const isCurrentlyOpen = () => {
-		const now = new Date();
-		const currentHour = now.getHours();
-		const currentMinute = now.getMinutes();
-		const currentTime = currentHour + currentMinute / 60;
+		const now = moment();
+		const currentTime = now.hour() + now.minute() / 60;
 		
 		const todayHours = hoursWithToday.find(h => h.isToday);
 		if (!todayHours) return false;

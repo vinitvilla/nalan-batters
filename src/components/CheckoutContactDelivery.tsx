@@ -12,6 +12,7 @@ import { formatAddress } from "@/lib/utils/commonFunctions";
 import { ChooseDeliveryDate } from "@/components/ChooseDeliveryDate";
 import { useConfigStore } from "@/store/configStore";
 import { useOrderStore } from "@/store/orderStore";
+import moment from 'moment';
 
 // Modern, engaging styling constants
 const INPUT_STYLES = "w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 placeholder:text-gray-500 px-4 py-3 font-medium transition-all duration-200 hover:border-gray-300 text-base shadow-sm";
@@ -415,12 +416,10 @@ export function CheckoutContactDelivery({
 function getNextDeliveryDates(city: string, freeDeliveryConfig: Record<string, unknown>): Array<{ date: string, day: string }> {
   if (!city || !freeDeliveryConfig) return [];
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const today = new Date();
-  const utcToday = new Date(today.toISOString());
-  const estOffset = -5 * 60;
-  const estToday = new Date(utcToday.getTime() + (estOffset * 60 * 1000));
-  estToday.setHours(0, 0, 0, 0);
-  const todayDay = estToday.getDay();
+  
+  // Use moment.js to get today in EST timezone
+  const estToday = moment().utcOffset(-5).startOf('day');
+  const todayDay = estToday.day(); // 0 = Sunday, 1 = Monday, etc.
   const count = 4;
 
   // Find all delivery days for the city
@@ -437,9 +436,11 @@ function getNextDeliveryDates(city: string, freeDeliveryConfig: Record<string, u
     let daysUntilNextDay = (targetDay - todayDay + 7) % 7;
     if (daysUntilNextDay === 0) daysUntilNextDay = 7;
     for (let i = 0; i < count; i++) {
-      const nextDayDate = new Date(estToday);
-      nextDayDate.setDate(estToday.getDate() + daysUntilNextDay);
-      allDates.push({ date: nextDayDate.toISOString().split('T')[0], day: dayName });
+      const nextDayDate = moment(estToday).add(daysUntilNextDay, 'days');
+      allDates.push({ 
+        date: nextDayDate.format('YYYY-MM-DD'), 
+        day: dayName 
+      });
       daysUntilNextDay += 7;
     }
   });

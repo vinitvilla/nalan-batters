@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createOrder } from "@/lib/utils/orderHelpers";
+import moment from 'moment';
 
 export async function POST(req: NextRequest) {
     try {
@@ -20,15 +21,14 @@ export async function POST(req: NextRequest) {
             }
             
             // Validate delivery date format and ensure it's not in the past
-            const date = new Date(deliveryDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const date = moment(deliveryDate, 'YYYY-MM-DD');
+            const today = moment().startOf('day');
             
-            if (isNaN(date.getTime())) {
+            if (!date.isValid()) {
                 return NextResponse.json({ error: "Invalid delivery date format" }, { status: 400 });
             }
             
-            if (date < today) {
+            if (date.isBefore(today)) {
                 return NextResponse.json({ error: "Delivery date cannot be in the past" }, { status: 400 });
             }
         }

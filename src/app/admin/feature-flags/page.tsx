@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { useAdminApi } from "../use-admin-api";
+import moment from 'moment';
 
 interface FeatureFlag {
   id: string;
@@ -58,8 +59,8 @@ export default function FeatureFlagsPage() {
                 </span>
               </div>
               <div className="text-xs text-gray-500 space-y-1">
-                <p>Created: {new Date(flag.createdAt).toLocaleString()}</p>
-                <p>Updated: {new Date(flag.updatedAt).toLocaleString()}</p>
+                <p>Created: {moment(flag.createdAt).format('MMMM Do YYYY, h:mm:ss a')}</p>
+                <p>Updated: {moment(flag.updatedAt).format('MMMM Do YYYY, h:mm:ss a')}</p>
               </div>
             </div>
           ))
@@ -97,8 +98,8 @@ export default function FeatureFlagsPage() {
                       {flag.value ? "Enabled" : "Disabled"}
                     </span>
                   </TableCell>
-                  <TableCell>{new Date(flag.createdAt).toLocaleString()}</TableCell>
-                  <TableCell>{new Date(flag.updatedAt).toLocaleString()}</TableCell>
+                  <TableCell>{moment(flag.createdAt).format('MMMM Do YYYY, h:mm:ss a')}</TableCell>
+                  <TableCell>{moment(flag.updatedAt).format('MMMM Do YYYY, h:mm:ss a')}</TableCell>
                 </TableRow>
               ))
             )}

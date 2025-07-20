@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/requireAdmin";
+import moment from 'moment';
 
 // Get all contact messages
 export async function GET(req: NextRequest) {
@@ -72,7 +73,7 @@ export async function PUT(req: NextRequest) {
 
     const updatedMessage = await prisma.contactMessage.update({
       where: { id },
-      data: { status: status.toUpperCase() as any, updatedAt: new Date() },
+      data: { status: status.toUpperCase() as any, updatedAt: moment().toDate() },
     });
 
     return NextResponse.json(updatedMessage);
@@ -102,7 +103,7 @@ export async function DELETE(req: NextRequest) {
 
     await prisma.contactMessage.update({
       where: { id },
-      data: { isDelete: true, updatedAt: new Date() },
+      data: { isDelete: true, updatedAt: moment().toDate() },
     });
 
     return NextResponse.json({ message: "Contact message deleted successfully" });

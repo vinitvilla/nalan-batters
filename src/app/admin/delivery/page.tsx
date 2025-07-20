@@ -15,6 +15,7 @@ import { Order, ORDER_STATUSES } from "../orders/types";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Calendar, Package, Truck, Clock, MapPin, Map as MapIcon } from "lucide-react";
 import { capitalize, formatCurrency, formatPhoneNumber, formatDateOnly, formatOrderId } from "@/lib/utils/commonFunctions";
+import moment from 'moment';
 
 export default function DeliveryPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -121,50 +122,38 @@ export default function DeliveryPage() {
     // Helper function to extract date part from delivery date string (handles UTC dates)
     const getDeliveryDateString = (deliveryDate: string | Date | null | undefined) => {
         if (!deliveryDate) return '';
-        if (typeof deliveryDate === 'string' && deliveryDate.includes('T')) {
-            // Extract just the date part to avoid timezone conversion
-            // "2025-07-17T00:00:00.000Z" -> "2025-07-17"
-            return deliveryDate.split('T')[0];
-        }
-        const d = new Date(deliveryDate);
-        return getDateString(d);
+        return moment(deliveryDate).format('YYYY-MM-DD');
     };
 
-    // Get today, tomorrow, and this week dates
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
+    // Get today, tomorrow, and this week dates using moment.js
+    const today = moment().startOf('day');
+    const tomorrow = moment().add(1, 'day').startOf('day');
     
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
-    
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6); // End of current week (Saturday)
+    const startOfWeek = moment().startOf('week'); // Start of current week (Sunday)
+    const endOfWeek = moment().endOf('week'); // End of current week (Saturday)
 
-    const todayString = getDateString(today);
-    const tomorrowString = getDateString(tomorrow);
+    const todayString = today.format('YYYY-MM-DD');
+    const tomorrowString = tomorrow.format('YYYY-MM-DD');
 
     // Filter orders by delivery date
     const todayOrders = orders.filter(order => {
         if (!order.deliveryDate) return false;
         const deliveryDateString = getDeliveryDateString(order.deliveryDate);
         return deliveryDateString === todayString;
-    }).sort((a, b) => new Date(a.deliveryDate!).getTime() - new Date(b.deliveryDate!).getTime());
+    }).sort((a, b) => moment(a.deliveryDate!).valueOf() - moment(b.deliveryDate!).valueOf());
 
     const tomorrowOrders = orders.filter(order => {
         if (!order.deliveryDate) return false;
         const deliveryDateString = getDeliveryDateString(order.deliveryDate);
         return deliveryDateString === tomorrowString;
-    }).sort((a, b) => new Date(a.deliveryDate!).getTime() - new Date(b.deliveryDate!).getTime());
+    }).sort((a, b) => moment(a.deliveryDate!).valueOf() - moment(b.deliveryDate!).valueOf());
 
     const thisWeekOrders = orders.filter(order => {
         if (!order.deliveryDate) return false;
         const deliveryDateString = getDeliveryDateString(order.deliveryDate);
-        const deliveryDate = new Date(deliveryDateString + 'T00:00:00'); // Local date
-        const startOfWeekLocal = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate());
-        const endOfWeekLocal = new Date(endOfWeek.getFullYear(), endOfWeek.getMonth(), endOfWeek.getDate());
-        return deliveryDate >= startOfWeekLocal && deliveryDate <= endOfWeekLocal;
-    }).sort((a, b) => new Date(a.deliveryDate!).getTime() - new Date(b.deliveryDate!).getTime());
+        const deliveryMoment = moment(deliveryDateString);
+        return deliveryMoment.isBetween(startOfWeek, endOfWeek, null, '[]'); // inclusive
+    }).sort((a, b) => moment(a.deliveryDate!).valueOf() - moment(b.deliveryDate!).valueOf());
 
     // Filter by search
     const filterOrdersBySearch = (ordersList: Order[]) => {

@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Truck, MapPin, Clock, Star } from "lucide-react";
+import moment from 'moment';
 import "../styles/theme.css";
 
 interface DeliveryScheduleItem {
@@ -16,7 +17,7 @@ interface FreeDeliveryScheduleProps {
 // Get current day to highlight today's delivery
 const getCurrentDay = () => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return days[new Date().getDay()];
+  return days[moment().day()];
 };
 
 const FreeDeliverySchedule: React.FC<FreeDeliveryScheduleProps> = ({ deliverySchedule }) => {

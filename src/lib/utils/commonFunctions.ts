@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 // Utility to format a number as currency string
 function formatCurrency(value: number | string | undefined, currency: string = "USD") {
     const num = typeof value === "number" ? value : Number(value);
@@ -44,47 +46,18 @@ function capitalize(str: string): string {
 function formatDate(date: string | number | Date | undefined, options?: { dateOnly?: boolean }): string {
     if (!date) return "";
     
-    // Handle ISO date strings that should be treated as date-only (like delivery dates)
-    if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}T/.test(date) && options?.dateOnly) {
-        // Extract just the date part: "2025-07-17T00:00:00.000Z" -> "2025-07-17"
-        const dateOnly = date.split('T')[0];
-        const [year, month, day] = dateOnly.split('-').map(Number);
-        
-        // Validate the extracted date parts
-        if (year && month && day && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-            // Create date using local timezone (avoids UTC conversion issues)
-            const localDate = new Date(year, month - 1, day); // month is 0-indexed
-            
-            return new Intl.DateTimeFormat("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric"
-            }).format(localDate);
-        }
-    }
+    // Use moment.js to parse and format dates
+    const m = moment(date);
     
-    // Regular date parsing
-    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
-    if (isNaN(d.getTime())) return "Invalid date";
+    if (!m.isValid()) return "Invalid date";
     
     // Return date-only or date-time based on options
     if (options?.dateOnly) {
-        return new Intl.DateTimeFormat("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric"
-        }).format(d);
+        return m.format('MMM D, YYYY');
     }
     
     // Default: return date with time
-    return new Intl.DateTimeFormat("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    }).format(d);
+    return m.format('MMM D, YYYY h:mm A');
 }
 
 // Convenience function for date-only formatting

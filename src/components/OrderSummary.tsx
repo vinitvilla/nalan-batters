@@ -11,6 +11,7 @@ import { useOrderStore } from "@/store/orderStore";
 import { useConfigStore } from "@/store/configStore";
 import { AddressFields } from "@/store/addressStore";
 import { DiscountType } from "@/generated/prisma";
+import moment from 'moment';
 
 export interface OrderSummaryProps {
   cartItems: Array<{ id: string; name: string; price: number; quantity: number }>;
@@ -81,12 +82,10 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const getNextDeliveryDates = (city: string, freeDeliveryConfig: Record<string, unknown>): Array<{ date: string, day: string }> => {
     if (!city || !freeDeliveryConfig) return [];
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const today = new Date();
-    const utcToday = new Date(today.toISOString());
-    const estOffset = -5 * 60;
-    const estToday = new Date(utcToday.getTime() + (estOffset * 60 * 1000));
-    estToday.setHours(0, 0, 0, 0);
-    const todayDay = estToday.getDay();
+    
+    // Use moment.js to get today in EST timezone
+    const estToday = moment().utcOffset(-5).startOf('day');
+    const todayDay = estToday.day(); // 0 = Sunday, 1 = Monday, etc.
     const count = 4;
 
     // Find all delivery days for the city
@@ -103,9 +102,11 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
       let daysUntilNextDay = (targetDay - todayDay + 7) % 7;
       if (daysUntilNextDay === 0) daysUntilNextDay = 7;
       for (let i = 0; i < count; i++) {
-        const nextDayDate = new Date(estToday);
-        nextDayDate.setDate(estToday.getDate() + daysUntilNextDay);
-        allDates.push({ date: nextDayDate.toISOString().split('T')[0], day: dayName });
+        const nextDayDate = moment(estToday).add(daysUntilNextDay, 'days');
+        allDates.push({ 
+          date: nextDayDate.format('YYYY-MM-DD'), 
+          day: dayName 
+        });
         daysUntilNextDay += 7;
       }
     });

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import moment from 'moment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -103,13 +104,11 @@ export default function PosOrdersPage() {
   };
 
   const calculateStats = (orderData: Order[]) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = moment().startOf('day');
     
     const todayOrders = orderData.filter(order => {
-      const orderDate = new Date(order.createdAt);
-      orderDate.setHours(0, 0, 0, 0);
-      return orderDate.getTime() === today.getTime();
+      const orderDate = moment(order.createdAt).startOf('day');
+      return orderDate.isSame(today);
     });
 
     const totalRevenue = orderData.reduce((sum, order) => sum + order.total, 0);
@@ -482,7 +481,7 @@ export default function PosOrdersPage() {
                               <User className="h-4 w-4" />
                               <span>{order.user.fullName}</span>
                               <span>•</span>
-                              <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                              <span>{moment(order.createdAt).format('MMM D, YYYY')}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               {order.orderType === 'PICKUP' ? <Store className="h-4 w-4" /> : <Truck className="h-4 w-4" />}
@@ -543,8 +542,8 @@ export default function PosOrdersPage() {
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Order Details</h4>
                     <div className="space-y-1 text-sm">
-                      <p><span className="font-medium">Date:</span> {new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
-                      <p><span className="font-medium">Time:</span> {new Date(selectedOrder.createdAt).toLocaleTimeString()}</p>
+                      <p><span className="font-medium">Date:</span> {moment(selectedOrder.createdAt).format('MMMM D, YYYY')}</p>
+                      <p><span className="font-medium">Time:</span> {moment(selectedOrder.createdAt).format('h:mm A')}</p>
                       <p><span className="font-medium">Type:</span> {selectedOrder.orderType}</p>
                       <p><span className="font-medium">Payment:</span> {selectedOrder.paymentMethod}</p>
                       <p>

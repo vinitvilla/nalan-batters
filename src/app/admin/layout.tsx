@@ -4,6 +4,8 @@ import React, { ReactNode, useState } from "react";
 import AdminSidebar from "./components/AdminSidebar";
 import Header from "./components/Header";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { GoldButton } from "@/components/GoldButton";
+import { useRouter } from "next/navigation";
 
 type AdminLayoutProps = {
     children: ReactNode;
@@ -12,6 +14,7 @@ type AdminLayoutProps = {
 export default function AdminLayout({ children }: AdminLayoutProps) {
     const { loading, hasAdminAccess } = useAdminAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const router = useRouter();
 
     // Show loading while checking authentication
     if (loading) {
@@ -30,6 +33,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
                     <p className="text-gray-600">You don't have permission to access this area.</p>
                 </div>
+                <GoldButton 
+                    className="mt-4"
+                    onClick={() => router.push("/signin")}
+                >
+                    Go to Home
+                </GoldButton>
             </div>
         );
     }

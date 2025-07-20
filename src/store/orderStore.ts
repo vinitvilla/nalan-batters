@@ -1,5 +1,6 @@
 import { DiscountType } from "@/generated/prisma";
 import { create } from "zustand";
+import moment from 'moment';
 
 interface CartItem {
   id: string;
@@ -106,9 +107,9 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     } else {
       // Check for free delivery eligibility (only for delivery orders)
       if (address && deliveryDate && deliveryCharge > 0 && config?.freeDelivery) {
-        const deliveryDateObj = new Date(deliveryDate + 'T00:00:00.000Z');
+        const deliveryDateObj = moment(deliveryDate);
         const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const dayName = daysOfWeek[deliveryDateObj.getDay()];
+        const dayName = daysOfWeek[deliveryDateObj.day()];
         
         const areasForDay = config.freeDelivery[dayName];
         if (Array.isArray(areasForDay) && address.city) {

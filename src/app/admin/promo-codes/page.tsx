@@ -2,6 +2,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+import moment from 'moment';
 
 // UI components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -252,8 +253,8 @@ export default function PromoCodesPage() {
                         placeholder="Expires At"
                         value={editIdx !== null ? (typeof editPromo?.expiresAt === "string" ? editPromo.expiresAt.split("T")[0] : "") : (typeof newPromo.expiresAt === "string" ? newPromo.expiresAt.split("T")[0] : "")}
                         onChange={e => {
-                          if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, expiresAt: e.target.value ? new Date(e.target.value).toISOString() : null } : editPromo);
-                          else setNewPromo({ ...newPromo, expiresAt: e.target.value ? new Date(e.target.value).toISOString() : null });
+                          if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, expiresAt: e.target.value ? moment(e.target.value).toISOString() : null } : editPromo);
+                          else setNewPromo({ ...newPromo, expiresAt: e.target.value ? moment(e.target.value).toISOString() : null });
                         }}
                         disabled={saving}
                       />
@@ -298,7 +299,7 @@ export default function PromoCodesPage() {
                         <TableCell>{promo.code}</TableCell>
                         <TableCell>{promo.discount}</TableCell>
                         <TableCell>{promo.discountType}</TableCell>
-                        <TableCell>{promo.expiresAt ? new Date(promo.expiresAt).toISOString().split("T")[0] : ""}</TableCell>
+                        <TableCell>{promo.expiresAt ? moment(promo.expiresAt).format('YYYY-MM-DD') : ""}</TableCell>
                         <TableCell>
                           <Switch
                             checked={promo.isActive}

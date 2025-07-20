@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
+import moment from 'moment';
 
 const prisma = new PrismaClient();
 
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
         isDelete: false,
         status: { not: 'CANCELLED' },
         createdAt: {
-          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+          gte: moment().startOf('month').toDate()
         }
       },
       _sum: { total: true }
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
         isDelete: false,
         status: 'CANCELLED',
         createdAt: {
-          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+          gte: moment().startOf('month').toDate()
         }
       },
       _sum: { total: true }

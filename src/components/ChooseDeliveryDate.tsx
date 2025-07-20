@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import moment from 'moment';
 
 export interface ChooseDeliveryDateProps {
   deliveryDates: Array<{ date: string; day: string }>;
@@ -9,32 +10,13 @@ export interface ChooseDeliveryDateProps {
 
 export function ChooseDeliveryDate({ deliveryDates, selectedDeliveryDate, setSelectedDeliveryDate }: ChooseDeliveryDateProps) {
   const formatDisplayDate = (dateString: string) => {
-    // Parse date string manually to avoid timezone issues
-    // Handle both YYYY-MM-DD and DD-MM-YYYY formats
-    let year: number, month: number, day: number;
+    // Use moment.js to parse and format the date
+    const date = moment(dateString, 'YYYY-MM-DD');
     
-    if (dateString.includes('-')) {
-      const parts = dateString.split('-');
-      if (parts[0].length === 4) {
-        // YYYY-MM-DD format
-        [year, month, day] = parts.map(Number);
-      } else {
-        // DD-MM-YYYY format
-        [day, month, year] = parts.map(Number);
-      }
-    } else {
-      // Fallback: try to parse as is
-      const date = new Date(dateString + 'T12:00:00'); // Add time to avoid timezone issues
-      day = date.getDate();
-      month = date.getMonth() + 1;
-      year = date.getFullYear();
-    }
-    
-    // Create date object with explicit local time
-    const date = new Date(year, month - 1, day); // month is 0-indexed in JS
-    const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-    
-    return { day: day.toString(), month: monthName };
+    return { 
+      day: date.format('D'), 
+      month: date.format('MMM') 
+    };
   };
 
   return (
