@@ -44,7 +44,20 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
 
   // Derived values using orderStore calculations
   const calculations = getOrderCalculations(cartItems, config, selectedAddress, selectedDeliveryDate);
-  const { subtotal, tax, convenienceCharge, deliveryCharge, appliedDiscount, finalTotal } = calculations;
+  const { 
+    subtotal, 
+    tax, 
+    convenienceCharge, 
+    deliveryCharge, 
+    appliedDiscount, 
+    finalTotal,
+    originalTax,
+    originalConvenienceCharge,
+    originalDeliveryCharge,
+    isTaxWaived,
+    isConvenienceWaived,
+    isDeliveryWaived
+  } = calculations;
   const taxRate = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0.13;
 
   // Place order handler
@@ -174,24 +187,33 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
             </div>
             <div className="flex justify-between text-xs text-yellow-700">
               <span>Tax ({Math.round(taxRate * 100)}%)</span>
-              {config?.taxPercent?.waive ? (
-                <span className="line-through text-red-500">${tax.toFixed(2)}</span>
+              {isTaxWaived ? (
+                <div className="flex items-center gap-2">
+                  <span className="line-through text-red-500">${originalTax.toFixed(2)}</span>
+                  <span className="text-green-600 font-semibold">$0.00</span>
+                </div>
               ) : (
                 <span>${tax.toFixed(2)}</span>
               )}
             </div>
             <div className="flex justify-between text-xs text-yellow-700">
               <span>Convenience Charge</span>
-              {config?.convenienceCharge?.waive ? (
-                <span className="line-through text-red-500">${convenienceCharge.toFixed(2)}</span>
+              {isConvenienceWaived ? (
+                <div className="flex items-center gap-2">
+                  <span className="line-through text-red-500">${originalConvenienceCharge.toFixed(2)}</span>
+                  <span className="text-green-600 font-semibold">$0.00</span>
+                </div>
               ) : (
                 <span>${convenienceCharge.toFixed(2)}</span>
               )}
             </div>
             <div className="flex justify-between text-xs text-yellow-700">
               <span>Delivery Charge</span>
-              {config?.deliveryCharge?.waive ? (
-                <span className="line-through text-red-500">${deliveryCharge.toFixed(2)}</span>
+              {isDeliveryWaived ? (
+                <div className="flex items-center gap-2">
+                  <span className="line-through text-red-500">${originalDeliveryCharge.toFixed(2)}</span>
+                  <span className="text-green-600 font-semibold">$0.00</span>
+                </div>
               ) : (
                 <span>${deliveryCharge.toFixed(2)}</span>
               )}

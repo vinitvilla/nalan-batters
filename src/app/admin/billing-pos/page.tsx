@@ -53,12 +53,14 @@ export default function BillingPage() {
   const categoryOptions = ['all', ...categories.map(cat => cat.name)];
 
   // Get tax rate from config (default to 13% HST)
-  const taxRate = posData?.config?.taxWaived ? 0 : (posData?.config?.taxRate || 0.13);
+  const originalTaxRate = posData?.config?.taxRate || 0.13; // Original rate before waiving
+  const taxRate = posData?.config?.taxWaived ? 0 : originalTaxRate;
   const isTaxWaived = posData?.config?.taxWaived || false;
 
   // Cart calculations
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
   const tax = subtotal * taxRate;
+  const originalTax = subtotal * originalTaxRate; // Original tax amount before waiving
   const discountAmount = subtotal * (discount / 100);
   const finalTotal = subtotal + tax - discountAmount;
   const changeAmount = receivedAmount ? Math.max(0, parseFloat(receivedAmount) - finalTotal) : 0;
@@ -274,7 +276,7 @@ export default function BillingPage() {
       -----------------------------
       Subtotal: $${subtotal.toFixed(2)}
       ${discount > 0 ? `Discount (${discount}%): -$${discountAmount.toFixed(2)}` : ''}
-      ${isTaxWaived ? 'Tax: WAIVED' : `Tax (${Math.round(taxRate * 100)}%): $${tax.toFixed(2)}`}
+      ${isTaxWaived ? `Tax (${Math.round(originalTaxRate * 100)}%): WAIVED ($${originalTax.toFixed(2)} → $0.00)` : `Tax (${Math.round(originalTaxRate * 100)}%): $${tax.toFixed(2)}`}
       
       TOTAL: $${finalTotal.toFixed(2)}
       
@@ -519,8 +521,15 @@ export default function BillingPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>{isTaxWaived ? 'Tax (WAIVED):' : `Tax (${Math.round(taxRate * 100)}%):`}</span>
-                  <span>{isTaxWaived ? 'WAIVED' : `$${tax.toFixed(2)}`}</span>
+                  <span>Tax ({Math.round(originalTaxRate * 100)}%)</span>
+                  {isTaxWaived ? (
+                    <div className="flex items-center gap-2">
+                      <span className="line-through text-red-500">${originalTax.toFixed(2)}</span>
+                      <span className="text-green-600 font-semibold">$0.00</span>
+                    </div>
+                  ) : (
+                    <span>${tax.toFixed(2)}</span>
+                  )}
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
