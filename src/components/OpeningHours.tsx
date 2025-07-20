@@ -52,7 +52,8 @@ export default function OpeningHours() {
 				<div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-200/20 to-yellow-200/20 rounded-full -translate-y-6 translate-x-6"></div>
 				
 				<div className="relative">
-					<CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-2">
+					<CardTitle className="text-2xl font-bold flex items-center gap-2 mb-2 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent"
+						style={{ fontFamily: "'Dancing Script', cursive" }}>
 						<div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-yellow-600 rounded-lg flex items-center justify-center">
 							<Clock className="w-4 h-4 text-white" />
 						</div>
