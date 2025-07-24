@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Allow crawling of main content
+Allow: /checkout
+Allow: /order-success
+
+# Disallow admin and API routes
+Disallow: /admin/
+Disallow: /api/
+Disallow: /signin
+Disallow: /signup
+
+# Disallow sensitive or dynamic content
+Disallow: /*?*
+Disallow: /test*
+
+# Sitemap location
+Sitemap: https://nalanbatters.com/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1

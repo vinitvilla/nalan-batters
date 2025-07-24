@@ -37,7 +37,7 @@ async function seedConfig() {
       value: {
         "Thursday": ["Mississauga", "Brampton", "Downtown Toronto"],
         "Friday": ["Pickering", "Ajax", "Whitby", "Oshawa"],
-        "Saturday": ["Etobicoke", "Northyork"],
+        "Saturday": ["Etobicoke", "North York"],
         "Sunday": ["Scarborough", "Markham (Until 407)"]
       },
       isActive: true,

@@ -7,10 +7,13 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import DeliveryPartnerSection from "@/components/DeliveryPartnerSection";
+import { StructuredData, homepageStructuredData, organizationStructuredData } from "@/components/StructuredData";
 import { useProductStore } from "@/store/productStore";
 import { useConfigStore } from "@/store/configStore";
 
-export default function HomePage() {
+// Structured data for SEO
+
+export default function HomePageClient() {
   const fetchProducts = useProductStore((s) => s.fetchProducts);
   const loadConfig = useConfigStore((s) => s.loadConfig);
 
@@ -24,6 +27,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-stone-50">
+      <StructuredData data={homepageStructuredData} />
+      <StructuredData data={organizationStructuredData} />
+      
       {/* Hero Section - Full width */}
       <HeroSection />
       

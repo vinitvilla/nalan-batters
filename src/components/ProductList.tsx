@@ -22,10 +22,11 @@ export default function ProductList({ products }: { products: any[] }) {
             {product.imageUrl && (
               <Image
                 src={product.imageUrl}
-                alt={product.name}
+                alt={`${product.name} - Fresh South Indian ${product.category || 'food product'} by Nalan Batters`}
                 width={400}
                 height={160}
                 className="w-full h-40 object-cover rounded mb-2"
+                loading="lazy"
               />
             )}
             <p className="text-gray-600 mb-2">{product.description}</p>

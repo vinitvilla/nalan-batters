@@ -11,5 +11,5 @@
   --gradient-gold-card: linear-gradient(to-br, #fffbe6, #fff9e3, #fff);
   --gradient-gold-btn: linear-gradient(to-r, #FFD700, #fffbe6);
   --font-cursive: 'Dancing Script', cursive;
-  --font-sans: 'Geist', 'Inter', sans-serif;
+  --font-sans: var(--font-poppins), 'Poppins', 'system-ui', sans-serif;
 }
