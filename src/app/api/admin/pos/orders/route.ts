@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     // Transform data for frontend
     const transformedOrders = orders.map(order => ({
       id: order.id,
+      orderNumber: order.orderNumber,
       total: parseFloat(order.total.toString()),
       tax: parseFloat(order.tax?.toString() || '0'),
       discount: order.discount ? parseFloat(order.discount.toString()) : null,

@@ -1,13 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
+import { requireAdmin } from '@/lib/requireAdmin';
 import { formatPhoneNumber, getPhoneVariations } from '@/lib/utils/phoneUtils';
 import type { PosSaleRequest, PosSaleResponse } from '@/types';
 
 const prisma = new PrismaClient();
 
+// Generate a unique 5-character alphanumeric order number
+async function generateOrderNumber(): Promise<string> {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let orderNumber: string;
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  do {
+    orderNumber = '';
+    for (let i = 0; i < 5; i++) {
+      orderNumber += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // Check if this order number already exists
+    const existingOrder = await prisma.order.findUnique({
+      where: { orderNumber }
+    });
+    
+    if (!existingOrder) {
+      return orderNumber;
+    }
+    
+    attempts++;
+  } while (attempts < maxAttempts);
+  
+  throw new Error('Unable to generate unique order number');
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+    
     const saleData: PosSaleRequest = await request.json();
+    
+    // Validate required sale data
+    if (!saleData.items || saleData.items.length === 0) {
+      return NextResponse.json<PosSaleResponse>({
+        success: false,
+        error: 'No items in the sale'
+      }, { status: 400 });
+    }
+    
+    if (!saleData.paymentMethod || !['cash', 'card'].includes(saleData.paymentMethod)) {
+      return NextResponse.json<PosSaleResponse>({
+        success: false,
+        error: 'Invalid payment method'
+      }, { status: 400 });
+    }
+    
+    if (typeof saleData.total !== 'number' || saleData.total <= 0) {
+      return NextResponse.json<PosSaleResponse>({
+        success: false,
+        error: 'Invalid total amount'
+      }, { status: 400 });
+    }
 
     // Determine user ID based on whether we have an existing user
     let userId: string;
@@ -93,9 +147,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Generate unique order number
+    const orderNumber = await generateOrderNumber();
+
     // Create the order
     const order = await prisma.order.create({
       data: {
+        orderNumber: orderNumber,
         userId: userId,
         addressId: storeAddress.id,
         orderType: 'PICKUP',
@@ -140,7 +198,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         orderId: order.id,
-        orderNumber: order.id.slice(-8).toUpperCase(),
+        orderNumber: order.orderNumber,
         total: Number(order.total),
         paymentMethod: saleData.paymentMethod,
         timestamp: order.createdAt
@@ -149,9 +207,27 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('POS sale creation error:', error);
+    
+    // Provide more detailed error information
+    let errorMessage = 'Failed to process POS sale';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      
+      // Handle specific Prisma errors
+      if (error.message.includes('orderNumber')) {
+        errorMessage = 'Error generating unique order number. Please try again.';
+      } else if (error.message.includes('phone')) {
+        errorMessage = 'Invalid phone number format.';
+      } else if (error.message.includes('stock')) {
+        errorMessage = 'Insufficient stock for one or more items.';
+      } else if (error.message.includes('foreign key constraint')) {
+        errorMessage = 'Invalid product or customer data.';
+      }
+    }
+    
     return NextResponse.json<PosSaleResponse>({
       success: false,
-      error: 'Failed to process POS sale'
+      error: errorMessage
     }, { status: 500 });
   }
 }

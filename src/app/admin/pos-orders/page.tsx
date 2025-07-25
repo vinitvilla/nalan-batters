@@ -35,6 +35,7 @@ import {
 
 interface Order {
   id: string;
+  orderNumber: string;
   total: number;
   tax: number;
   discount: number | null;
@@ -453,7 +454,7 @@ export default function PosOrdersPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-3">
                             <h3 className="text-lg font-semibold text-gray-900">
-                              #{order.id.slice(-5).toUpperCase()}
+                              #{order.orderNumber}
                             </h3>
                             <Badge 
                               className={`text-xs ${
@@ -524,7 +525,7 @@ export default function PosOrdersPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Receipt className="h-5 w-5 text-blue-600" />
-                Order #{selectedOrder?.id.slice(-5).toUpperCase()}
+                Order #{selectedOrder?.orderNumber}
               </DialogTitle>
             </DialogHeader>
             
