@@ -16,7 +16,7 @@ Disallow: /*?*
 Disallow: /test*
 
 # Sitemap location
-Sitemap: https://nalanbatters.com/sitemap.xml
+Sitemap: https://nalanbatters.ca/sitemap.xml
 
 # Crawl delay (optional)
 Crawl-delay: 1
