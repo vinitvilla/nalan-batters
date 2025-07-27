@@ -24,11 +24,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" 
           rel="stylesheet" 
         />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/icon-192x192.png" sizes="192x192" type="image/png" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#FF8C00" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
       <body

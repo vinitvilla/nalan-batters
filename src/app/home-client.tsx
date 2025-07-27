@@ -13,15 +13,15 @@ import { useConfigStore } from "@/store/configStore";
 
 export default function HomePageClient() {
   const fetchProducts = useProductStore((s) => s.fetchProducts);
-  const loadConfig = useConfigStore((s) => s.loadConfig);
+  const loadAllConfigs = useConfigStore((s) => s.loadAllConfigs);
 
   useEffect(() => {
     const fetchData = async () => {
       fetchProducts();
-      await loadConfig("freeDelivery");
+      await loadAllConfigs();
     };
     fetchData();
-  }, [fetchProducts, loadConfig]);
+  }, [fetchProducts, loadAllConfigs]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-stone-50">

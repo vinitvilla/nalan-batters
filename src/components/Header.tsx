@@ -5,6 +5,7 @@ import MainNav from "./MainNav";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ShoppingBag, Home, UtensilsCrossed, Phone } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { userStore } from "@/store/userStore";
 import UserLoginButton from "@/components/UserLoginButton";
 import "../styles/theme.css";
@@ -58,10 +59,18 @@ export default function Header() {
               aria-label="Go to home page"
             >
               <div className="relative">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:rotate-6">
-                  <span className="text-xl lg:text-2xl filter drop-shadow-sm">🍲</span>
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                  <Image 
+                    src="/icon.svg" 
+                    alt="Nalan Batters Logo" 
+                    width={40}
+                    height={40}
+                    className="w-8 h-8 lg:w-10 lg:h-10 transition-all duration-300 group-hover:rotate-6"
+                    priority
+                    unoptimized
+                    loading="eager"
+                  />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full opacity-60 group-hover:opacity-80 transition-opacity"></div>
               </div>
               <div className="hidden sm:flex flex-col">
                 <span 
@@ -131,8 +140,16 @@ export default function Header() {
           {/* Mobile Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-md">
-                <span className="text-xl">🍲</span>
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md">
+                <Image 
+                  src="/icon.svg" 
+                  alt="Nalan Batters Logo" 
+                  width={32}
+                  height={32}
+                  className="w-8 h-8"
+                  unoptimized
+                  loading="eager"
+                />
               </div>
               <div>
                 <span className="font-bold text-lg text-gray-800" style={{ fontFamily: "'Dancing Script', cursive" }}>

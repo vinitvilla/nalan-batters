@@ -12,53 +12,50 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/logo-nalan2-192x192.jpg",
-      "sizes": "192x192",
+      "src": "/icon-144x144.png",
+      "sizes": "144x144",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/logo-nalan2-512x512.jpg",
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "screenshots": [
     {
       "src": "/ss0.png",
-      "sizes": "1280x720",
+      "sizes": "3018x1508",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Nalan Batters homepage on desktop"
     },
     {
       "src": "/ss00.png",
-      "sizes": "750x1334",
+      "sizes": "724x1388",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Nalan Batters homepage on mobile"
-    },
-    {
-      "src": "/ss1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Nalan Batters product section on desktop"
-    },
-    {
-      "src": "/ss2.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Nalan Batters testimonial section on desktop"
-    },
-    {
-      "src": "/ss3.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Nalan Batters Contact section on desktop"
     }
   ]
 }
