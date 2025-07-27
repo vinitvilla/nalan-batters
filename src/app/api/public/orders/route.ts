@@ -33,14 +33,15 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // For pickup orders, address is optional but still validate if provided
-        if (orderType === 'PICKUP' && !addressId) {
-            return NextResponse.json({ error: "Address is required for pickup confirmation" }, { status: 400 });
+        // For pickup orders, use the default pickup location address
+        let finalAddressId = addressId;
+        if (orderType === 'PICKUP') {
+            finalAddressId = 'pickup-location-default';
         }
 
         const order = await createOrder({ 
             userId, 
-            addressId, 
+            addressId: finalAddressId, 
             items, 
             promoCodeId, 
             deliveryDate, 
