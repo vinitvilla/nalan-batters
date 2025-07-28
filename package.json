@@ -14,8 +14,11 @@
     "migrate:staging:interactive": "./scripts/migrate-staging.sh",
     "seed": "node seed.js",
     "seed:staging": "NODE_ENV=staging node seed.js",
+    "populate": "node scripts/populate-db.js",
+    "populate:fresh": "npm run seed && npm run populate",
     "db:setup": "npm run migrate && npm run seed",
     "db:setup:staging": "npm run migrate:staging && npm run seed:staging",
+    "db:setup:full": "npm run migrate && npm run seed && npm run populate",
     "deploy:staging": "./scripts/deploy-staging.sh",
     "deploy:staging:full": "npm run migrate:staging:interactive && npm run build:staging && npm run start:staging",
     "postinstall": "prisma generate"
@@ -66,6 +69,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@faker-js/faker": "^9.9.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
