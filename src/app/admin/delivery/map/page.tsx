@@ -23,6 +23,7 @@ import { userStore } from "@/store/userStore";
 import { Order } from "../../orders/types";
 import { toast } from "sonner";
 import { formatCurrency, formatPhoneNumber, formatOrderId, formatDateOnly } from "@/lib/utils/commonFunctions";
+import moment from "moment";
 
 const libraries = ["places"] as ("places")[];
 
@@ -146,11 +147,9 @@ function DeliveryMapContent() {
     }, [isLoaded, orders]);
 
     const filterOrdersByDate = (ordersList: Order[], dateFilter: string) => {
-        const today = new Date();
-        const todayString = getDateString(today);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        const tomorrowString = getDateString(tomorrow);
+        const today = moment();
+        const todayString = today.format('YYYY-MM-DD');
+        const tomorrowString = moment().add(1, 'day').format('YYYY-MM-DD');
 
         switch (dateFilter) {
             case 'today':
@@ -164,28 +163,21 @@ function DeliveryMapContent() {
                     return deliveryDateString === tomorrowString;
                 });
             case 'week':
-                const startOfWeek = new Date(today);
-                startOfWeek.setDate(today.getDate() - today.getDay());
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                const startOfWeek = moment().startOf('week');
+                const endOfWeek = moment().endOf('week');
                 
                 return ordersList.filter(order => {
                     const deliveryDateString = getDeliveryDateString(order.deliveryDate);
-                    const deliveryDate = new Date(deliveryDateString + 'T00:00:00');
-                    const startOfWeekLocal = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate());
-                    const endOfWeekLocal = new Date(endOfWeek.getFullYear(), endOfWeek.getMonth(), endOfWeek.getDate());
-                    return deliveryDate >= startOfWeekLocal && deliveryDate <= endOfWeekLocal;
+                    const deliveryDate = moment(deliveryDateString);
+                    return deliveryDate.isBetween(startOfWeek, endOfWeek, 'day', '[]');
                 });
             default:
                 return ordersList;
         }
     };
 
-    const getDateString = (date: Date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+    const getDateString = (date: Date | moment.Moment) => {
+        return moment(date).format('YYYY-MM-DD');
     };
 
     const getDeliveryDateString = (deliveryDate: string | Date | null | undefined) => {
@@ -193,8 +185,7 @@ function DeliveryMapContent() {
         if (typeof deliveryDate === 'string' && deliveryDate.includes('T')) {
             return deliveryDate.split('T')[0];
         }
-        const d = new Date(deliveryDate);
-        return getDateString(d);
+        return moment(deliveryDate).format('YYYY-MM-DD');
     };
 
     // Calculate route statistics

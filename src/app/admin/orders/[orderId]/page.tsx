@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { capitalize, formatCurrency, formatPhoneNumber, formatAddress } from "@/lib/utils/commonFunctions";
+import moment from "moment";
 
 export default function OrderDetailPage() {
     const router = useRouter();
@@ -231,26 +232,15 @@ export default function OrderDetailPage() {
                                     <div className="flex items-center gap-2">
                                         <Clock className="w-4 h-4 text-gray-400" />
                                         <span className="font-medium">
-                                            {new Date(order.createdAt).toLocaleDateString(undefined, { 
-                                                year: 'numeric', 
-                                                month: 'short', 
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
+                                            {moment(order.createdAt).format('MMM D, YYYY [at] h:mm A')}
                                         </span>
                                     </div>
                                     
                                     {order.deliveryDate && (
                                         <div className="flex items-center gap-2">
-                                            <Calendar className="w-4 h-4 text-gray-500" />
-                                            <span className="font-medium">
-                                                Delivery: {new Date(order.deliveryDate).toLocaleDateString(undefined, { 
-                                                    month: 'short', 
-                                                    day: 'numeric',
-                                                    year: 'numeric'
-                                                })}
-                                            </span>
+                                            <Calendar className="w-4 h-4 text-gray-500" />                            <span className="font-medium">
+                                Delivery: {moment(order.deliveryDate).format('MMM D, YYYY')}
+                            </span>
                                         </div>
                                     )}
                                     
@@ -514,11 +504,7 @@ export default function OrderDetailPage() {
                                                             <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Delivery Date</p>
                                                             <p className="text-lg font-semibold text-gray-900">
                                                                 {order.deliveryDate
-                                                                    ? new Date(order.deliveryDate).toLocaleDateString(undefined, { 
-                                                                        year: 'numeric', 
-                                                                        month: 'long', 
-                                                                        day: 'numeric' 
-                                                                    })
+                                                                    ? moment(order.deliveryDate).format('MMMM D, YYYY')
                                                                     : <span className="italic text-gray-500">Not scheduled</span>
                                                                 }
                                                             </p>
@@ -606,7 +592,7 @@ export default function OrderDetailPage() {
                                                 <div className="bg-gray-50 rounded-xl p-4 text-center">
                                                     <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                                                         <Clock className="w-4 h-4" />
-                                                        <span>Payment processed on {new Date(order.createdAt).toLocaleDateString()}</span>
+                                                        <span>Payment processed on {moment(order.createdAt).format('MMMM D, YYYY')}</span>
                                                     </div>
                                                 </div>
                                             </div>

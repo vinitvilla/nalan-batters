@@ -43,6 +43,154 @@ export async function getAllOrders() {
     });
 }
 
+interface GetOrdersParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    orderType?: string;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}
+
+export async function getOrdersPaginated({
+    page = 1,
+    limit = 25,
+    search,
+    status,
+    orderType,
+    paymentMethod,
+    startDate,
+    endDate,
+    sortBy = 'createdAt',
+    sortOrder = 'desc'
+}: GetOrdersParams) {
+    const offset = (page - 1) * limit;
+    
+    // Build where clause for filtering
+    const whereClause: any = {
+        isDelete: false,
+    };
+
+    // Search filter (name, phone, order number)
+    if (search) {
+        whereClause.OR = [
+            {
+                user: {
+                    fullName: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                }
+            },
+            {
+                user: {
+                    phone: {
+                        contains: search
+                    }
+                }
+            },
+            {
+                orderNumber: {
+                    contains: search,
+                    mode: 'insensitive'
+                }
+            }
+        ];
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+        whereClause.status = status.toUpperCase();
+    }
+
+    // Order type filter
+    if (orderType && orderType !== 'all') {
+        whereClause.orderType = orderType.toUpperCase();
+    }
+
+    // Payment method filter
+    if (paymentMethod && paymentMethod !== 'all') {
+        whereClause.paymentMethod = paymentMethod.toUpperCase();
+    }
+
+    // Date range filter
+    if (startDate || endDate) {
+        console.log('Date filter received:', { startDate, endDate });
+        whereClause.createdAt = {};
+        if (startDate) {
+            // Parse date and set to start of day in local timezone using moment
+            const startDateTime = moment(startDate).startOf('day').toDate();
+            console.log('Start date parsed:', startDateTime);
+            whereClause.createdAt.gte = startDateTime;
+        }
+        if (endDate) {
+            // Parse date and set to end of day in local timezone using moment
+            const endDateTime = moment(endDate).endOf('day').toDate();
+            console.log('End date parsed:', endDateTime);
+            whereClause.createdAt.lte = endDateTime;
+        }
+    }
+
+    // Build orderBy clause for sorting
+    const buildOrderBy = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+        switch (sortBy) {
+            case 'user.fullName':
+                return { user: { fullName: sortOrder } };
+            case 'total':
+                return { total: sortOrder };
+            case 'status':
+                return { status: sortOrder };
+            case 'orderType':
+                return { orderType: sortOrder };
+            case 'deliveryDate':
+                return { deliveryDate: sortOrder };
+            case 'orderNumber':
+                return { orderNumber: sortOrder };
+            case 'createdAt':
+            default:
+                return { createdAt: sortOrder };
+        }
+    };
+
+    const orderByClause = buildOrderBy(sortBy, sortOrder);
+
+    // Get total count for pagination
+    const totalCount = await prisma.order.count({
+        where: whereClause
+    });
+
+    // Get paginated orders
+    const orders = await prisma.order.findMany({
+        where: whereClause,
+        include: {
+            user: true,
+            address: true,
+            items: { include: { product: true } }
+        },
+        orderBy: orderByClause,
+        skip: offset,
+        take: limit
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+        orders,
+        pagination: {
+            page,
+            limit,
+            totalCount,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1
+        }
+    };
+}
+
 export async function getOrderById(orderId: string) {
     return prisma.order.findFirst({
         where: { 
@@ -195,11 +343,29 @@ async function calculateDiscount(subtotal: number, promoCodeId?: string) {
             } 
         });
         if (promo && promo.isActive && (!promo.expiresAt || moment(promo.expiresAt).isSameOrAfter(moment()))) {
+            // Check minimum order amount
+            if (promo.minOrderAmount && subtotal < Number(promo.minOrderAmount)) {
+                return { discount: 0, discountType: undefined };
+            }
+            
+            // Check usage limit
+            if (promo.usageLimit && promo.currentUsage >= promo.usageLimit) {
+                return { discount: 0, discountType: undefined };
+            }
+            
             discountType = promo.discountType;
             if (promo.discountType === DiscountType.PERCENTAGE) {
                 discount = +(subtotal * (Number(promo.discount) / 100)).toFixed(2);
+                // Apply max discount limit if set
+                if (promo.maxDiscount && discount > Number(promo.maxDiscount)) {
+                    discount = Number(promo.maxDiscount);
+                }
             } else {
                 discount = Number(promo.discount);
+                // For fixed amount discounts, maxDiscount acts as the discount amount limit
+                if (promo.maxDiscount && discount > Number(promo.maxDiscount)) {
+                    discount = Number(promo.maxDiscount);
+                }
             }
         }
     }
@@ -302,6 +468,15 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
         include: { items: true }
     });
     await reduceProductStock(items);
+    
+    // Increment promo code usage if applicable
+    if (promoCodeId && discount > 0) {
+        await prisma.promoCode.update({
+            where: { id: promoCodeId },
+            data: { currentUsage: { increment: 1 } }
+        });
+    }
+    
     return order;
 }
 

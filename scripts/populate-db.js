@@ -72,6 +72,112 @@ function getWeightedRandom(weights) {
   return items[items.length - 1];
 }
 
+async function createMockPromoCodes() {
+  console.log('🎫 Creating promo codes...');
+  
+  const promoCodes = [
+    {
+      code: 'WELCOME10',
+      discount: 10.00,
+      discountType: 'PERCENTAGE',
+      description: 'Welcome discount - 10% off your order',
+      minOrderAmount: 25.00,
+      maxDiscount: 15.00,
+      usageLimit: 100,
+      isActive: true,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+    },
+    {
+      code: 'SAVE5',
+      discount: 5.00,
+      discountType: 'VALUE',
+      description: 'Get $5 off your order',
+      minOrderAmount: 30.00,
+      maxDiscount: 5.00,
+      usageLimit: 200,
+      isActive: true,
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 60 days from now
+    },
+    {
+      code: 'BIGORDER',
+      discount: 15.00,
+      discountType: 'PERCENTAGE',
+      description: 'Big order discount - 15% off orders over $75',
+      minOrderAmount: 75.00,
+      maxDiscount: 25.00,
+      usageLimit: 50,
+      isActive: true,
+      expiresAt: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000) // 45 days from now
+    },
+    {
+      code: 'FIRSTORDER',
+      discount: 3.00,
+      discountType: 'VALUE',
+      description: 'First order discount - $3 off',
+      minOrderAmount: 20.00,
+      maxDiscount: 3.00,
+      usageLimit: 500,
+      isActive: true,
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days from now
+    },
+    {
+      code: 'BULK20',
+      discount: 20.00,
+      discountType: 'PERCENTAGE',
+      description: 'Bulk order special - 20% off orders over $100',
+      minOrderAmount: 100.00,
+      maxDiscount: 40.00,
+      usageLimit: 25,
+      isActive: true,
+      expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) // 15 days from now
+    },
+    {
+      code: 'WEEKEND15',
+      discount: 15.00,
+      discountType: 'PERCENTAGE',
+      description: 'Weekend special - 15% off',
+      minOrderAmount: 40.00,
+      maxDiscount: 20.00,
+      usageLimit: 75,
+      isActive: true,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+    },
+    {
+      code: 'FLAT10',
+      discount: 10.00,
+      discountType: 'VALUE',
+      description: 'Flat $10 off your order',
+      minOrderAmount: 50.00,
+      maxDiscount: 10.00,
+      usageLimit: 150,
+      isActive: true,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+    },
+    {
+      code: 'EXPIRED50',
+      discount: 50.00,
+      discountType: 'PERCENTAGE',
+      description: 'Expired promo - 50% off (for testing)',
+      minOrderAmount: 10.00,
+      maxDiscount: 100.00,
+      usageLimit: 10,
+      isActive: false,
+      expiresAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
+    }
+  ];
+  
+  const createdPromoCodes = [];
+  for (const promoData of promoCodes) {
+    const promoCode = await prisma.promoCode.create({
+      data: promoData
+    });
+    createdPromoCodes.push(promoCode);
+  }
+  
+  console.log(`✅ Created ${createdPromoCodes.length} promo codes`);
+  return createdPromoCodes;
+}
+
 function generateCanadianPhoneNumber() {
   // Generate a properly formatted Canadian phone number
   const areaCodes = ['416', '647', '437', '905', '289', '365', '226', '519', '613', '343', '705', '249'];
@@ -108,6 +214,9 @@ async function truncateAllData() {
       }
     });
     
+    // Delete promo codes (these are dynamic data, not seed data)
+    await prisma.promoCode.deleteMany();
+    
     console.log('✅ All mock data truncated successfully (preserved system data)');
   } catch (error) {
     console.error('❌ Error truncating data:', error);
@@ -115,7 +224,7 @@ async function truncateAllData() {
   }
 }
 
-function generateOrdersForDate(date, products, users, addresses) {
+function generateOrdersForDate(date, products, users, addresses, promoCodes) {
   const dayOfWeek = date.getDay();
   const baseDayMultiplier = DAILY_PATTERNS[dayOfWeek] / 10;
   const baseOrderCount = Math.floor(
@@ -155,7 +264,7 @@ function generateOrdersForDate(date, products, users, addresses) {
     // Generate order items (1-4 items per order)
     const itemCount = Math.floor(Math.random() * 4) + 1;
     const orderItems = [];
-    let totalAmount = 0;
+    let subtotal = 0;
     
     for (let j = 0; j < itemCount; j++) {
       const product = products[Math.floor(Math.random() * products.length)];
@@ -168,17 +277,57 @@ function generateOrdersForDate(date, products, users, addresses) {
         price: product.price,
       });
       
-      totalAmount += price * quantity;
+      subtotal += price * quantity;
     }
+    
+    // Calculate charges and discounts
+    let deliveryCharges = 0;
+    let convenienceCharges = 0;
+    let tax = 0;
+    let discount = 0;
+    let promoCodeId = null;
     
     // Add delivery charges for delivery orders
     if (orderType === 'DELIVERY') {
-      totalAmount += Math.floor(Math.random() * 5) + 3; // ₹3-7 delivery charge
+      deliveryCharges = Math.floor(Math.random() * 5) + 3; // $3-7 delivery charge
+      // Free delivery for orders over $50
+      if (subtotal >= 50) {
+        deliveryCharges = 0;
+      }
     }
     
-    // Add some randomness to total (tax, discounts, etc.)
-    const variation = (Math.random() - 0.5) * 0.1; // ±5% variation
-    totalAmount = Math.max(1, totalAmount * (1 + variation));
+    // Add convenience charges (random 10% chance)
+    if (Math.random() < 0.1) {
+      convenienceCharges = 2.50; // Fixed convenience charge
+    }
+    
+    // Apply promo code (30% chance)
+    if (Math.random() < 0.3 && promoCodes.length > 0) {
+      const availablePromoCodes = promoCodes.filter(promo => 
+        promo.isActive && 
+        (!promo.expiresAt || promo.expiresAt > orderTime)
+      );
+      
+      if (availablePromoCodes.length > 0) {
+        const promoCode = availablePromoCodes[Math.floor(Math.random() * availablePromoCodes.length)];
+        promoCodeId = promoCode.id;
+        
+        if (promoCode.discountType === 'PERCENTAGE') {
+          discount = subtotal * (parseFloat(promoCode.discount) / 100);
+          // Cap percentage discounts at 50% of subtotal for reasonableness
+          discount = Math.min(discount, subtotal * 0.5);
+        } else if (promoCode.discountType === 'VALUE') {
+          discount = Math.min(parseFloat(promoCode.discount), subtotal);
+        }
+      }
+    }
+    
+    // Calculate tax (13% HST on subtotal + charges - discount)
+    const taxableAmount = Math.max(0, subtotal + deliveryCharges + convenienceCharges - discount);
+    tax = taxableAmount * 0.13;
+    
+    // Calculate final total: subtotal + charges + tax - discount
+    const totalAmount = subtotal + deliveryCharges + convenienceCharges + tax - discount;
     
     // Generate realistic delivery date based on order type and status
     let deliveryDate = null;
@@ -214,6 +363,11 @@ function generateOrdersForDate(date, products, users, addresses) {
       addressId,
       status,
       total: Math.round(totalAmount * 100) / 100, // Round to 2 decimal places
+      deliveryCharges: deliveryCharges > 0 ? Math.round(deliveryCharges * 100) / 100 : null,
+      convenienceCharges: convenienceCharges > 0 ? Math.round(convenienceCharges * 100) / 100 : null,
+      tax: Math.round(tax * 100) / 100,
+      discount: discount > 0 ? Math.round(discount * 100) / 100 : null,
+      promoCodeId,
       orderType,
       paymentMethod,
       deliveryDate,
@@ -273,7 +427,7 @@ async function createMockUsers() {
   return { users, addresses };
 }
 
-async function createMockOrders(users, addresses) {
+async function createMockOrders(users, addresses, promoCodes) {
   console.log('📦 Creating mock orders...');
   
   // Get available products
@@ -285,6 +439,8 @@ async function createMockOrders(users, addresses) {
     throw new Error('No products found. Please run seed first.');
   }
   
+  console.log(`📄 Using ${promoCodes.length} promo codes for order generation`);
+  
   const today = new Date();
   const startDate = new Date(today);
   startDate.setDate(today.getDate() - CONFIG.DAYS_TO_SIMULATE);
@@ -295,7 +451,7 @@ async function createMockOrders(users, addresses) {
   // Generate orders for each day
   for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
     const currentDate = new Date(d);
-    const orders = generateOrdersForDate(currentDate, products, users, addresses);
+    const orders = generateOrdersForDate(currentDate, products, users, addresses, promoCodes);
     
     for (const orderData of orders) {
       const { items, ...orderFields } = orderData;
@@ -363,11 +519,14 @@ async function populateDatabase() {
     // Step 0: Truncate existing mock data
     await truncateAllData();
     
-    // Step 1: Create users and addresses
+    // Step 1: Create promo codes (dynamic business data)
+    const promoCodes = await createMockPromoCodes();
+    
+    // Step 2: Create users and addresses
     const { users, addresses } = await createMockUsers();
     
-    // Step 2: Create orders with realistic patterns
-    const orderCount = await createMockOrders(users, addresses);
+    // Step 3: Create orders with realistic patterns
+    const orderCount = await createMockOrders(users, addresses, promoCodes);
     
     // Step 3: Update product stock levels
     await updateProductStock();
@@ -377,6 +536,7 @@ async function populateDatabase() {
     
     console.log('\n🎉 Database population completed successfully!');
     console.log('📈 Summary:');
+    console.log(`   🎫 Promo codes created: ${promoCodes.length}`);
     console.log(`   👥 Users created: ${users.length}`);
     console.log(`   🏠 Addresses created: ${addresses.length}`);
     console.log(`   📦 Orders created: ${orderCount}`);

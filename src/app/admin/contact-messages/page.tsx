@@ -34,7 +34,7 @@ import {
   Users,
   TrendingUp
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import moment from "moment";
 import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { useNewMessagesCount } from "@/hooks/useNewMessagesCount";
@@ -317,7 +317,7 @@ export default function ContactMessagesPage() {
             filteredMessages.map((message) => {
               const StatusIcon = statusIcons[message.status as keyof typeof statusIcons];
               const isSelected = selectedMessage?.id === message.id;
-              const messageAge = Date.now() - new Date(message.createdAt).getTime();
+              const messageAge = Date.now() - moment(message.createdAt).valueOf();
               const hoursOld = messageAge / (1000 * 60 * 60);
               const isUrgent = message.status === "NEW" && hoursOld > 24;
               const isHighPriority = message.status === "NEW" && hoursOld > 4;
@@ -351,7 +351,7 @@ export default function ContactMessagesPage() {
                             "text-gray-400"
                           }`} />
                           <span className="text-xs text-gray-500">
-                            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                            {moment(message.createdAt).fromNow()}
                           </span>
                           {isUrgent && (
                             <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">
@@ -523,7 +523,7 @@ export default function ContactMessagesPage() {
                     {/* Message Header */}
                     <div className="mb-2">
                       <span className="text-xs text-gray-500">
-                        {format(new Date(selectedMessage.createdAt), "EEEE, MMMM do, yyyy 'at' h:mm a")}
+                        {moment(selectedMessage.createdAt).format("dddd, MMMM Do, YYYY [at] h:mm A")}
                       </span>
                     </div>
                     
@@ -539,7 +539,7 @@ export default function ContactMessagesPage() {
                       <Mail className="w-3 h-3" />
                       <span>{selectedMessage.mobile}</span>
                       <span>•</span>
-                      <span>{formatDistanceToNow(new Date(selectedMessage.createdAt), { addSuffix: true })}</span>
+                      <span>{moment(selectedMessage.createdAt).fromNow()}</span>
                     </div>
                   </div>
                 </div>
@@ -556,7 +556,7 @@ export default function ContactMessagesPage() {
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <span className="text-gray-600">Message received</span>
                       <span className="text-gray-500">
-                        {format(new Date(selectedMessage.createdAt), "MMM dd, h:mm a")}
+                        {moment(selectedMessage.createdAt).format("MMM DD, h:mm A")}
                       </span>
                     </div>
                     
@@ -565,7 +565,7 @@ export default function ContactMessagesPage() {
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         <span className="text-gray-600">Status updated</span>
                         <span className="text-gray-500">
-                          {format(new Date(selectedMessage.updatedAt), "MMM dd, h:mm a")}
+                          {moment(selectedMessage.updatedAt).format("MMM DD, h:mm A")}
                         </span>
                       </div>
                     )}
@@ -629,7 +629,7 @@ export default function ContactMessagesPage() {
                 </div>
                 
                 <div className="text-xs text-gray-500">
-                  Last updated {formatDistanceToNow(new Date(selectedMessage.updatedAt), { addSuffix: true })}
+                  Last updated {moment(selectedMessage.updatedAt).fromNow()}
                 </div>
               </div>
             </div>

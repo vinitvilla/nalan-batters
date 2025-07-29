@@ -22,8 +22,15 @@ interface PromoCode {
   code: string;
   discount: number;
   discountType: 'PERCENTAGE' | 'VALUE';
+  description?: string;
+  minOrderAmount?: number;
+  maxDiscount?: number;
+  usageLimit?: number;
+  currentUsage: number;
   isActive: boolean;
   expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PosConfig {

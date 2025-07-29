@@ -291,7 +291,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className="text-sm font-medium text-purple-100 mb-2">Monthly Revenue</h3>
-                                <p className="text-3xl font-bold">₹{dashboardData.overview.monthlyRevenue.toLocaleString()}</p>
+                                <p className="text-3xl font-bold">${dashboardData.overview.monthlyRevenue.toLocaleString()}</p>
                                 <p className={`text-sm mt-1 ${dashboardData.overview.revenueGrowth >= 0 ? 'text-green-200' : 'text-red-200'}`}>
                                     {dashboardData.overview.revenueGrowth >= 0 ? '+' : ''}{dashboardData.overview.revenueGrowth}% from last month
                                 </p>
