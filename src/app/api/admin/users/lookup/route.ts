@@ -7,8 +7,9 @@ import type { UserLookupRequest, UserLookupResponse } from '@/types';
 export async function POST(request: NextRequest) {
   try {
     // Require admin authentication
-    await requireAdmin(request);
-    
+    const adminCheck = await requireAdmin(request);
+    if (adminCheck instanceof NextResponse) return adminCheck;
+
     const { phone }: UserLookupRequest = await request.json();
     
     if (!phone) {

@@ -4,7 +4,9 @@ import { getOrderById, updateOrderStatus } from "@/lib/utils/orderHelpers";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
     try {
-        await requireAdmin(req);
+        const adminCheck = await requireAdmin(req);
+        if (adminCheck instanceof NextResponse) return adminCheck;
+
         const { orderId } = await params;
         const order = await getOrderById(orderId);
         if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -16,7 +18,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ orde
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
     try {
-        await requireAdmin(req);
+        const adminCheck = await requireAdmin(req);
+        if (adminCheck instanceof NextResponse) return adminCheck;
+
         const { orderId } = await params;
         const { status } = await req.json();
         const order = await updateOrderStatus(orderId, status);
@@ -28,7 +32,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ orde
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
     try {
-        await requireAdmin(req);
+        const adminCheck = await requireAdmin(req);
+        if (adminCheck instanceof NextResponse) return adminCheck;
+
         const { orderId } = await params;
         const { softDeleteOrder } = await import("@/lib/utils/orderHelpers");
         const order = await softDeleteOrder(orderId);

@@ -4,7 +4,8 @@ import { getAllOrders, createOrder, getOrdersPaginated } from "@/lib/utils/order
 
 export async function GET(req: NextRequest) {
     try {
-        await requireAdmin(req);
+        const adminCheck = await requireAdmin(req);
+        if (adminCheck instanceof NextResponse) return adminCheck;
         
         const { searchParams } = new URL(req.url);
         

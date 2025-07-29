@@ -14,6 +14,8 @@ import {
     Legend,
     Filler,
 } from "chart.js";
+import { useAdminApi } from "../use-admin-api";
+import { toast } from "sonner";
 
 // Register chart.js components
 ChartJS.register(
@@ -59,6 +61,7 @@ export default function DashboardPage() {
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const adminApiFetch = useAdminApi();
 
     useEffect(() => {
         fetchDashboardData();
@@ -67,14 +70,16 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/admin/dashboard');
-            if (!response.ok) {
-                throw new Error('Failed to fetch dashboard data');
+            const response = await adminApiFetch('/api/admin/dashboard');
+            if (!response) {
+                throw new Error("Failed to fetch dashboard data");
             }
             const data = await response.json();
             setDashboardData(data);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
+            console.error("Error fetching dashboard data:", error);
+            toast.error("Failed to fetch dashboard data");
         } finally {
             setLoading(false);
         }
@@ -91,7 +96,7 @@ export default function DashboardPage() {
         );
     }
 
-    if (error || !dashboardData) {
+    if (!dashboardData) {
         return (
             <div className="space-y-6">
                 <h1 className="text-xl sm:text-2xl font-bold">Admin Dashboard</h1>

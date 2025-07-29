@@ -5,10 +5,10 @@ import moment from 'moment';
 
 // Get all contact messages
 export async function GET(req: NextRequest) {
-  const adminCheck = await requireAdmin(req);
-  if (adminCheck instanceof NextResponse) return adminCheck;
-
   try {
+    const adminCheck = await requireAdmin(req);
+    if (adminCheck instanceof NextResponse) return adminCheck;
+
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const page = parseInt(searchParams.get('page') || '1');
