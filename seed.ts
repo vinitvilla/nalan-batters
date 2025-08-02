@@ -1,5 +1,5 @@
-const { PrismaClient } = require("./src/generated/prisma");
-const seedConfig = require("./prisma/seeds/config");
+import { PrismaClient } from "./src/generated/prisma";
+import { seedConfigData } from "./prisma/seed-config";
 
 const prisma = new PrismaClient();
 
@@ -7,12 +7,10 @@ async function main() {
   try {
     console.log("🌱 Starting database seeding...");
     
-    
     // Seed config
     console.log("⚙️ Seeding config...");
-    await seedConfig();
+    await seedConfigData(prisma);
     console.log("✅ Config seeded");
-    
     
     console.log("🎉 Database seeding completed successfully!");
   } catch (error) {

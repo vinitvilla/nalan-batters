@@ -57,7 +57,6 @@ model Product {
 
 model Order {
   id                 String        @id @default(uuid())
-  orderNumber        String        @unique @db.Char(5)
   userId             String
   addressId          String
   status             OrderStatus   @default(PENDING)
@@ -73,6 +72,7 @@ model Order {
   isDelete           Boolean       @default(false)
   orderType          OrderType     @default(DELIVERY)
   paymentMethod      PaymentMethod @default(ONLINE)
+  orderNumber        String        @unique @db.Char(5)
   address            Address       @relation(fields: [addressId], references: [id])
   promoCode          PromoCode?    @relation(fields: [promoCodeId], references: [id])
   user               User          @relation(fields: [userId], references: [id])
@@ -93,17 +93,17 @@ model PromoCode {
   id             String       @id @default(uuid())
   code           String       @unique
   discount       Decimal      @db.Decimal(5, 2)
-  discountType   DiscountType @default(PERCENTAGE)
-  description    String?
-  minOrderAmount Decimal?     @db.Decimal(10, 2)
-  maxDiscount    Decimal?     @db.Decimal(10, 2)
-  usageLimit     Int?
-  currentUsage   Int          @default(0)
   isActive       Boolean      @default(true)
   expiresAt      DateTime?
+  discountType   DiscountType @default(PERCENTAGE)
   isDeleted      Boolean      @default(false)
   createdAt      DateTime     @default(now())
+  currentUsage   Int          @default(0)
+  description    String?
+  maxDiscount    Decimal?     @db.Decimal(10, 2)
+  minOrderAmount Decimal?     @db.Decimal(10, 2)
   updatedAt      DateTime     @updatedAt
+  usageLimit     Int?
   orders         Order[]
 }
 

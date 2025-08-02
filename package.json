@@ -12,7 +12,7 @@
     "migrate": "prisma migrate dev",
     "migrate:staging": "prisma migrate deploy",
     "migrate:staging:interactive": "./scripts/migrate-staging.sh",
-    "seed": "node seed.js",
+    "seed": "npx tsx seed.ts",
     "populate": "node scripts/populate-db.js",
     "populate:fresh": "npm run populate",
     "db:setup": "npm run migrate && npm run seed",
