@@ -43,10 +43,8 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
 
   // Order store  
   const promo = useOrderStore(s => s.promo);
-  const promoApplied = useOrderStore(s => s.promoApplied);
   const setPromo = useOrderStore(s => s.setPromo);
-  const setPromoApplied = useOrderStore(s => s.setPromoApplied);
-  const setDiscount = useOrderStore(s => s.setDiscount);
+  const clearPromo = useOrderStore(s => s.clearPromo);
   const applyPromo = useOrderStore(s => s.applyPromo);
   const getOrderCalculations = useOrderStore(s => s.getOrderCalculations);
 
@@ -92,16 +90,14 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
     if (isApplyingPromo) return;
     
     setIsApplyingPromo(true);
-    const result = await applyPromo(promo);
+    const result = await applyPromo(promo.code);
     setPromoError(!result.success);
     setIsApplyingPromo(false);
   };
 
   // Reset promo handler
   const handlePromoReset = () => {
-    setPromo("");
-    setPromoApplied(false);
-    setDiscount(0);
+    clearPromo();
     setPromoError(false);
   };
 
@@ -140,11 +136,11 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
             isTaxWaived={isTaxWaived}
             isConvenienceWaived={isConvenienceWaived}
             isDeliveryWaived={isDeliveryWaived}
-            promo={promo}
-            promoApplied={promoApplied}
+            promo={promo.code}
+            promoApplied={promo.applied}
             promoError={promoError}
             isApplyingPromo={isApplyingPromo}
-            setPromo={setPromo}
+            setPromo={(code: string) => setPromo({ code })}
             setPromoError={setPromoError}
             handlePromoSubmit={handlePromoSubmit}
             handlePromoReset={handlePromoReset}

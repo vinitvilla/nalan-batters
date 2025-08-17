@@ -30,7 +30,11 @@ import {
   Eye,
   Download,
   MoreVertical,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 
 interface Order {
@@ -64,9 +68,17 @@ interface OrderStats {
   todayOrders: number;
 }
 
+interface PaginationData {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export default function PosOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,6 +86,18 @@ export default function PosOrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [loadingPagination, setLoadingPagination] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [pagination, setPagination] = useState<PaginationData>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false
+  });
   const [stats, setStats] = useState<OrderStats>({
     totalOrders: 0,
     totalRevenue: 0,
@@ -81,17 +105,25 @@ export default function PosOrdersPage() {
     todayOrders: 0
   });
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (page = 1, search = '', status = 'all', payment = 'all') => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/admin/pos/orders');
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pageSize.toString(),
+        search,
+        status: status === 'all' ? '' : status,
+        paymentMethod: payment === 'all' ? '' : payment
+      });
+      
+      const response = await fetch(`/api/admin/pos/orders?${params}`);
       const result = await response.json();
       
       if (result.success) {
         setOrders(result.data);
-        setFilteredOrders(result.data);
+        setPagination(result.pagination);
         calculateStats(result.data);
       } else {
         setError(result.error || 'Failed to fetch orders');
@@ -115,36 +147,28 @@ export default function PosOrdersPage() {
     const totalRevenue = orderData.reduce((sum, order) => sum + order.total, 0);
     
     setStats({
-      totalOrders: orderData.length,
+      totalOrders: pagination.total || orderData.length,
       totalRevenue,
       avgOrderValue: orderData.length > 0 ? totalRevenue / orderData.length : 0,
       todayOrders: todayOrders.length
     });
   };
 
-  const filterOrders = () => {
-    let filtered = orders;
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchOrders(1, searchTerm, statusFilter, paymentFilter);
+  };
 
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(order => 
-        order.user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.user.phone.includes(searchTerm) ||
-        order.id.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setLoadingPagination(true);
+    fetchOrders(page, searchTerm, statusFilter, paymentFilter).finally(() => {
+      setLoadingPagination(false);
+    });
+  };
 
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.status === statusFilter);
-    }
-
-    // Payment filter
-    if (paymentFilter !== 'all') {
-      filtered = filtered.filter(order => order.paymentMethod === paymentFilter);
-    }
-
-    setFilteredOrders(filtered);
+  const handleRefresh = () => {
+    fetchOrders(currentPage, searchTerm, statusFilter, paymentFilter);
   };
 
   const handleViewOrder = (order: Order) => {
@@ -153,8 +177,8 @@ export default function PosOrdersPage() {
   };
 
   useEffect(() => {
-    filterOrders();
-  }, [searchTerm, statusFilter, paymentFilter, orders]);
+    handleSearch();
+  }, [statusFilter, paymentFilter]);
 
   useEffect(() => {
     fetchOrders();
@@ -188,7 +212,7 @@ export default function PosOrdersPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Orders</h3>
                 <p className="text-red-600 mb-4">{error}</p>
-                <Button onClick={fetchOrders} className="w-full">
+                <Button onClick={handleRefresh} className="w-full">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Try Again
                 </Button>
@@ -218,13 +242,13 @@ export default function PosOrdersPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                    POS Orders
+                    POS Transactions
                   </h1>
-                  <p className="text-gray-600 mt-1">Manage and track in-store transactions</p>
+                  <p className="text-gray-600 mt-1">Point-of-sale transactions and walk-in customer orders</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button onClick={fetchOrders} variant="outline" className="flex items-center gap-2 hover:bg-blue-50">
+                <Button onClick={handleRefresh} variant="outline" className="flex items-center gap-2 hover:bg-blue-50">
                   <RefreshCw className="h-4 w-4" />
                   Refresh
                 </Button>
@@ -241,9 +265,9 @@ export default function PosOrdersPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-emerald-100 text-sm font-medium">Total Orders</p>
+                      <p className="text-emerald-100 text-sm font-medium">Total Transactions</p>
                       <p className="text-3xl font-bold mt-2">{stats.totalOrders}</p>
-                      <p className="text-emerald-200 text-xs mt-1">All time</p>
+                      <p className="text-emerald-200 text-xs mt-1">POS sales</p>
                     </div>
                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                       <ShoppingCart className="w-6 h-6 text-white" />
@@ -256,9 +280,9 @@ export default function PosOrdersPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-blue-100 text-sm font-medium">Today's Orders</p>
+                      <p className="text-blue-100 text-sm font-medium">Today's Sales</p>
                       <p className="text-3xl font-bold mt-2">{stats.todayOrders}</p>
-                      <p className="text-blue-200 text-xs mt-1">Today's activity</p>
+                      <p className="text-blue-200 text-xs mt-1">In-store today</p>
                     </div>
                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                       <Clock className="w-6 h-6 text-white" />
@@ -271,9 +295,9 @@ export default function PosOrdersPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-100 text-sm font-medium">Total Revenue</p>
+                      <p className="text-purple-100 text-sm font-medium">POS Revenue</p>
                       <p className="text-3xl font-bold mt-2">${stats.totalRevenue.toFixed(2)}</p>
-                      <p className="text-purple-200 text-xs mt-1">All orders</p>
+                      <p className="text-purple-200 text-xs mt-1">In-store sales</p>
                     </div>
                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                       <DollarSign className="w-6 h-6 text-white" />
@@ -318,15 +342,23 @@ export default function PosOrdersPage() {
                     <div className="relative">
                       <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <Input
-                        placeholder="Search by customer name, phone, or order ID..."
+                        placeholder="Search by order number or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                         className="pl-12 h-12 bg-gray-50/50 border-gray-200 focus:border-blue-300 focus:ring-blue-200 text-base"
                       />
                     </div>
                   </div>
                   
                   <div className="flex gap-3">
+                    <Button 
+                      onClick={handleSearch}
+                      className="h-12 px-6 bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      Search
+                    </Button>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="w-44 h-12 bg-gray-50/50 border-gray-200 focus:border-blue-300">
                         <div className="flex items-center gap-2">
@@ -405,27 +437,28 @@ export default function PosOrdersPage() {
           </Card>
 
           {/* Orders Content */}
-          {filteredOrders.length === 0 ? (
+          {orders.length === 0 ? (
             <Card className="bg-white">
               <CardContent className="p-12 text-center">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Receipt className="h-12 w-12 text-gray-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  {orders.length === 0 ? 'No orders yet' : 'No orders match your filters'}
+                  {pagination.total === 0 ? 'No POS transactions yet' : 'No POS orders match your filters'}
                 </h3>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  {orders.length === 0 
-                    ? 'POS sales will appear here once customers make purchases in-store.' 
-                    : 'Try adjusting your search or filter criteria to find the orders you\'re looking for.'
+                  {pagination.total === 0 
+                    ? 'Point-of-sale transactions will appear here when customers make in-store purchases.' 
+                    : 'Try adjusting your search or filter criteria to find the POS transactions you\'re looking for.'
                   }
                 </p>
-                {orders.length > 0 && (
+                {pagination.total > 0 && (
                   <Button 
                     onClick={() => {
                       setSearchTerm('');
                       setStatusFilter('all');
                       setPaymentFilter('all');
+                      fetchOrders(1, '', 'all', 'all');
                     }}
                     variant="outline"
                   >
@@ -438,83 +471,349 @@ export default function PosOrdersPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm text-gray-600">
-                  Showing {filteredOrders.length} of {orders.length} orders
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} orders
                 </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Show:</span>
+                  <Select 
+                    value={pageSize.toString()} 
+                    onValueChange={(value) => {
+                      const newPageSize = Number(value);
+                      setPageSize(newPageSize);
+                      setCurrentPage(1);
+                      // Update the fetch function to use the new page size
+                      const params = new URLSearchParams({
+                        page: '1',
+                        limit: newPageSize.toString(),
+                        search: searchTerm,
+                        status: statusFilter === 'all' ? '' : statusFilter,
+                        paymentMethod: paymentFilter === 'all' ? '' : paymentFilter
+                      });
+                      
+                      fetch(`/api/admin/pos/orders?${params}`)
+                        .then(response => response.json())
+                        .then(result => {
+                          if (result.success) {
+                            setOrders(result.data);
+                            setPagination(result.pagination);
+                            calculateStats(result.data);
+                          }
+                        });
+                    }}
+                  >
+                    <SelectTrigger className="w-20 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <div className="h-4 w-px bg-gray-300 mx-2"></div>
+                  
+                  <div className="flex items-center border rounded-lg p-1 bg-gray-50">
+                    <Button
+                      variant={viewMode === 'card' ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-6 px-2"
+                      onClick={() => setViewMode('card')}
+                    >
+                      <LayoutGrid className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'table' ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-6 px-2"
+                      onClick={() => setViewMode('table')}
+                    >
+                      <List className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
               </div>
               
-              {filteredOrders.map(order => (
-                <Card key={order.id} className="bg-white shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4 flex-1">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Receipt className="h-5 w-5 text-blue-600" />
+              {viewMode === 'card' ? (
+                // Card View
+                orders.map((order: Order) => (
+                  <Card key={order.id} className={`bg-white shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 ${loadingPagination ? 'opacity-50' : ''}`}>
+                    <CardContent className="p-0">
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">
+                            #{order.orderNumber}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                className={`text-xs font-medium ${
+                                  order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
+                                    ? 'bg-green-100 text-green-700 border-green-200' 
+                                    : order.status === 'PENDING'
+                                    ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                    : 'bg-red-100 text-red-700 border-red-200'
+                                }`}
+                              >
+                                {order.status}
+                              </Badge>
+                              <span className="text-sm text-gray-500">•</span>
+                              <span className="text-sm text-gray-600">{moment(order.createdAt).format('MMM D, h:mm A')}</span>
+                            </div>
+                          </div>
                         </div>
                         
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-3">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              #{order.orderNumber}
-                            </h3>
-                            <Badge 
-                              className={`text-xs ${
-                                order.status === 'COMPLETED'  || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
-                                  ? 'bg-green-100 text-green-800' 
-                                  : order.status === 'PENDING'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}
-                            >
-                              {order.status}
-                            </Badge>
-                            {order.discount && (
-                              <Badge className="text-xs flex items-center gap-1 bg-gradient-to-r from-yellow-200 to-yellow-400 text-yellow-900 border border-yellow-300 shadow-sm px-2 py-1">
-                                <span className="font-semibold">Discount</span>
-                                <span className="bg-yellow-100 rounded px-1 text-xs font-mono">
-                                  -${order.discount.toFixed(2)}
-                                </span>
-                              </Badge>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <div className="text-xl font-bold text-green-600">${order.total.toFixed(2)}</div>
+                            {order.discount && order.discount > 0 && (
+                              <div className="text-xs text-green-600">-${order.discount.toFixed(2)} discount</div>
                             )}
                           </div>
-                          
-                          <div className="space-y-2 text-sm text-gray-600">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleViewOrder(order)}
+                            className="h-8 px-3"
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Content Row */}
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Payment & Type Info */}
+                          <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
-                              <User className="h-4 w-4" />
-                              <span>{order.user.fullName}</span>
-                              <span>•</span>
-                              <span>{moment(order.createdAt).format('MMM D, YYYY')}</span>
+                              {order.paymentMethod === 'CASH' ? (
+                                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                  <Banknote className="h-4 w-4 text-green-600" />
+                                </div>
+                              ) : order.paymentMethod === 'CARD' ? (
+                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                  <CreditCard className="h-4 w-4 text-blue-600" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                  <CreditCard className="h-4 w-4 text-purple-600" />
+                                </div>
+                              )}
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{order.paymentMethod}</div>
+                                <div className="text-xs text-gray-500">Payment</div>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              {order.orderType === 'PICKUP' ? <Store className="h-4 w-4" /> : <Truck className="h-4 w-4" />}
-                              <span>{order.orderType}</span>
-                              <span>•</span>
-                              {order.paymentMethod === 'CASH' ? <Banknote className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
-                              <span>{order.paymentMethod}</span>
-                              <span>•</span>
-                              <span>{order.items.length} items</span>
+                          </div>
+
+                          {/* Items Summary */}
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                              <Package className="h-4 w-4 text-orange-600" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{order.items.length} items</div>
+                              <div className="text-xs text-gray-500">
+                                {order.items.slice(0, 2).map(item => item.product.name).join(', ')}
+                                {order.items.length > 2 && ` +${order.items.length - 2} more`}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Tax Info */}
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <Receipt className="h-4 w-4 text-gray-600" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">${order.tax.toFixed(2)}</div>
+                              <div className="text-xs text-gray-500">Tax included</div>
                             </div>
                           </div>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                // Table View
+                <Card className="bg-white">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b">
+                          <tr>
+                            <th className="text-left p-4 font-semibold text-gray-900">Order</th>
+                            <th className="text-left p-4 font-semibold text-gray-900">Time</th>
+                            <th className="text-left p-4 font-semibold text-gray-900">Status</th>
+                            <th className="text-left p-4 font-semibold text-gray-900">Payment</th>
+                            <th className="text-left p-4 font-semibold text-gray-900">Items</th>
+                            <th className="text-left p-4 font-semibold text-gray-900">Tax</th>
+                            <th className="text-right p-4 font-semibold text-gray-900">Total</th>
+                            <th className="text-center p-4 font-semibold text-gray-900">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className={loadingPagination ? 'opacity-50' : ''}>
+                          {orders.map((order: Order) => (
+                            <tr key={order.id} className="border-b hover:bg-gray-50 transition-colors">
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-blue-600 text-white rounded text-xs flex items-center justify-center font-bold">
+                                    #
+                                  </div>
+                                  <span className="font-medium text-gray-900">{order.orderNumber}</span>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-sm text-gray-900">{moment(order.createdAt).format('MMM D')}</div>
+                                <div className="text-xs text-gray-500">{moment(order.createdAt).format('h:mm A')}</div>
+                              </td>
+                              <td className="p-4">
+                                <Badge 
+                                  className={`text-xs ${
+                                    order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
+                                      ? 'bg-green-100 text-green-700 border-green-200' 
+                                      : order.status === 'PENDING'
+                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                      : 'bg-red-100 text-red-700 border-red-200'
+                                  }`}
+                                >
+                                  {order.status}
+                                </Badge>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  {order.paymentMethod === 'CASH' ? (
+                                    <Banknote className="h-4 w-4 text-green-600" />
+                                  ) : (
+                                    <CreditCard className="h-4 w-4 text-blue-600" />
+                                  )}
+                                  <span className="text-sm text-gray-900">{order.paymentMethod}</span>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-sm text-gray-900">{order.items.length} items</div>
+                                <div className="text-xs text-gray-500 max-w-32 truncate">
+                                  {order.items.slice(0, 2).map(item => item.product.name).join(', ')}
+                                  {order.items.length > 2 && '...'}
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <span className="text-sm text-gray-900">${order.tax.toFixed(2)}</span>
+                              </td>
+                              <td className="p-4 text-right">
+                                <div className="text-lg font-bold text-green-600">${order.total.toFixed(2)}</div>
+                                {order.discount && order.discount > 0 && (
+                                  <div className="text-xs text-green-600">-${order.discount.toFixed(2)}</div>
+                                )}
+                              </td>
+                              <td className="p-4 text-center">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => handleViewOrder(order)}
+                                  className="h-7 px-2"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Pagination Controls */}
+              {pagination.totalPages > 1 && (
+                <Card className="mt-6">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Page {pagination.page} of {pagination.totalPages}
+                      </div>
                       
-                      <div className="text-right ml-4">
-                        <div className="text-2xl font-bold text-green-600 mb-2">
-                          ${order.total.toFixed(2)}
-                        </div>
+                      <div className="flex items-center gap-2">
                         <Button 
                           variant="outline" 
-                          size="sm" 
-                          className="text-xs"
-                          onClick={() => handleViewOrder(order)}
+                          size="sm"
+                          disabled={!pagination.hasPrev || loadingPagination}
+                          onClick={() => handlePageChange(1)}
                         >
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
+                          First
                         </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={!pagination.hasPrev || loadingPagination}
+                          onClick={() => handlePageChange(pagination.page - 1)}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous
+                        </Button>
+                        
+                        {/* Page numbers */}
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (pagination.totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (pagination.page <= 3) {
+                              pageNum = i + 1;
+                            } else if (pagination.page >= pagination.totalPages - 2) {
+                              pageNum = pagination.totalPages - 4 + i;
+                            } else {
+                              pageNum = pagination.page - 2 + i;
+                            }
+                            
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={pageNum === pagination.page ? "default" : "outline"}
+                                size="sm"
+                                className="w-8 h-8 p-0"
+                                onClick={() => handlePageChange(pageNum)}
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={!pagination.hasNext || loadingPagination}
+                          onClick={() => handlePageChange(pagination.page + 1)}
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={!pagination.hasNext || loadingPagination}
+                          onClick={() => handlePageChange(pagination.totalPages)}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600">
+                        Total: {pagination.total} orders
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )}
             </div>
           )}
         </div>

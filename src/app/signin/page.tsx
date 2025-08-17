@@ -60,12 +60,7 @@ export default function SignInPage() {
                     <UserAuthFlow
                       onSuccess={(user) => {
                         userStore.getState().setPhone(user.phone);
-                        userStore.getState().setUser({
-                          id: user.id,
-                          phone: user.phone,
-                          fullName: user.fullName || "",
-                          role: user.role
-                        });
+                        userStore.getState().setUser(user);
                         router.push("/");
                       }}
                     />

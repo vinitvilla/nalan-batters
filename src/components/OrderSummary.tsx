@@ -27,16 +27,11 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const config = useConfigStore(s => s.configs);
   const user = userStore(s => s.user);
   const selectedDeliveryDate = useOrderStore(s => s.selectedDeliveryDate);
-  const orderType = useOrderStore(s => s.orderType);
-  const setOrderType = useOrderStore(s => s.setOrderType);
-  const promoId = useOrderStore(s => s.promoId);
+  const deliveryType = useOrderStore(s => s.deliveryType);
+  const setDeliveryType = useOrderStore(s => s.setDeliveryType);
   const promo = useOrderStore(s => s.promo);
-  const promoApplied = useOrderStore(s => s.promoApplied);
-  const discount = useOrderStore(s => s.discount);
-  const discountType = useOrderStore(s => s.discountType);
   const setPromo = useOrderStore(s => s.setPromo);
-  const setPromoApplied = useOrderStore(s => s.setPromoApplied);
-  const setDiscount = useOrderStore(s => s.setDiscount);
+  const clearPromo = useOrderStore(s => s.clearPromo);
   const getOrderCalculations = useOrderStore(s => s.getOrderCalculations);
 
   // State hooks
@@ -46,10 +41,11 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const [applyingPromo, setApplyingPromo] = useState(false);
 
   // Derived values using orderStore calculations
-  const calculations = getOrderCalculations(cartItems, config, selectedAddress, selectedDeliveryDate, orderType);
+  const calculations = getOrderCalculations(cartItems, config, selectedAddress, selectedDeliveryDate, deliveryType);
   const { 
     subtotal, 
     tax, 
+    taxRate,
     convenienceCharge, 
     deliveryCharge, 
     appliedDiscount, 
@@ -64,11 +60,11 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   // Check what's missing for order completion
   const getOrderValidationMessage = () => {
     if (cartItems.length === 0) return "Your cart is empty";
-    if (orderType === 'DELIVERY' && !selectedAddress) return "Please select a delivery address";
-    if (orderType === 'DELIVERY' && !selectedDeliveryDate) return "Please select a delivery date";
+    if (deliveryType === 'DELIVERY' && !selectedAddress) return "Please select a delivery address";
+    if (deliveryType === 'DELIVERY' && !selectedDeliveryDate) return "Please select a delivery date";
     
     // Check if delivery is available for the selected address
-    if (orderType === 'DELIVERY' && selectedAddress && config.freeDelivery) {
+    if (deliveryType === 'DELIVERY' && selectedAddress && config.freeDelivery) {
       const deliveryDates = getNextDeliveryDates(selectedAddress.city || '', config.freeDelivery);
       if (deliveryDates.length === 0) {
         return "Delivery is not available for this location";
@@ -126,7 +122,6 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
 
   const validationMessage = getOrderValidationMessage();
   const isOrderReady = !validationMessage && !placing;
-  const taxRate = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0.13;
 
   // Place order handler
   async function handlePlaceOrder() {
@@ -140,9 +135,10 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
           userId: user?.id,
           addressId: selectedAddress?.id,
           items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity, price: i.price })),
-          promoCodeId: promoApplied && promoId ? promoId : null,
+          promoCodeId: promo.applied && promo.id ? promo.id : null,
           deliveryDate: selectedDeliveryDate,
-          orderType: orderType,
+          orderType: 'ONLINE', // This is an online order from the website
+          deliveryType: deliveryType,
         }),
       });
       const data = await res.json();
@@ -222,26 +218,26 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
                   id="promo-input"
                   type="text"
                   placeholder="Enter promo code"
-                  value={promo}
-                  onChange={e => setPromo(e.target.value)}
-                  className={`w-full border border-yellow-300 rounded-lg px-3 py-2 text-sm focus:border-yellow-500 focus:ring-2 focus:ring-yellow-400/20 ${promoApplied ? 'bg-yellow-100 text-yellow-600' : 'bg-white text-yellow-800'}`}
-                  disabled={promoApplied}
+                  value={promo.code}
+                  onChange={e => setPromo({ code: e.target.value })}
+                  className={`w-full border border-yellow-300 rounded-lg px-3 py-2 text-sm focus:border-yellow-500 focus:ring-2 focus:ring-yellow-400/20 ${promo.applied ? 'bg-yellow-100 text-yellow-600' : 'bg-white text-yellow-800'}`}
+                  disabled={promo.applied}
                   autoComplete="off"
                 />
               </div>
               <Button
                 type="button"
                 size="sm"
-                disabled={promoApplied || !promo || applyingPromo}
-                className={`rounded-lg font-bold px-4 py-2 transition-all shadow ${promoApplied ? 'bg-green-600 text-white' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
+                disabled={promo.applied || !promo.code || applyingPromo}
+                className={`rounded-lg font-bold px-4 py-2 transition-all shadow ${promo.applied ? 'bg-green-600 text-white' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
                 onClick={async () => {
                   setApplyingPromo(true);
-                  const result = await useOrderStore.getState().applyPromo(promo);
+                  const result = await useOrderStore.getState().applyPromo(promo.code);
                   setPromoError(!result.success);
                   setApplyingPromo(false);
                 }}
               >
-                {promoApplied ? (
+                {promo.applied ? (
                   <span className="flex items-center gap-1"><span className="inline-block w-4 h-4 bg-green-500 rounded-full text-white flex items-center justify-center text-xs">✔</span>Applied</span>
                 ) : applyingPromo ? (
                   <span className="flex items-center gap-1"><span className="inline-block w-4 h-4 bg-gray-400 rounded-full text-white flex items-center justify-center text-xs animate-spin">⏳</span>Applying...</span>
@@ -251,10 +247,10 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
               </Button>
             </div>
             {/* Show error or success message for promo code */}
-            {promoError && !promoApplied && (
+            {promoError && !promo.applied && (
               <div className="text-xs text-red-500 font-semibold mb-1">Invalid or expired promo code.</div>
             )}
-            {promoApplied && (
+            {promo.applied && (
               <div className="text-xs text-green-600 font-semibold mb-1">Promo code applied!</div>
             )}
             <div className="flex justify-between text-xs text-yellow-700">
@@ -299,15 +295,13 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
                 <div>Promo Discount
                   <span className="text-xs ml-2 text-red-700 cursor-pointer"
                     onClick={() => {
-                      setPromo("");
-                      setPromoApplied(false);
-                      setDiscount(0);
+                      clearPromo();
                     }}>
                     remove
                   </span>
                 </div>
                 <span>
-                  -{discountType === "PERCENTAGE" ? `${discount}% ($${appliedDiscount.toFixed(2)})` : `$${appliedDiscount.toFixed(2)}`}
+                  -{promo.discountType === "PERCENTAGE" ? `${promo.discount}% ($${appliedDiscount.toFixed(2)})` : `$${appliedDiscount.toFixed(2)}`}
                 </span>
               </div>
             )}
@@ -318,17 +312,17 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
           {/* Order Type and Date/Pickup Info */}
           <div className="space-y-2">
             {/* Order Type Display */}
-            {orderType && (
+            {deliveryType && (
               <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 shadow-sm">
                 <span className="text-sm font-semibold text-blue-700 flex items-center gap-2">
-                  {orderType === 'PICKUP' ? '🏪' : '🚚'} Order Type: <span className="text-blue-800 font-bold">{orderType === 'PICKUP' ? 'Store Pickup' : 'Home Delivery'}</span>
+                  {deliveryType === 'PICKUP' ? '🏪' : '🚚'} Order Type: <span className="text-blue-800 font-bold">{deliveryType === 'PICKUP' ? 'Store Pickup' : 'Home Delivery'}</span>
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-1 h-auto cursor-pointer"
                   onClick={() => {
-                    setOrderType(null); // Reset order type to force re-selection
+                    setDeliveryType(null); // Reset delivery type to force re-selection
                     // Also clear delivery date when changing order type
                     useOrderStore.getState().setSelectedDeliveryDate("");
                   }}

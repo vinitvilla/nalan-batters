@@ -7,7 +7,8 @@ export interface Order {
   id: string;
   userId: string;
   addressId: string;
-  orderType: 'DELIVERY' | 'PICKUP';
+  deliveryType: 'DELIVERY' | 'PICKUP';
+  orderType: 'POS' | 'ONLINE';
   paymentMethod: 'CASH' | 'CARD';
   total: number;
   tax: number;
@@ -25,7 +26,8 @@ export interface OrderResponse {
   id: string;
   userId: string;
   addressId: string;
-  orderType: 'DELIVERY' | 'PICKUP';
+  deliveryType: 'DELIVERY' | 'PICKUP';
+  orderType: 'POS' | 'ONLINE';
   paymentMethod: 'CASH' | 'CARD';
   total: number;
   tax: number;
@@ -75,7 +77,8 @@ export interface OrderItemWithProduct extends OrderItem {
 export interface CreateOrderData {
   userId: string;
   addressId: string;
-  orderType: 'DELIVERY' | 'PICKUP';
+  deliveryType: 'DELIVERY' | 'PICKUP';
+  orderType: 'POS' | 'ONLINE';
   paymentMethod: 'CASH' | 'CARD';
   total: number;
   tax: number;
@@ -89,4 +92,23 @@ export interface CreateOrderItemData {
   productId: string;
   quantity: number;
   price: number;
+}
+
+// Order calculations for store
+export interface OrderCalculations {
+  subtotal: number;
+  tax: number;
+  taxRate: number;
+  convenienceCharge: number;
+  deliveryCharge: number;
+  appliedDiscount: number;
+  finalTotal: number;
+  // Original amounts (before waiving)
+  originalTax: number;
+  originalConvenienceCharge: number;
+  originalDeliveryCharge: number;
+  // Waive flags
+  isTaxWaived: boolean;
+  isConvenienceWaived: boolean;
+  isDeliveryWaived: boolean;
 }

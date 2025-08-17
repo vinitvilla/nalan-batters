@@ -19,8 +19,8 @@ export interface UserResponse {
   fullName: string;
   email?: string | null;
   role: UserRole;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string; // Optional since not all API endpoints include timestamps
+  updatedAt?: string; // Optional since not all API endpoints include timestamps
 }
 
 // User type with relationships

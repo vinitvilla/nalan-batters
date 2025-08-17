@@ -236,12 +236,7 @@ export default function CheckoutPage() {
                     <UserAuthFlow
                       onSuccess={(user) => {
                         userStore.getState().setPhone(user.phone);
-                        userStore.getState().setUser({
-                          id: user.id,
-                          phone: user.phone,
-                          fullName: user.fullName || "",
-                          role: user.role
-                        });
+                        userStore.getState().setUser(user);
                       }}
                     />
                   </div>

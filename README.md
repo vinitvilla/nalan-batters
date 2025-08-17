@@ -190,7 +190,6 @@ components/
 ├── CheckoutContactDelivery.tsx # Checkout delivery form
 ├── ChooseDeliveryDate.tsx   # Delivery date picker
 ├── ContactSection.tsx       # Contact information section
-├── DeliveryMapModal.tsx     # Delivery area map modal
 ├── EnvironmentBadge.tsx     # Environment indicator
 ├── FeaturesSection.tsx      # Product features section
 ├── Footer.tsx               # Site footer
@@ -199,18 +198,16 @@ components/
 ├── Header.tsx               # Site header
 ├── HeroSection.tsx          # Landing page hero
 ├── MainNav.tsx              # Main navigation
-├── Map.js                   # Google Maps component (JS)
-├── Map.tsx                  # Google Maps component (TS)
 ├── OpeningHours.tsx         # Business hours display
 ├── OrderSummary.tsx         # Order summary component
 ├── PermissionWrapper.tsx    # Role-based access control
 ├── ProductList.tsx          # Product listing component
 ├── QuickOrderSection.tsx    # Quick order interface
 ├── SessionHydrator.tsx      # Session state hydration
+├── SimpleDeliveryMap.tsx    # Simple delivery locations map
 ├── TestimonialsSection.tsx  # Customer testimonials
 ├── UserDropdown.tsx         # User menu dropdown
 ├── UserLoginButton.tsx      # Login/logout button
-├── shortestWay.tsx          # Route optimization component
 ├── admin/                   # Admin-specific components
 ├── auth/                    # Authentication components
 └── ui/                      # Reusable UI components (shadcn/ui)

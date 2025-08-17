@@ -68,11 +68,12 @@ model Order {
   discount           Decimal?      @db.Decimal(10, 2)
   tax                Decimal?      @db.Decimal(10, 2)
   deliveryDate       DateTime?
-  convenienceCharges Decimal?      @db.Decimal(10, 2)
-  isDelete           Boolean       @default(false)
-  orderType          OrderType     @default(DELIVERY)
-  paymentMethod      PaymentMethod @default(ONLINE)
-  orderNumber        String        @unique @db.Char(5)
+  convenienceCharges Decimal?       @db.Decimal(10, 2)
+  isDelete           Boolean        @default(false)
+  deliveryType       DeliveryType   @default(DELIVERY)
+  orderType          OrderSource    @default(ONLINE)
+  paymentMethod      PaymentMethod  @default(ONLINE)
+  orderNumber        String         @unique @db.Char(5)
   address            Address       @relation(fields: [addressId], references: [id])
   promoCode          PromoCode?    @relation(fields: [promoCodeId], references: [id])
   user               User          @relation(fields: [userId], references: [id])
@@ -179,9 +180,14 @@ enum OrderStatus {
   CANCELLED
 }
 
-enum OrderType {
+enum DeliveryType {
   PICKUP
   DELIVERY
+}
+
+enum OrderSource {
+  POS
+  ONLINE
 }
 
 enum PaymentMethod {

@@ -47,11 +47,11 @@ export function CheckoutContactDelivery({
   const [deliveryDates, setDeliveryDates] = useState<Array<{ date: string, day: string }>>([]);
   const selectedDeliveryDate = useOrderStore(s => s.selectedDeliveryDate);
   const setSelectedDeliveryDate = useOrderStore(s => s.setSelectedDeliveryDate);
-  const orderType = useOrderStore(s => s.orderType);
+  const deliveryType = useOrderStore(s => s.deliveryType);
 
   useEffect(() => {
     // Only calculate delivery dates for delivery orders
-    if (orderType !== 'DELIVERY' || !selectedAddress?.city || !freeDeliveryConfig) {
+    if (deliveryType !== 'DELIVERY' || !selectedAddress?.city || !freeDeliveryConfig) {
       setDeliveryDates([]);
       setSelectedDeliveryDate("");
       return;
@@ -59,7 +59,7 @@ export function CheckoutContactDelivery({
     const dates = getNextDeliveryDates(selectedAddress.city, freeDeliveryConfig);
     setDeliveryDates(dates);
     setSelectedDeliveryDate(dates[0]?.date || "");
-  }, [selectedAddress, freeDeliveryConfig, setSelectedDeliveryDate, orderType]);
+  }, [selectedAddress, freeDeliveryConfig, setSelectedDeliveryDate, deliveryType]);
 
   const handleAddressAdded = useCallback(() => {
     onAddAddress();
@@ -93,7 +93,7 @@ export function CheckoutContactDelivery({
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
                 <p className="text-gray-600">
-                  {orderType === 'PICKUP' 
+                  {deliveryType === 'PICKUP' 
                     ? 'We need your name for pickup confirmation'
                     : 'We need your name for delivery confirmation'
                   }
@@ -115,7 +115,7 @@ export function CheckoutContactDelivery({
         </div>
 
         {/* Delivery Address - Only show for delivery orders */}
-        {orderType === 'DELIVERY' && (
+        {deliveryType === 'DELIVERY' && (
           <div className={STEP_CARD_STYLES}>
             <div className={STEP_HEADER_STYLES}>
               <div className="flex items-center gap-4">
@@ -348,7 +348,7 @@ export function CheckoutContactDelivery({
         )}
 
         {/* Delivery Date - Only show for delivery orders */}
-        {orderType === 'DELIVERY' && hasAddresses && selectedAddress && (
+        {deliveryType === 'DELIVERY' && hasAddresses && selectedAddress && (
           <div className={STEP_CARD_STYLES}>
             <div className={STEP_HEADER_STYLES}>
               <div className="flex items-center gap-4">
@@ -391,8 +391,8 @@ export function CheckoutContactDelivery({
         )}
 
         {/* Completion Indicator */}
-        {((orderType === 'DELIVERY' && hasAddresses && selectedAddress && selectedDeliveryDate && deliveryDates.length > 0) || 
-          (orderType === 'PICKUP' && name.trim().length > 0)) && (
+        {((deliveryType === 'DELIVERY' && hasAddresses && selectedAddress && selectedDeliveryDate && deliveryDates.length > 0) || 
+          (deliveryType === 'PICKUP' && name.trim().length > 0)) && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-8 text-center shadow-lg">
             <div className="flex justify-center mb-6">
               <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 text-white rounded-3xl flex items-center justify-center shadow-lg">
@@ -401,7 +401,7 @@ export function CheckoutContactDelivery({
             </div>
             <h3 className="text-2xl font-bold text-green-900 mb-3">Ready to Place Order!</h3>
             <p className="text-green-700 text-lg leading-relaxed max-w-md mx-auto">
-              {orderType === 'PICKUP' 
+              {deliveryType === 'PICKUP' 
                 ? 'All information complete. You can now proceed to payment and finalize your pickup order.'
                 : 'All information complete. You can now proceed to payment and finalize your delicious batter order.'
               }

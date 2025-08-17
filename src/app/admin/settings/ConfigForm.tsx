@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { camelToTitle } from "@/lib/utils/commonFunctions";
 import { Trash2, Plus, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AdditionalChargesForm } from "@/components/AdditionalChargesForm";
 
 interface Config {
   id?: string;
@@ -215,7 +216,17 @@ export default function ConfigForm() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {typeof config.value === "object" && config.value !== null ? (
+                  {config.key === 'additionalCharges' || config.title === 'additionalCharges' ? (
+                    // Special beautiful form for Additional Charges
+                    <AdditionalChargesForm
+                      value={config.value as any}
+                      onChange={(newValue) => {
+                        handleChange(idx, newValue);
+                        setError(null);
+                      }}
+                      disabled={saving}
+                    />
+                  ) : typeof config.value === "object" && config.value !== null ? (
                     Object.entries(config.value).map(([key, val]) => (
                       <div key={key} className="space-y-2">
                         <label className="text-sm font-semibold capitalize">

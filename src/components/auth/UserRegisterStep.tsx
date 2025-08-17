@@ -1,4 +1,4 @@
-import { UserType } from "@/types/UserType";
+import { UserResponse } from "@/types/user";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,7 @@ import { userStore } from "@/store/userStore";
 import { useState } from "react";
 
 export interface UserRegisterStepProps {
-  onRegistered: (user: UserType) => void;
+  onRegistered: (user: UserResponse) => void;
   onBack: () => void;
 }
 
@@ -32,14 +32,7 @@ export function UserRegisterStep({ onRegistered, onBack }: UserRegisterStepProps
       });
       const data = await res.json();
       if (!res.ok || !data.user?.id) throw new Error(data.error || "Registration failed");
-      onRegistered({
-        id: data.user.id,
-        phone: data.user.phone,
-        fullName: data.user.fullName || fullName,
-        role: data.user.role, // Ensure the backend returns 'role'
-        addresses: data.user.addresses,
-        defaultAddress: data.user.defaultAddress,
-      });
+      onRegistered(data.user); // Pass the complete user object from API
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
