@@ -30,6 +30,35 @@ export default function ConfigForm() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Helper function to sort object entries by day of week if applicable
+  const getSortedEntries = (configKey: string, value: unknown): [string, unknown][] => {
+    if (typeof value !== "object" || value === null) {
+      return [];
+    }
+    
+    const entries = Object.entries(value);
+    
+    // Check if this is the freeDelivery config (contains day names)
+    if (configKey === 'freeDelivery' || configKey === 'operatingHours') {
+      const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const isDayConfig = entries.some(([key]) => daysOrder.includes(key));
+      
+      if (isDayConfig) {
+        return entries.sort(([keyA], [keyB]) => {
+          const indexA = daysOrder.indexOf(keyA);
+          const indexB = daysOrder.indexOf(keyB);
+          // Put days in order, keep non-day keys at the end
+          if (indexA === -1 && indexB === -1) return 0;
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+          return indexA - indexB;
+        });
+      }
+    }
+    
+    return entries;
+  };
+
   useEffect(() => {
     adminApiFetch("/api/admin/config").then(async (res) => {
       if (!res) return;
@@ -227,7 +256,7 @@ export default function ConfigForm() {
                       disabled={saving}
                     />
                   ) : typeof config.value === "object" && config.value !== null ? (
-                    Object.entries(config.value).map(([key, val]) => (
+                    getSortedEntries(config.key || config.title || '', config.value).map(([key, val]) => (
                       <div key={key} className="space-y-2">
                         <label className="text-sm font-semibold capitalize">
                           {key.replace(/([A-Z])/g, ' $1').trim()}
