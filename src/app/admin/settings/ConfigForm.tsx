@@ -13,6 +13,8 @@ import { camelToTitle } from "@/lib/utils/commonFunctions";
 import { Trash2, Plus, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AdditionalChargesForm } from "@/components/AdditionalChargesForm";
+import { OperatingHoursForm } from "@/components/OperatingHoursForm";
+import { FreeDeliveryForm } from "@/components/FreeDeliveryForm";
 
 interface Config {
   id?: string;
@@ -248,6 +250,26 @@ export default function ConfigForm() {
                   {config.key === 'additionalCharges' || config.title === 'additionalCharges' ? (
                     // Special beautiful form for Additional Charges
                     <AdditionalChargesForm
+                      value={config.value as any}
+                      onChange={(newValue) => {
+                        handleChange(idx, newValue);
+                        setError(null);
+                      }}
+                      disabled={saving}
+                    />
+                  ) : config.key === 'operatingHours' || config.title === 'operatingHours' ? (
+                    // Special beautiful form for Operating Hours
+                    <OperatingHoursForm
+                      value={config.value as any}
+                      onChange={(newValue) => {
+                        handleChange(idx, newValue);
+                        setError(null);
+                      }}
+                      disabled={saving}
+                    />
+                  ) : config.key === 'freeDelivery' || config.title === 'freeDelivery' ? (
+                    // Special beautiful form for Free Delivery
+                    <FreeDeliveryForm
                       value={config.value as any}
                       onChange={(newValue) => {
                         handleChange(idx, newValue);
