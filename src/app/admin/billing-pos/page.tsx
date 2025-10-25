@@ -365,34 +365,24 @@ export default function BillingPage() {
               <Alert 
                 key={alert.id} 
                 variant={alert.type === 'error' ? 'destructive' : 'default'}
-                className={`shadow-lg border-l-4 ${
-                  alert.type === 'success' ? 'border-l-green-500 bg-green-50' :
-                  alert.type === 'error' ? 'border-l-red-500' :
-                  alert.type === 'warning' ? 'border-l-yellow-500 bg-yellow-50' :
-                  'border-l-blue-500 bg-blue-50'
+                className={`shadow-lg border-l-4 bg-white ${
+                  alert.type === 'success' ? 'border-l-gray-800' :
+                  alert.type === 'error' ? 'border-l-black' :
+                  alert.type === 'warning' ? 'border-l-gray-600' :
+                  'border-l-gray-500'
                 }`}
               >
                 <div className="flex items-start justify-between w-full">
                   <div className="flex items-start gap-2">
-                    {alert.type === 'success' && <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />}
-                    {alert.type === 'error' && <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />}
-                    {alert.type === 'warning' && <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />}
-                    {alert.type === 'info' && <Search className="h-4 w-4 text-blue-600 mt-0.5" />}
+                    {alert.type === 'success' && <CheckCircle className="h-4 w-4 text-gray-800 mt-0.5" />}
+                    {alert.type === 'error' && <AlertTriangle className="h-4 w-4 text-black mt-0.5" />}
+                    {alert.type === 'warning' && <AlertTriangle className="h-4 w-4 text-gray-600 mt-0.5" />}
+                    {alert.type === 'info' && <Search className="h-4 w-4 text-gray-600 mt-0.5" />}
                     <div>
-                      <AlertTitle className={`text-sm font-semibold ${
-                        alert.type === 'success' ? 'text-green-800' :
-                        alert.type === 'error' ? 'text-red-800' :
-                        alert.type === 'warning' ? 'text-yellow-800' :
-                        'text-blue-800'
-                      }`}>
+                      <AlertTitle className="text-sm font-semibold text-black">
                         {alert.title}
                       </AlertTitle>
-                      <AlertDescription className={`text-xs whitespace-pre-line ${
-                        alert.type === 'success' ? 'text-green-700' :
-                        alert.type === 'error' ? 'text-red-700' :
-                        alert.type === 'warning' ? 'text-yellow-700' :
-                        'text-blue-700'
-                      }`}>
+                      <AlertDescription className="text-xs whitespace-pre-line text-gray-700">
                         {alert.message}
                       </AlertDescription>
                     </div>
@@ -401,7 +391,7 @@ export default function BillingPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => removeAlert(alert.id)}
-                    className="h-6 w-6 p-0 hover:bg-transparent"
+                    className="h-6 w-6 p-0 hover:bg-gray-100"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -416,15 +406,15 @@ export default function BillingPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Live Billing (POS)</h1>
-                <p className="text-gray-600">Point of Sale system for walk-in customers</p>
+                <h1 className="text-3xl font-bold text-black mb-2">Live Billing (POS)</h1>
+                <p className="text-gray-700">Point of Sale system for walk-in customers</p>
               </div>
               {alerts.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={clearAllAlerts}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 border-gray-300 hover:bg-gray-100"
                 >
                   <X className="h-4 w-4" />
                   Clear Alerts ({alerts.length})
@@ -441,11 +431,11 @@ export default function BillingPage() {
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-gray-300 focus:border-black focus:ring-black"
               />
             </div>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 border-gray-300 focus:border-black focus:ring-black">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -456,7 +446,7 @@ export default function BillingPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" size="icon" title="Barcode Scanner">
+            <Button variant="outline" size="icon" title="Barcode Scanner" className="border-gray-300 hover:bg-gray-100">
               <Scan className="h-4 w-4" />
             </Button>
           </div>
@@ -467,14 +457,14 @@ export default function BillingPage() {
               {filteredProducts.map(product => (
                 <Card 
                   key={product.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="cursor-pointer hover:shadow-md transition-shadow border-gray-200"
                   onClick={() => addToCart(product)}
                 >
                   <CardContent className="p-4">
                     <div className="text-center">
-                      <h3 className="font-semibold text-sm mb-2 line-clamp-2">{product.name}</h3>
-                      <Badge variant="secondary" className="mb-2">{product.category?.name}</Badge>
-                      <p className="text-lg font-bold text-green-600">${parseFloat(product.price.toString()).toFixed(2)}</p>
+                      <h3 className="font-semibold text-sm mb-2 line-clamp-2 text-black">{product.name}</h3>
+                      <Badge variant="secondary" className="mb-2 bg-gray-100 text-gray-800">{product.category?.name}</Badge>
+                      <p className="text-lg font-bold text-black">${parseFloat(product.price.toString()).toFixed(2)}</p>
                       <p className="text-xs text-gray-500">Stock: {product.stock}</p>
                     </div>
                   </CardContent>
@@ -503,7 +493,7 @@ export default function BillingPage() {
                     placeholder="Customer phone number"
                     value={getPhoneDisplayValue()}
                     onChange={(e) => handlePhoneChange(e.target.value)}
-                    className={`${customer.isExistingUser ? 'border-green-500 bg-green-50' : ''}`}
+                    className={`border-gray-300 focus:border-black focus:ring-black ${customer.isExistingUser ? 'border-gray-500 bg-gray-50' : ''}`}
                   />
                   {lookingUpUser && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -517,7 +507,7 @@ export default function BillingPage() {
                   size="sm"
                   onClick={handleManualLookup}
                   disabled={!customer.phone || customer.phone.length < 10 || lookingUpUser}
-                  className="px-3 flex items-center gap-1 whitespace-nowrap"
+                  className="px-3 flex items-center gap-1 whitespace-nowrap border-gray-300 hover:bg-gray-100"
                   title="Look up existing customer by phone number"
                 >
                   <Search className="h-4 w-4" />
@@ -530,25 +520,25 @@ export default function BillingPage() {
                   placeholder="Customer name"
                   value={customer.name || ''}
                   onChange={(e) => setCustomer((prev: PosCustomerData) => ({ ...prev, name: e.target.value }))}
-                  className={`${customer.isExistingUser ? 'border-green-500 bg-green-50' : ''}`}
+                  className={`border-gray-300 focus:border-black focus:ring-black ${customer.isExistingUser ? 'border-gray-500 bg-gray-50' : ''}`}
                   disabled={customer.isExistingUser}
                 />
                 {customer.isExistingUser && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <User className="h-4 w-4 text-green-600" />
+                    <User className="h-4 w-4 text-gray-700" />
                   </div>
                 )}
               </div>
               
               {customer.isExistingUser && (
-                <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
+                <div className="flex items-center gap-2 text-sm text-gray-800 bg-gray-100 p-2 rounded-md border border-gray-300">
                   <User className="h-4 w-4" />
                   <span>Existing customer found and linked to order</span>
                 </div>
               )}
               
               {customer.phone && !customer.isExistingUser && !lookingUpUser && customer.phone.length >= 10 && (
-                <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-2 rounded-md">
+                <div className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 p-2 rounded-md border border-gray-300">
                   <span>New customer - will be added to system</span>
                 </div>
               )}
@@ -566,9 +556,9 @@ export default function BillingPage() {
             ) : (
               <div className="space-y-3">
                 {cart.map(item => (
-                  <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm">{item.name}</h4>
+                      <h4 className="font-medium text-sm text-black">{item.name}</h4>
                       <p className="text-xs text-gray-500">${item.price.toFixed(2)} each</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -576,14 +566,16 @@ export default function BillingPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => updateQuantity(item.id, -1)}
+                        className="border-gray-300 hover:bg-gray-100"
                       >
                         <Minus className="h-3 w-3" />
                       </Button>
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
+                      <span className="w-8 text-center font-medium text-black">{item.quantity}</span>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => updateQuantity(item.id, 1)}
+                        className="border-gray-300 hover:bg-gray-100"
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
@@ -591,11 +583,12 @@ export default function BillingPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => removeFromCart(item.id)}
+                        className="hover:bg-gray-100"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
-                    <div className="w-16 text-right font-medium">
+                    <div className="w-16 text-right font-medium text-black">
                       ${item.total.toFixed(2)}
                     </div>
                   </div>
@@ -606,44 +599,44 @@ export default function BillingPage() {
 
           {/* Checkout Area */}
           {cart.length > 0 && (
-            <div className="p-6 border-t bg-gray-50">
+            <div className="p-6 border-t bg-white">
               {/* Discount */}
               <div className="mb-4">
-                <label className="text-sm font-medium">Discount %</label>
+                <label className="text-sm font-medium text-black">Discount %</label>
                 <Input
                   type="number"
                   placeholder="0"
                   value={discount}
                   onChange={(e) => setDiscount(Number(e.target.value) || 0)}
-                  className="mt-1"
+                  className="mt-1 border-gray-300 focus:border-black focus:ring-black"
                 />
               </div>
 
               {/* Totals */}
               <div className="space-y-2 mb-4 text-sm">
-                <div className="flex justify-between">
+                <div className="flex justify-between text-gray-700">
                   <span>Subtotal:</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
                 {discount > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-gray-700">
                     <span>Discount ({discount}%):</span>
                     <span>-${discountAmount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
+                <div className="flex justify-between text-gray-700">
                   <span>Tax ({Math.round(originalTaxRate * 100)}%)</span>
                   {isTaxWaived ? (
                     <div className="flex items-center gap-2">
-                      <span className="line-through text-red-500">${originalTax.toFixed(2)}</span>
-                      <span className="text-green-600 font-semibold">$0.00</span>
+                      <span className="line-through text-gray-400">${originalTax.toFixed(2)}</span>
+                      <span className="text-gray-800 font-semibold">$0.00</span>
                     </div>
                   ) : (
                     <span>${tax.toFixed(2)}</span>
                   )}
                 </div>
                 <Separator />
-                <div className="flex justify-between font-bold text-lg">
+                <div className="flex justify-between font-bold text-lg text-black">
                   <span>Total:</span>
                   <span>${finalTotal.toFixed(2)}</span>
                 </div>
@@ -651,9 +644,9 @@ export default function BillingPage() {
 
               {/* Payment Method */}
               <Tabs value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'cash' | 'card')}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="cash">Cash</TabsTrigger>
-                  <TabsTrigger value="card">Card</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 bg-gray-100">
+                  <TabsTrigger value="cash" className="data-[state=active]:bg-black data-[state=active]:text-white">Cash</TabsTrigger>
+                  <TabsTrigger value="card" className="data-[state=active]:bg-black data-[state=active]:text-white">Card</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="cash" className="mt-4">
@@ -662,17 +655,17 @@ export default function BillingPage() {
                     placeholder="Amount received"
                     value={receivedAmount}
                     onChange={(e) => setReceivedAmount(e.target.value)}
-                    className="mb-2"
+                    className="mb-2 border-gray-300 focus:border-black focus:ring-black"
                   />
                   {receivedAmount && (
-                    <p className="text-sm text-gray-600">
-                      Change: <span className="font-bold">${changeAmount.toFixed(2)}</span>
+                    <p className="text-sm text-gray-700">
+                      Change: <span className="font-bold text-black">${changeAmount.toFixed(2)}</span>
                     </p>
                   )}
                 </TabsContent>
                 
                 <TabsContent value="card" className="mt-4">
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-gray-700 mb-2">
                     Ready for card payment
                   </p>
                 </TabsContent>
@@ -683,14 +676,14 @@ export default function BillingPage() {
                 <Button 
                   variant="outline" 
                   onClick={clearCart}
-                  className="flex-1"
+                  className="flex-1 border-gray-300 hover:bg-gray-100"
                 >
                   Clear
                 </Button>
                 <Button 
                   onClick={processPayment}
                   disabled={paymentMethod === 'cash' && (!receivedAmount || parseFloat(receivedAmount) < finalTotal)}
-                  className="flex-1"
+                  className="flex-1 bg-black hover:bg-gray-800 text-white"
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Pay ${finalTotal.toFixed(2)}
