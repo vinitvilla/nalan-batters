@@ -52,6 +52,7 @@ interface GetOrdersParams {
     paymentMethod?: string;
     startDate?: string;
     endDate?: string;
+    deliveryDate?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
 }
@@ -65,6 +66,7 @@ export async function getOrdersPaginated({
     paymentMethod,
     startDate,
     endDate,
+    deliveryDate,
     sortBy = 'createdAt',
     sortOrder = 'desc'
 }: GetOrdersParams) {
@@ -104,7 +106,15 @@ export async function getOrdersPaginated({
 
     // Status filter
     if (status && status !== 'all') {
-        whereClause.status = status.toUpperCase();
+        if (status.startsWith('!')) {
+            // Handle "not" status (e.g., "!CANCELLED")
+            const excludedStatus = status.substring(1).toUpperCase();
+            whereClause.status = {
+                not: excludedStatus
+            };
+        } else {
+            whereClause.status = status.toUpperCase();
+        }
     }
 
     // Order type filter
@@ -117,22 +127,56 @@ export async function getOrdersPaginated({
         whereClause.paymentMethod = paymentMethod.toUpperCase();
     }
 
-    // Date range filter
+    // Date range filter (for order creation date)
     if (startDate || endDate) {
         console.log('Date filter received:', { startDate, endDate });
         whereClause.createdAt = {};
+        
         if (startDate) {
-            // Parse date and set to start of day in local timezone using moment
-            const startDateTime = moment(startDate).startOf('day').toDate();
+            // Validate and parse start date
+            const startMoment = moment(startDate, 'YYYY-MM-DD', true);
+            if (!startMoment.isValid()) {
+                console.error('Invalid start date format:', startDate);
+                throw new Error(`Invalid start date format: ${startDate}. Expected format: YYYY-MM-DD`);
+            }
+            const startDateTime = startMoment.startOf('day').toDate();
             console.log('Start date parsed:', startDateTime);
             whereClause.createdAt.gte = startDateTime;
         }
+        
         if (endDate) {
-            // Parse date and set to end of day in local timezone using moment
-            const endDateTime = moment(endDate).endOf('day').toDate();
+            // Validate and parse end date
+            const endMoment = moment(endDate, 'YYYY-MM-DD', true);
+            if (!endMoment.isValid()) {
+                console.error('Invalid end date format:', endDate);
+                throw new Error(`Invalid end date format: ${endDate}. Expected format: YYYY-MM-DD`);
+            }
+            const endDateTime = endMoment.endOf('day').toDate();
             console.log('End date parsed:', endDateTime);
             whereClause.createdAt.lte = endDateTime;
         }
+    }
+
+    // Delivery date filter (for specific delivery date)
+    if (deliveryDate) {
+        console.log('Delivery date filter received:', deliveryDate);
+        
+        // Validate the date format and create a valid moment object
+        const deliveryMoment = moment(deliveryDate, 'YYYY-MM-DD', true); // strict parsing
+        
+        if (!deliveryMoment.isValid()) {
+            console.error('Invalid delivery date format:', deliveryDate);
+            throw new Error(`Invalid delivery date format: ${deliveryDate}. Expected format: YYYY-MM-DD`);
+        }
+        
+        const deliveryStart = deliveryMoment.startOf('day').toDate();
+        const deliveryEnd = deliveryMoment.endOf('day').toDate();
+        console.log('Delivery date range:', { deliveryStart, deliveryEnd });
+        
+        whereClause.deliveryDate = {
+            gte: deliveryStart,
+            lte: deliveryEnd
+        };
     }
 
     // Build orderBy clause for sorting

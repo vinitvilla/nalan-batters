@@ -22,6 +22,12 @@ function validateConfiguration() {
   if (CONFIG.ORDERS_PER_DAY_MIN > CONFIG.ORDERS_PER_DAY_MAX) {
     throw new Error('ORDERS_PER_DAY_MIN cannot be greater than ORDERS_PER_DAY_MAX');
   }
+  if (CONFIG.USER_ORDER_PROBABILITY < 0 || CONFIG.USER_ORDER_PROBABILITY > 1) {
+    throw new Error('USER_ORDER_PROBABILITY must be between 0 and 1');
+  }
+  if (CONFIG.MAX_ADDRESSES_PER_USER < 1 || CONFIG.MAX_ADDRESSES_PER_USER > 5) {
+    throw new Error('MAX_ADDRESSES_PER_USER must be between 1 and 5');
+  }
 }
 
 // ===== CONFIGURATION =====
@@ -32,17 +38,21 @@ function validateConfiguration() {
  */
 const CONFIG = {
   /** Number of mock users to create (1-10000) */
-  USERS_COUNT: 2,
+  USERS_COUNT: 50,
   /** Minimum orders per day for online orders (realistic range) */
-  ORDERS_PER_DAY_MIN: 5,
+  ORDERS_PER_DAY_MIN: 15,
   /** Maximum orders per day for online orders (realistic range) */
-  ORDERS_PER_DAY_MAX: 10,
+  ORDERS_PER_DAY_MAX: 20,
   /** Minimum POS orders per day (store pickup orders) */
-  POS_ORDERS_PER_DAY_MIN: 3,
+  POS_ORDERS_PER_DAY_MIN: 30,
   /** Maximum POS orders per day (store pickup orders) */
-  POS_ORDERS_PER_DAY_MAX: 8,
+  POS_ORDERS_PER_DAY_MAX: 40,
   /** Number of days to simulate historical data (1-365) */
-  DAYS_TO_SIMULATE: 180, // 6 months of data
+  DAYS_TO_SIMULATE: 30, // 30 days of historical data
+  /** Maximum addresses per user (increased for better distribution) */
+  MAX_ADDRESSES_PER_USER: 1,
+  /** Probability that a user will order on any given day (0-1) */
+  USER_ORDER_PROBABILITY: 0.1, // 10% chance per user per day
 };
 
 /**
@@ -401,79 +411,140 @@ function generateRealGTAAddress() {
     { street: '200 Bay St', unit: Math.random() > 0.5 ? `Suite ${Math.floor(Math.random() * 500) + 100}` : null, city: 'Toronto', postal: 'M5J 2J1' },
     { street: '88 Queens Quay W', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 300) + 100}` : null, city: 'Toronto', postal: 'M5J 0B8' },
     { street: '123 Front St W', unit: Math.random() > 0.8 ? `Apt ${Math.floor(Math.random() * 50) + 1}` : null, city: 'Toronto', postal: 'M5J 2M2' },
-    
+    { street: '250 Dundas St W', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 400) + 100}` : null, city: 'Toronto', postal: 'M5T 2Z5' },
+    { street: '33 Harbour Sq', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 600) + 100}` : null, city: 'Toronto', postal: 'M5J 2G2' },
+    { street: '500 University Ave', unit: null, city: 'Toronto', postal: 'M5G 1V7' },
+    { street: '777 Bay St', unit: Math.random() > 0.6 ? `Suite ${Math.floor(Math.random() * 200) + 10}` : null, city: 'Toronto', postal: 'M5G 2C8' },
+    { street: '299 Queen St W', unit: null, city: 'Toronto', postal: 'M5V 2Z5' },
+
     // North York
     { street: '5000 Yonge St', unit: Math.random() > 0.5 ? `Unit ${Math.floor(Math.random() * 200) + 1}` : null, city: 'North York', postal: 'M2N 7E9' },
     { street: '4700 Keele St', unit: null, city: 'North York', postal: 'M3J 1P3' },
     { street: '1200 Sheppard Ave E', unit: Math.random() > 0.7 ? `Suite ${Math.floor(Math.random() * 100) + 10}` : null, city: 'North York', postal: 'M2K 2S5' },
     { street: '3401 Dufferin St', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 150) + 1}` : null, city: 'North York', postal: 'M6A 2T9' },
     { street: '2200 Finch Ave W', unit: null, city: 'North York', postal: 'M3N 2V7' },
-    
+    { street: '1500 Don Mills Rd', unit: Math.random() > 0.6 ? `Suite ${Math.floor(Math.random() * 200) + 10}` : null, city: 'North York', postal: 'M3B 3K4' },
+    { street: '35 Finch Ave E', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 300) + 100}` : null, city: 'North York', postal: 'M2N 6Z8' },
+    { street: '5650 Yonge St', unit: null, city: 'North York', postal: 'M2M 4G3' },
+    { street: '1800 Sheppard Ave E', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'North York', postal: 'M2J 5A7' },
+    { street: '1010 Wilson Ave', unit: null, city: 'North York', postal: 'M3K 1G6' },
+
     // Scarborough
     { street: '300 Borough Dr', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 800) + 100}` : null, city: 'Scarborough', postal: 'M1P 4P5' },
     { street: '4700 Lawrence Ave E', unit: null, city: 'Scarborough', postal: 'M1E 2V2' },
     { street: '1911 Kennedy Rd', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 50) + 1}` : null, city: 'Scarborough', postal: 'M1P 2L9' },
     { street: '200 Town Centre Crt', unit: Math.random() > 0.6 ? `Suite ${Math.floor(Math.random() * 300) + 100}` : null, city: 'Scarborough', postal: 'M1P 4X4' },
-    { street: '2623 Eglinton Ave E', unit: 'Unit 1', city: 'Scarborough', postal: 'M1K 2S2' }, // Nalan Batters store
-    
+    { street: '2623 Eglinton Ave E', unit: 'Unit 1', city: 'Scarborough', postal: 'M1K 2S2' },
+    { street: '1050 Markham Rd', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 500) + 100}` : null, city: 'Scarborough', postal: 'M1H 2Y7' },
+    { street: '3415 Kingston Rd', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Scarborough', postal: 'M1M 1R4' },
+    { street: '1750 Brimley Rd', unit: null, city: 'Scarborough', postal: 'M1P 0C8' },
+    { street: '2900 Warden Ave', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 150) + 1}` : null, city: 'Scarborough', postal: 'M1W 2S8' },
+    { street: '2555 Victoria Park Ave', unit: null, city: 'Scarborough', postal: 'M1T 1A3' },
+
     // Mississauga
     { street: '100 City Centre Dr', unit: Math.random() > 0.8 ? `Unit ${Math.floor(Math.random() * 200) + 1}` : null, city: 'Mississauga', postal: 'L5B 2C9' },
     { street: '6800 Kitimat Rd', unit: null, city: 'Mississauga', postal: 'L5N 5L9' },
     { street: '3050 Confederation Pkwy', unit: Math.random() > 0.5 ? `Suite ${Math.floor(Math.random() * 150) + 10}` : null, city: 'Mississauga', postal: 'L5B 3Z9' },
     { street: '2151 Leanne Blvd', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Mississauga', postal: 'L5K 2L5' },
     { street: '4141 Dixie Rd', unit: null, city: 'Mississauga', postal: 'L4W 1V5' },
-    
+    { street: '3000 Mavis Rd', unit: Math.random() > 0.6 ? `Apt ${Math.floor(Math.random() * 400) + 100}` : null, city: 'Mississauga', postal: 'L5C 1T7' },
+    { street: '4275 Hurontario St', unit: Math.random() > 0.5 ? `Suite ${Math.floor(Math.random() * 200) + 10}` : null, city: 'Mississauga', postal: 'L4Z 0A3' },
+    { street: '1700 Dundas St W', unit: null, city: 'Mississauga', postal: 'L5C 1E3' },
+    { street: '5100 Erin Mills Pkwy', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Mississauga', postal: 'L5M 4Z5' },
+    { street: '2085 Winston Park Dr', unit: null, city: 'Mississauga', postal: 'L5K 2T1' },
+
     // Brampton
     { street: '2 County Ct Blvd', unit: Math.random() > 0.6 ? `Suite ${Math.floor(Math.random() * 200) + 100}` : null, city: 'Brampton', postal: 'L6W 3W8' },
     { street: '25 Peel Centre Dr', unit: Math.random() > 0.5 ? `Unit ${Math.floor(Math.random() * 50) + 1}` : null, city: 'Brampton', postal: 'L6T 3R5' },
     { street: '50 Gillingham Dr', unit: null, city: 'Brampton', postal: 'L6X 5A5' },
     { street: '9025 Torbram Rd', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 75) + 1}` : null, city: 'Brampton', postal: 'L6S 6H3' },
     { street: '7700 Hurontario St', unit: Math.random() > 0.8 ? `Apt ${Math.floor(Math.random() * 300) + 100}` : null, city: 'Brampton', postal: 'L6Y 4M3' },
-    
+    { street: '295 Queen St E', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 150) + 1}` : null, city: 'Brampton', postal: 'L6W 4S6' },
+    { street: '100 Main St N', unit: null, city: 'Brampton', postal: 'L6V 1N8' },
+    { street: '50 Kennedy Rd S', unit: Math.random() > 0.5 ? `Suite ${Math.floor(Math.random() * 100) + 10}` : null, city: 'Brampton', postal: 'L6W 3R7' },
+    { street: '85 Steeles Ave W', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 75) + 1}` : null, city: 'Brampton', postal: 'L6Y 0B5' },
+    { street: '2500 Williams Pkwy', unit: null, city: 'Brampton', postal: 'L6S 5M9' },
+
     // Markham
     { street: '4800 Highway 7', unit: Math.random() > 0.5 ? `Unit ${Math.floor(Math.random() * 150) + 1}` : null, city: 'Markham', postal: 'L3R 1M2' },
     { street: '3601 Highway 7 E', unit: null, city: 'Markham', postal: 'L3R 0M3' },
     { street: '9350 Yonge St', unit: Math.random() > 0.6 ? `Suite ${Math.floor(Math.random() * 100) + 10}` : null, city: 'Markham', postal: 'L4C 5G2' },
     { street: '14 Cornerstone Dr', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 50) + 1}` : null, city: 'Markham', postal: 'L3P 7N8' },
     { street: '5762 Highway 7', unit: null, city: 'Markham', postal: 'L3P 1A8' },
-    
+    { street: '8601 Warden Ave', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 300) + 100}` : null, city: 'Markham', postal: 'L3R 0B5' },
+    { street: '3080 Kennedy Rd', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 75) + 1}` : null, city: 'Markham', postal: 'L3R 2B7' },
+    { street: '7181 Yonge St', unit: null, city: 'Markham', postal: 'L3T 0C7' },
+    { street: '4300 Steeles Ave E', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 150) + 1}` : null, city: 'Markham', postal: 'L3R 0Y5' },
+    { street: '3000 Highway 7 E', unit: null, city: 'Markham', postal: 'L3R 6E1' },
+
     // Ajax
     { street: '75 Bayly St W', unit: Math.random() > 0.5 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Ajax', postal: 'L1S 7K7' },
     { street: '1166 Harwood Ave N', unit: null, city: 'Ajax', postal: 'L1T 0B6' },
     { street: '50 Westney Rd N', unit: Math.random() > 0.6 ? `Suite ${Math.floor(Math.random() * 75) + 10}` : null, city: 'Ajax', postal: 'L1T 1P6' },
-    
+    { street: '280 Kingston Rd', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 50) + 1}` : null, city: 'Ajax', postal: 'L1S 7J9' },
+    { street: '15 Westney Rd N', unit: null, city: 'Ajax', postal: 'L1T 3V2' },
+    { street: '1901 Harwood Ave N', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 200) + 100}` : null, city: 'Ajax', postal: 'L1Z 0B8' },
+    { street: '600 Monarch Ave', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Ajax', postal: 'L1S 6M1' },
+    { street: '1955 Bayly St', unit: null, city: 'Ajax', postal: 'L1S 3M7' },
+
     // Pickering
     { street: '1355 Kingston Rd', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 50) + 1}` : null, city: 'Pickering', postal: 'L1V 1B8' },
     { street: '1899 Brock Rd', unit: null, city: 'Pickering', postal: 'L1V 2P8' },
     { street: '533 Kingston Rd', unit: Math.random() > 0.5 ? `Suite ${Math.floor(Math.random() * 100) + 10}` : null, city: 'Pickering', postal: 'L1V 2R1' },
-    
+    { street: '1792 Liverpool Rd', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 75) + 1}` : null, city: 'Pickering', postal: 'L1V 1V9' },
+    { street: '1101 Finch Ave', unit: null, city: 'Pickering', postal: 'L1V 0B6' },
+    { street: '650 Kingston Rd', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 150) + 100}` : null, city: 'Pickering', postal: 'L1V 3N7' },
+    { street: '850 Whites Rd', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Pickering', postal: 'L1V 0A2' },
+    { street: '1755 Pickering Pkwy', unit: null, city: 'Pickering', postal: 'L1V 6K5' },
+
     // Whitby
     { street: '75 Consumers Dr', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 150) + 1}` : null, city: 'Whitby', postal: 'L1N 9S2' },
     { street: '1615 Dundas St E', unit: null, city: 'Whitby', postal: 'L1N 1C4' },
     { street: '209 Dundas St W', unit: Math.random() > 0.5 ? `Suite ${Math.floor(Math.random() * 75) + 10}` : null, city: 'Whitby', postal: 'L1N 2M2' },
-    
+    { street: '3000 Garden St', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Whitby', postal: 'L1R 2G6' },
+    { street: '701 Rossland Rd E', unit: null, city: 'Whitby', postal: 'L1N 8Y9' },
+    { street: '1111 Brock St S', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 200) + 100}` : null, city: 'Whitby', postal: 'L1N 4M1' },
+    { street: '4100 Baldwin St S', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 75) + 1}` : null, city: 'Whitby', postal: 'L1R 2W6' },
+    { street: '900 Thickson Rd S', unit: null, city: 'Whitby', postal: 'L1N 0A4' },
+
     // Oshawa
     { street: '419 King St W', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Oshawa', postal: 'L1J 2K5' },
     { street: '1300 Stevenson Rd N', unit: null, city: 'Oshawa', postal: 'L1J 5P5' },
     { street: '240 Taunton Rd E', unit: Math.random() > 0.5 ? `Suite ${Math.floor(Math.random() * 50) + 10}` : null, city: 'Oshawa', postal: 'L1G 3V2' },
-    
-    // Etobicoke  
+    { street: '580 Laval Dr', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 75) + 1}` : null, city: 'Oshawa', postal: 'L1J 0B5' },
+    { street: '200 Bond St W', unit: null, city: 'Oshawa', postal: 'L1J 2L7' },
+    { street: '1389 Harmony Rd N', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 150) + 100}` : null, city: 'Oshawa', postal: 'L1H 7K5' },
+    { street: '1050 Simcoe St N', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Oshawa', postal: 'L1G 4W4' },
+    { street: '600 Grandview St S', unit: null, city: 'Oshawa', postal: 'L1H 8P4' },
+
+    // Etobicoke
     { street: '25 The West Mall', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 200) + 1}` : null, city: 'Etobicoke', postal: 'M9C 1B8' },
     { street: '900 The Queensway', unit: null, city: 'Etobicoke', postal: 'M8Z 1N5' },
     { street: '1500 Royal York Rd', unit: Math.random() > 0.5 ? `Suite ${Math.floor(Math.random() * 100) + 10}` : null, city: 'Etobicoke', postal: 'M9P 3B4' },
+    { street: '380 The Westway', unit: Math.random() > 0.7 ? `Unit ${Math.floor(Math.random() * 100) + 1}` : null, city: 'Etobicoke', postal: 'M9R 1H4' },
+    { street: '2500 Bloor St W', unit: null, city: 'Etobicoke', postal: 'M8X 2X5' },
+    { street: '3300 Lakeshore Blvd W', unit: Math.random() > 0.5 ? `Apt ${Math.floor(Math.random() * 300) + 100}` : null, city: 'Etobicoke', postal: 'M8V 1M4' },
+    { street: '5400 Dixie Rd', unit: Math.random() > 0.6 ? `Unit ${Math.floor(Math.random() * 150) + 1}` : null, city: 'Etobicoke', postal: 'M9B 1A7' },
+    { street: '1000 Islington Ave', unit: null, city: 'Etobicoke', postal: 'M8Z 4P8' },
   ];
 
-  const selectedAddress = faker.helpers.arrayElement(gtaAddresses);
-  
-  return {
-    street: selectedAddress.street,
-    unit: selectedAddress.unit,
-    city: selectedAddress.city,
-    province: 'ON',
-    country: 'Canada',
-    postal: selectedAddress.postal,
-  };
-}
+  // Randomly select an address from the array
+    const randomIndex = Math.floor(Math.random() * gtaAddresses.length);
+    const address = gtaAddresses[randomIndex];
+
+    // Format the address
+    return {
+      street: address.street,
+      unit: address.unit,
+      city: address.city,
+      province: 'ON',
+      country: 'Canada',
+      postal: address.postal,
+      // fullAddress: address.unit 
+      //   ? `${address.unit}, ${address.street}, ${address.city}, ON ${address.postal}`
+      //   : `${address.street}, ${address.city}, ON ${address.postal}`
+    };
+  }
 
 // ===== DATA CLEANUP FUNCTIONS =====
 
@@ -646,6 +717,7 @@ async function createMockPromoCodes() {
 
 /**
  * Creates mock users with realistic Canadian addresses
+ * Each user gets multiple addresses in different delivery areas
  * @returns {Object} - Object containing arrays of users and addresses
  */
 async function createMockUsers() {
@@ -668,8 +740,8 @@ async function createMockUsers() {
     
     users.push(user);
     
-    // Create 1-2 addresses per user
-    const addressCount = Math.floor(Math.random() * 2) + 1;
+    // Create 1-3 addresses per user for better distribution
+    const addressCount = Math.floor(Math.random() * CONFIG.MAX_ADDRESSES_PER_USER) + 1;
     for (let j = 0; j < addressCount; j++) {
       const address = await prisma.address.create({
         data: {
@@ -687,6 +759,7 @@ async function createMockUsers() {
     }
   }
   
+  console.log(`📊 Created ${users.length} users with ${addresses.length} total addresses`);
   return { users, addresses };
 }
 
@@ -749,25 +822,81 @@ async function createStoreAddress(userId) {
 // ===== ORDER GENERATION FUNCTIONS =====
 
 /**
- * Generates realistic orders for a specific date
+ * Generates realistic orders for a specific date with STRICT one order per user per day maximum
+ * Ensures no user can have multiple orders on the same day regardless of address
  * @param {Date} date - Date to generate orders for
  * @param {Array} products - Available products
  * @param {Array} users - Available users
  * @param {Array} addresses - Available addresses
  * @param {Array} promoCodes - Available promo codes
  * @param {Object} deliveryConfig - Delivery configuration object
+ * @param {Set} usedUserAddressCombos - Set of "userId-addressId" combinations that already have orders for this date
  * @returns {Array} - Array of order objects
  */
-function generateOrdersForDate(date, products, users, addresses, promoCodes, deliveryConfig) {
+function generateOrdersForDate(date, products, users, addresses, promoCodes, deliveryConfig, usedUsersForDate = new Set()) {
   const dayOfWeek = date.getDay();
   const baseDayMultiplier = TIME_PATTERNS.DAILY[dayOfWeek] / 10;
-  const baseOrderCount = Math.floor(
-    (CONFIG.ORDERS_PER_DAY_MIN + Math.random() * (CONFIG.ORDERS_PER_DAY_MAX - CONFIG.ORDERS_PER_DAY_MIN)) * baseDayMultiplier
-  );
   
+  // Create a map of user addresses for faster lookup
+  const userAddressMap = new Map();
+  addresses.forEach(address => {
+    if (!userAddressMap.has(address.userId)) {
+      userAddressMap.set(address.userId, []);
+    }
+    userAddressMap.get(address.userId).push(address);
+  });
+
+  // Filter out users who already have orders for this date
+  // This ensures one order per user per day maximum (strict constraint)
+  const availableUsers = users.filter(user => !usedUsersForDate.has(user.id));
+  const targetOrderCount = Math.floor(availableUsers.length * CONFIG.USER_ORDER_PROBABILITY * baseDayMultiplier);
+
   const orders = [];
+
+  console.log(`🔍 Debug for ${date.toISOString().split('T')[0]}:`);
+  console.log(`   � Users with orders today: ${usedUsersForDate.size}`);
+  console.log(`   👥 Available users: ${availableUsers.length}/${users.length}`);
+  console.log(`   🎯 Target orders: ${targetOrderCount}`);
   
-  for (let i = 0; i < baseOrderCount; i++) {
+  // Create array of available users (only one order per user per day)
+  // For each user, select ONE delivery option (either delivery to one address OR pickup)
+  const availableCombos = [];
+  
+  for (const user of availableUsers) {
+    const userAddresses = userAddressMap.get(user.id) || [];
+    const pickupAddress = addresses.find(addr => addr.id === 'pickup-location-default');
+    
+    // Collect all possible options for this user
+    const userOptions = [];
+    
+    // Add delivery options
+    for (const address of userAddresses) {
+      userOptions.push({ user, address, deliveryType: 'DELIVERY' });
+    }
+    
+    // Add pickup option
+    if (pickupAddress) {
+      userOptions.push({ user, address: pickupAddress, deliveryType: 'PICKUP' });
+    }
+    
+    // If this user has any valid options, select ONE randomly
+    if (userOptions.length > 0) {
+      const selectedOption = userOptions[Math.floor(Math.random() * userOptions.length)];
+      availableCombos.push(selectedOption);
+    }
+  }
+  
+  console.log(`   📋 Available combos: ${availableCombos.length}`);
+  
+  // Shuffle available combinations for random selection
+  const shuffledCombos = availableCombos.sort(() => Math.random() - 0.5);
+
+  // Take only the number of combinations we need for orders
+  const selectedCombos = shuffledCombos.slice(0, Math.min(targetOrderCount, shuffledCombos.length));
+  
+  console.log(`   ✅ Selected combos: ${selectedCombos.length}`);
+
+  for (const { user, address: selectedAddress, deliveryType } of selectedCombos) {
     // Generate realistic order time based on hourly patterns
     const hour = getWeightedRandom(TIME_PATTERNS.HOURLY);
     const minute = Math.floor(Math.random() * 60);
@@ -777,23 +906,64 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
     // Skip future dates
     if (orderTime > new Date()) continue;
     
-    const deliveryType = getWeightedRandom(DISTRIBUTIONS.DELIVERY_TYPE);
+    // Delivery type and address are already determined from the pre-selected combo
     const status = getWeightedRandom(DISTRIBUTIONS.ORDER_STATUS);
     const paymentMethod = getWeightedRandom(DISTRIBUTIONS.PAYMENT_METHOD);
     
-    // Select random user and appropriate address
-    const user = users[Math.floor(Math.random() * users.length)];
-    let addressId;
+    // Address is already determined from the pre-filtered selection
+    const finalAddress = selectedAddress;
+    let deliveryDate = null;
     
     if (deliveryType === 'PICKUP') {
-      addressId = 'pickup-location-default';
+      // Pickup orders can have a pickup date (same day or next day)
+      deliveryDate = new Date(orderTime);
+      if (Math.random() > 0.7) { // 30% chance of next-day pickup
+        deliveryDate.setDate(deliveryDate.getDate() + 1);
+      }
     } else {
-      // Use customer address or pickup location as fallback
-      const customerAddresses = addresses.filter(addr => addr.userId === user.id && addr.id !== 'pickup-location-default');
-      addressId = customerAddresses.length > 0 
-        ? customerAddresses[Math.floor(Math.random() * customerAddresses.length)].id
-        : 'pickup-location-default';
+      // DELIVERY - validate the delivery date
+      const validDeliveryDate = findNextValidDeliveryDate(selectedAddress, orderTime, deliveryConfig);
+      
+      if (!validDeliveryDate) continue; // Skip if address cannot be delivered to on this date
+      
+      deliveryDate = validDeliveryDate;
+      
+      // Adjust delivery date based on order status for realism
+      if (status === 'DELIVERED') {
+        const maxDeliveryDate = new Date();
+        if (deliveryDate > maxDeliveryDate) {
+          // Try to find a valid delivery date in the past
+          const pastOrderTime = new Date(orderTime);
+          pastOrderTime.setDate(pastOrderTime.getDate() - 3); // Go back 3 days
+          const pastValidDate = findNextValidDeliveryDate(selectedAddress, pastOrderTime, deliveryConfig, 7);
+          if (pastValidDate && pastValidDate <= maxDeliveryDate) {
+            deliveryDate = pastValidDate;
+          } else {
+            // Try next day if it's valid and in the past
+            const nextDay = new Date(orderTime);
+            nextDay.setDate(nextDay.getDate() + 1);
+            if (nextDay <= maxDeliveryDate && validateDeliveryAvailability(selectedAddress, nextDay, deliveryConfig)) {
+              deliveryDate = nextDay;
+            } else {
+              continue; // Skip this order
+            }
+          }
+        }
+      }
+      
+      // For pending/confirmed orders, delivery date should be in future (if order is recent)
+      if ((status === 'PENDING' || status === 'CONFIRMED') && orderTime > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) {
+        const futureValidDate = findNextValidDeliveryDate(selectedAddress, new Date(), deliveryConfig);
+        if (futureValidDate) {
+          deliveryDate = futureValidDate;
+        }
+      }
     }
+    
+    if (!finalAddress) continue; // Safety check
+    
+    // Mark this user as having an order today to prevent duplicates (critical constraint enforcement)
+    usedUsersForDate.add(user.id);
     
     // Generate order items (1-4 items per order)
     const itemCount = Math.floor(Math.random() * 4) + 1;
@@ -863,69 +1033,9 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
     // Calculate final total: subtotal + charges + tax - discount
     const totalAmount = subtotal + deliveryCharges + convenienceCharges + tax - discount;
     
-    // Generate realistic delivery date based on delivery type and status
-    let deliveryDate = null;
-    if (deliveryType === 'DELIVERY') {
-      // Get the address for this order to validate delivery availability
-      const orderAddress = addresses.find(addr => addr.id === addressId);
-      
-      if (orderAddress && orderAddress.id !== 'pickup-location-default') {
-        // Find next valid delivery date for this address
-        const validDeliveryDate = findNextValidDeliveryDate(orderAddress, orderTime, deliveryConfig);
-        
-        if (validDeliveryDate) {
-          deliveryDate = validDeliveryDate;
-          
-          // For delivered orders, ensure delivery date is in the past
-          if (status === 'DELIVERED') {
-            const maxDeliveryDate = new Date();
-            if (deliveryDate > maxDeliveryDate) {
-              // Try to find a valid delivery date in the past
-              const pastOrderTime = new Date(orderTime);
-              pastOrderTime.setDate(pastOrderTime.getDate() - 3); // Go back 3 days
-              const pastValidDate = findNextValidDeliveryDate(orderAddress, pastOrderTime, deliveryConfig, 7);
-              if (pastValidDate && pastValidDate <= maxDeliveryDate) {
-                deliveryDate = pastValidDate;
-              } else {
-                // Fallback: just use next day from order time if it's valid
-                const nextDay = new Date(orderTime);
-                nextDay.setDate(nextDay.getDate() + 1);
-                if (validateDeliveryAvailability(orderAddress, nextDay, deliveryConfig)) {
-                  deliveryDate = nextDay;
-                } else {
-                  // Skip this delivery order if we can't find a valid date
-                  continue;
-                }
-              }
-            }
-          }
-          
-          // For pending/confirmed orders, delivery date should be in future (if order is recent)
-          if ((status === 'PENDING' || status === 'CONFIRMED') && orderTime > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) {
-            const futureValidDate = findNextValidDeliveryDate(orderAddress, new Date(), deliveryConfig);
-            if (futureValidDate) {
-              deliveryDate = futureValidDate;
-            }
-          }
-        } else {
-          // No valid delivery date found for this address, skip this delivery order
-          continue;
-        }
-      } else {
-        // No valid address for delivery, skip this order
-        continue;
-      }
-    } else if (deliveryType === 'PICKUP') {
-      // Pickup orders can have a pickup date (same day or next day)
-      deliveryDate = new Date(orderTime);
-      if (Math.random() > 0.7) { // 30% chance of next-day pickup
-        deliveryDate.setDate(deliveryDate.getDate() + 1);
-      }
-    }
-    
     orders.push({
       userId: user.id,
-      addressId,
+      addressId: finalAddress.id,
       status,
       total: roundCurrency(totalAmount),
       deliveryCharges: deliveryCharges > 0 ? roundCurrency(deliveryCharges) : null,
@@ -1037,13 +1147,14 @@ function generatePosOrdersForDate(date, products, walkInUser, storeAddress) {
 
 /**
  * Creates mock online orders over the specified time period with realistic patterns
+ * STRICT CONSTRAINT: Ensures each user has maximum one order per day (regardless of address)
  * @param {Array} users - Available users for order assignment
  * @param {Array} addresses - Available addresses for delivery
  * @param {Array} promoCodes - Available promo codes for discounts
  * @returns {Promise<number>} Total number of orders created
  */
 async function createMockOrders(users, addresses, promoCodes) {
-  console.log('📦 Creating mock online orders...');
+  console.log('📦 Creating mock online orders with one order per user per day...');
   
   if (!users.length || !addresses.length) {
     throw new Error('Cannot create orders without users and addresses');
@@ -1063,6 +1174,7 @@ async function createMockOrders(users, addresses, promoCodes) {
   }
   
   console.log(`📄 Using ${promoCodes.length} promo codes for order generation`);
+  console.log(`👥 Creating orders for ${users.length} users with max one order per user per address per day`);
   
   const today = new Date();
   const startDate = new Date(today);
@@ -1072,10 +1184,23 @@ async function createMockOrders(users, addresses, promoCodes) {
   let totalOrdersCreated = 0;
   let skippedDeliveryOrders = 0;
   
+  // Track which users have orders for each date to enforce one order per user per day
+  const globalUsedUsers = new Map(); // Map<dateString, Set<userId>>
+  
   // Generate orders for each day
   for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
     const currentDate = new Date(d);
-    const orders = generateOrdersForDate(currentDate, products, users, addresses, promoCodes, deliveryConfig);
+    const dateString = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Initialize tracking for this date
+    if (!globalUsedUsers.has(dateString)) {
+      globalUsedUsers.set(dateString, new Set());
+    }
+    
+    const usedUsersForDate = globalUsedUsers.get(dateString);
+    const orders = generateOrdersForDate(currentDate, products, users, addresses, promoCodes, deliveryConfig, usedUsersForDate);
+    
+    console.log(`📅 ${dateString}: Generated ${orders.length} orders from ${users.length} eligible users`);
     
     // Batch create orders for better performance
     const orderCreationPromises = orders.map(async (orderData) => {
@@ -1124,7 +1249,13 @@ async function createMockOrders(users, addresses, promoCodes) {
     console.log(`⚠️  Skipped ${skippedDeliveryOrders} delivery orders due to invalid delivery dates`);
   }
   
+  // Calculate average orders per day and per user
+  const avgOrdersPerDay = (totalOrdersCreated / CONFIG.DAYS_TO_SIMULATE).toFixed(1);
+  const avgOrdersPerUser = (totalOrdersCreated / users.length).toFixed(1);
+  
   console.log(`🎉 Created ${totalOrdersCreated} online orders over ${CONFIG.DAYS_TO_SIMULATE} days`);
+  console.log(`📊 Average: ${avgOrdersPerDay} orders/day, ${avgOrdersPerUser} orders/user total`);
+  console.log(`🎯 One order per user per day constraint: ENFORCED`);
   return totalOrdersCreated;
 }
 
@@ -1323,7 +1454,8 @@ async function populateDatabase() {
     validateConfiguration();
     
     console.log(`📊 Configuration: ${CONFIG.USERS_COUNT} users, ${CONFIG.DAYS_TO_SIMULATE} days of data`);
-    console.log(`📊 Orders per day: ${CONFIG.ORDERS_PER_DAY_MIN}-${CONFIG.ORDERS_PER_DAY_MAX} online, ${CONFIG.POS_ORDERS_PER_DAY_MIN}-${CONFIG.POS_ORDERS_PER_DAY_MAX} POS`);
+    console.log(`📊 Orders per day: ${CONFIG.ORDERS_PER_DAY_MIN}-${CONFIG.ORDERS_PER_DAY_MAX} online (max 1 per user), ${CONFIG.POS_ORDERS_PER_DAY_MIN}-${CONFIG.POS_ORDERS_PER_DAY_MAX} POS`);
+    console.log(`📊 User order probability: ${(CONFIG.USER_ORDER_PROBABILITY * 100).toFixed(0)}% per day, Max addresses per user: ${CONFIG.MAX_ADDRESSES_PER_USER}`);
     
     // Step 0: Complete data wipe
     console.log('\n🗑️  Step 1/8: Clearing existing data...');

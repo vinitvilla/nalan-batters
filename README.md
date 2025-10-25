@@ -204,7 +204,6 @@ components/
 ├── ProductList.tsx          # Product listing component
 ├── QuickOrderSection.tsx    # Quick order interface
 ├── SessionHydrator.tsx      # Session state hydration
-├── SimpleDeliveryMap.tsx    # Simple delivery locations map
 ├── TestimonialsSection.tsx  # Customer testimonials
 ├── UserDropdown.tsx         # User menu dropdown
 ├── UserLoginButton.tsx      # Login/logout button
