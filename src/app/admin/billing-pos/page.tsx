@@ -13,7 +13,7 @@ import { RequirePermission } from "@/components/PermissionWrapper";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { usePosData } from '@/hooks/usePosData';
 import { formatPhoneNumber, displayPhoneNumber } from '@/lib/utils/phoneUtils';
-import type { PosCartItem, PosCustomerData, PosSaleRequest, UserLookupResponse } from '@/types';
+import type { PosCartItem, PosCustomerData, PosSaleRequest, UserSearchResponse, UserResponse } from '@/types';
 import moment from 'moment';
 import { toast } from "sonner";
 import { 
@@ -28,7 +28,8 @@ import {
   User,
   Search,
   Scan,
-  Loader2
+  Loader2,
+  Edit
 } from 'lucide-react';
 
 export default function BillingPage() {
@@ -41,7 +42,14 @@ export default function BillingPage() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [receivedAmount, setReceivedAmount] = useState('');
   const [discount, setDiscount] = useState(0);
-  const [lookingUpUser, setLookingUpUser] = useState(false); // Loading state for user lookup
+  const [searchResults, setSearchResults] = useState<UserResponse[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [phoneSearchResults, setPhoneSearchResults] = useState<UserResponse[]>([]);
+  const [showPhoneDropdown, setShowPhoneDropdown] = useState(false);
+  const [searchingByPhone, setSearchingByPhone] = useState(false);
+  const [phoneSearchTimeout, setPhoneSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Get products and categories from API data
   const products = posData?.products || [];
@@ -60,6 +68,18 @@ export default function BillingPage() {
   const originalTaxRate = posData?.config?.taxRate !== undefined ? posData.config.taxRate : 0.13; // Default to 13% HST only if not configured
   const taxRate = posData?.config?.taxWaived ? 0 : originalTaxRate;
   const isTaxWaived = posData?.config?.taxWaived || false;
+
+  // Cleanup search timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      if (phoneSearchTimeout) {
+        clearTimeout(phoneSearchTimeout);
+      }
+    };
+  }, [searchTimeout, phoneSearchTimeout]);
 
   // Cart calculations
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
@@ -112,66 +132,127 @@ export default function BillingPage() {
     setCart(prev => prev.filter(item => item.id !== id));
   };
 
-  // Function to look up user by phone number
-  const lookupUserByPhone = async (phone: string) => {
-    // Validate and format phone number
-    const standardizedPhone = formatPhoneNumber(phone);
-    if (!standardizedPhone) {
-      toast.error('Please enter a valid phone number (10 digits minimum)');
+  // Function to search users by name
+  const searchUsersByName = async (name: string) => {
+    if (name.length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
       return;
     }
     
-    setLookingUpUser(true);
+    setSearchingUsers(true);
     try {
-      const response = await fetch('/api/admin/users/lookup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone: phone })
-      });
-
-      const result: UserLookupResponse = await response.json();
+      const response = await adminApiFetch(`/api/admin/users/search?q=${encodeURIComponent(name)}`);
       
-      if (result.success && result.user) {
-        // User found - auto-populate customer info
-        setCustomer((prev: PosCustomerData) => ({
-          ...prev,
-          name: result.user!.fullName,
-          userId: result.user!.id,
-          isExistingUser: true,
-          phone: standardizedPhone // Store in standardized format
-        }));
-        
-        // Show success feedback if phone was standardized
-        if (result.message.includes('standardized')) {
-          toast.info('Phone number was updated to standard format');
-        }
-        toast.success(`Found existing customer: ${result.user!.fullName}`);
+      if (!response) {
+        throw new Error('No response from server');
+      }
+      
+      const result: UserSearchResponse = await response.json();
+      
+      if (result.success && result.users) {
+        setSearchResults(result.users);
+        setShowDropdown(result.users.length > 0);
       } else {
-        // User not found - show feedback and clear auto-populated data
-        setCustomer((prev: PosCustomerData) => ({
-          ...prev,
-          name: '',
-          userId: undefined,
-          isExistingUser: false,
-          phone: standardizedPhone // Still store in standardized format
-        }));
-        toast.warning('Customer not found. You can enter their name manually to create a new customer account.');
+        setSearchResults([]);
+        setShowDropdown(false);
       }
     } catch (error) {
-      console.error('Error looking up user:', error);
-      // Reset user data on error
-      setCustomer((prev: PosCustomerData) => ({
-        ...prev,
-        name: '',
-        userId: undefined,
-        isExistingUser: false
-      }));
-      toast.error('Error looking up customer. Please try again.');
+      console.error('Error searching users:', error);
+      setSearchResults([]);
+      setShowDropdown(false);
     } finally {
-      setLookingUpUser(false);
+      setSearchingUsers(false);
     }
+  };
+
+  // Function to search users by phone number
+  const searchUsersByPhone = async (phone: string) => {
+    // Need at least 3 digits to search
+    if (phone.length < 3) {
+      setPhoneSearchResults([]);
+      setShowPhoneDropdown(false);
+      return;
+    }
+    
+    setSearchingByPhone(true);
+    try {
+      const response = await adminApiFetch(`/api/admin/users/search?q=${encodeURIComponent(phone)}`);
+      
+      if (!response) {
+        throw new Error('No response from server');
+      }
+      
+      const result: UserSearchResponse = await response.json();
+      
+      if (result.success && result.users) {
+        // Filter results to only show users whose phone contains the search string
+        const filteredUsers = result.users.filter(user => 
+          user.phone.includes(phone) || 
+          displayPhoneNumber(user.phone).includes(phone)
+        );
+        setPhoneSearchResults(filteredUsers);
+        setShowPhoneDropdown(filteredUsers.length > 0);
+      } else {
+        setPhoneSearchResults([]);
+        setShowPhoneDropdown(false);
+      }
+    } catch (error) {
+      console.error('Error searching users by phone:', error);
+      setPhoneSearchResults([]);
+      setShowPhoneDropdown(false);
+    } finally {
+      setSearchingByPhone(false);
+    }
+  };
+
+  // Debounced search handler
+  const handleNameChange = (name: string) => {
+    setCustomer((prev: PosCustomerData) => ({ 
+      ...prev, 
+      name,
+      // Reset user data when name changes manually
+      userId: undefined,
+      isExistingUser: false
+    }));
+
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Set new timeout for debounced search
+    const timeout = setTimeout(() => {
+      searchUsersByName(name);
+    }, 300); // 300ms debounce
+
+    setSearchTimeout(timeout);
+  };
+
+  // Select user from dropdown
+  const selectUser = (user: UserResponse) => {
+    setCustomer({
+      name: user.fullName,
+      phone: user.phone,
+      userId: user.id,
+      isExistingUser: true
+    });
+    setShowDropdown(false);
+    setSearchResults([]);
+    toast.success(`Selected customer: ${user.fullName}`);
+  };
+
+  // Select user from phone dropdown
+  const selectUserByPhone = (user: UserResponse) => {
+    setCustomer({
+      name: user.fullName,
+      phone: user.phone,
+      userId: user.id,
+      isExistingUser: true
+    });
+    setShowPhoneDropdown(false);
+    setPhoneSearchResults([]);
+    toast.success(`Selected customer: ${user.fullName}`);
   };
 
   // Handle phone number change (without automatic lookup)
@@ -184,13 +265,28 @@ export default function BillingPage() {
       userId: undefined,
       isExistingUser: false
     }));
+
+    // Clear existing timeout
+    if (phoneSearchTimeout) {
+      clearTimeout(phoneSearchTimeout);
+    }
+
+    // Set new timeout for debounced search
+    const timeout = setTimeout(() => {
+      searchUsersByPhone(phone);
+    }, 300); // 300ms debounce
+
+    setPhoneSearchTimeout(timeout);
   };
 
-  // Manual lookup function triggered by button
-  const handleManualLookup = () => {
-    if (customer.phone) {
-      lookupUserByPhone(customer.phone);
-    }
+  // Function to unlock/edit customer data
+  const unlockCustomer = () => {
+    setCustomer((prev: PosCustomerData) => ({
+      ...prev,
+      isExistingUser: false,
+      userId: undefined
+    }));
+    toast.info('Customer unlocked for editing');
   };
 
   // Get display format for phone number
@@ -212,6 +308,16 @@ export default function BillingPage() {
     setCustomer({});
     setReceivedAmount('');
     setDiscount(0);
+    setSearchResults([]);
+    setShowDropdown(false);
+    setPhoneSearchResults([]);
+    setShowPhoneDropdown(false);
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    if (phoneSearchTimeout) {
+      clearTimeout(phoneSearchTimeout);
+    }
   };
 
   // Process payment
@@ -409,57 +515,119 @@ export default function BillingPage() {
 
             {/* Customer Info */}
             <div className="space-y-3">
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Input
-                    placeholder="Customer phone number"
-                    value={getPhoneDisplayValue()}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    className={`border-gray-300 focus:border-black focus:ring-black ${customer.isExistingUser ? 'border-gray-500 bg-gray-50' : ''}`}
-                  />
-                  {lookingUpUser && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                    </div>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleManualLookup}
-                  disabled={!customer.phone || customer.phone.length < 10 || lookingUpUser}
-                  className="px-3 flex items-center gap-1 whitespace-nowrap border-gray-300 hover:bg-gray-100"
-                  title="Look up existing customer by phone number"
-                >
-                  <Search className="h-4 w-4" />
-                  Look Up
-                </Button>
+              <div className="relative">
+                <Input
+                  placeholder="Customer phone number"
+                  value={getPhoneDisplayValue()}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  onFocus={() => {
+                    // Show dropdown if we have results
+                    if (phoneSearchResults.length > 0 && !customer.isExistingUser) {
+                      setShowPhoneDropdown(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    // Delay hiding dropdown to allow click on items
+                    setTimeout(() => setShowPhoneDropdown(false), 200);
+                  }}
+                  className={`border-gray-300 focus:border-black focus:ring-black ${customer.isExistingUser ? 'border-gray-500 bg-gray-50' : ''}`}
+                  disabled={customer.isExistingUser}
+                />
+                {searchingByPhone && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  </div>
+                )}
+                {customer.isExistingUser && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <User className="h-4 w-4 text-gray-700" />
+                  </div>
+                )}
+                
+                {/* Phone Autocomplete Dropdown */}
+                {showPhoneDropdown && phoneSearchResults.length > 0 && !customer.isExistingUser && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {phoneSearchResults.map((user) => (
+                      <div
+                        key={user.id}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => selectUserByPhone(user)}
+                      >
+                        <div className="font-medium text-sm text-black">{user.fullName}</div>
+                        <div className="text-xs text-gray-500">{displayPhoneNumber(user.phone)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               <div className="relative">
                 <Input
                   placeholder="Customer name"
                   value={customer.name || ''}
-                  onChange={(e) => setCustomer((prev: PosCustomerData) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  onFocus={() => {
+                    // Show dropdown if we have results
+                    if (searchResults.length > 0) {
+                      setShowDropdown(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    // Delay hiding dropdown to allow click on items
+                    setTimeout(() => setShowDropdown(false), 200);
+                  }}
                   className={`border-gray-300 focus:border-black focus:ring-black ${customer.isExistingUser ? 'border-gray-500 bg-gray-50' : ''}`}
                   disabled={customer.isExistingUser}
                 />
+                {searchingUsers && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  </div>
+                )}
                 {customer.isExistingUser && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                     <User className="h-4 w-4 text-gray-700" />
                   </div>
                 )}
+                
+                {/* Autocomplete Dropdown */}
+                {showDropdown && searchResults.length > 0 && !customer.isExistingUser && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {searchResults.map((user) => (
+                      <div
+                        key={user.id}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => selectUser(user)}
+                      >
+                        <div className="font-medium text-sm text-black">{user.fullName}</div>
+                        <div className="text-xs text-gray-500">{displayPhoneNumber(user.phone)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               {customer.isExistingUser && (
-                <div className="flex items-center gap-2 text-sm text-gray-800 bg-gray-100 p-2 rounded-md border border-gray-300">
-                  <User className="h-4 w-4" />
-                  <span>Existing customer found and linked to order</span>
+                <div className="flex items-center justify-between gap-2 text-sm text-gray-800 bg-gray-100 p-2 rounded-md border border-gray-300">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>Existing customer found and linked to order</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={unlockCustomer}
+                    className="h-6 px-2 text-xs hover:bg-gray-200 flex items-center gap-1 cursor-pointer"
+                    title="Edit customer information"
+                  >
+                    <Edit className="h-3 w-3" />
+                    Edit
+                  </Button>
                 </div>
               )}
               
-              {customer.phone && !customer.isExistingUser && !lookingUpUser && customer.phone.length >= 10 && (
+              {customer.phone && !customer.isExistingUser && customer.phone.length >= 10 && (
                 <div className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 p-2 rounded-md border border-gray-300">
                   <span>New customer - will be added to system</span>
                 </div>

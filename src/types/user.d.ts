@@ -44,14 +44,10 @@ export interface UpdateUserData {
   role?: UserRole;
 }
 
-// User lookup types
-export interface UserLookupRequest {
-  phone: string;
-}
-
-export interface UserLookupResponse {
+// User search types
+export interface UserSearchResponse {
   success: boolean;
-  user: UserResponse | null;
+  users: UserResponse[];
   message: string;
 }
 
