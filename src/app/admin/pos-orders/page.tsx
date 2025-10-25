@@ -541,189 +541,231 @@ export default function PosOrdersPage() {
               </div>
               
               {viewMode === 'card' ? (
-                // Card View
-                orders.map((order: Order) => (
-                  <Card key={order.id} className={`bg-white shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 ${loadingPagination ? 'opacity-50' : ''}`}>
-                    <CardContent className="p-0">
-                      {/* Header Row */}
-                      <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">
-                            #{order.orderNumber}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Badge 
-                                className={`text-xs font-medium ${
-                                  order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
-                                    ? 'bg-green-100 text-green-700 border-green-200' 
-                                    : order.status === 'PENDING'
-                                    ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                                    : 'bg-red-100 text-red-700 border-red-200'
-                                }`}
-                              >
-                                {order.status}
-                              </Badge>
-                              <span className="text-sm text-gray-500">•</span>
-                              <span className="text-sm text-gray-600">{moment(order.createdAt).format('MMM D, h:mm A')}</span>
+                // Card View - Enhanced Design
+                <div className="grid gap-3">
+                  {orders.map((order: Order) => (
+                    <Card key={order.id} className={`bg-white shadow-sm hover:shadow-lg transition-all duration-200 border-l-4 ${
+                      order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
+                        ? 'border-l-green-500' 
+                        : order.status === 'PENDING'
+                        ? 'border-l-yellow-500'
+                        : 'border-l-red-500'
+                    } ${loadingPagination ? 'opacity-50' : ''}`}>
+                      <CardContent className="p-0">
+                        {/* Compact Header Row */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-50 to-white">
+                          <div className="flex items-center gap-3">
+                            {/* Order Number Badge */}
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg shadow-sm">
+                              <Receipt className="h-4 w-4" />
+                              <span className="font-bold text-sm">{order.orderNumber}</span>
+                            </div>
+                            
+                            {/* Status Badge */}
+                            <Badge 
+                              className={`text-xs font-semibold px-2 py-1 ${
+                                order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
+                                  ? 'bg-green-100 text-green-700 border-green-300' 
+                                  : order.status === 'PENDING'
+                                  ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                                  : 'bg-red-100 text-red-700 border-red-300'
+                              }`}
+                            >
+                              {order.status}
+                            </Badge>
+                            
+                            {/* Timestamp */}
+                            <div className="flex items-center gap-1.5 text-gray-600">
+                              <Clock className="h-3.5 w-3.5" />
+                              <span className="text-sm font-medium">{moment(order.createdAt).format('MMM D, h:mm A')}</span>
                             </div>
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <div className="text-xl font-bold text-green-600">${order.total.toFixed(2)}</div>
-                            {order.discount && order.discount > 0 && (
-                              <div className="text-xs text-green-600">-${order.discount.toFixed(2)} discount</div>
-                            )}
+                          
+                          {/* Total & View Button */}
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-green-600">${order.total.toFixed(2)}</div>
+                              {order.discount && order.discount > 0 && (
+                                <div className="text-xs text-green-600 font-medium">-${order.discount.toFixed(2)} saved</div>
+                              )}
+                            </div>
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              onClick={() => handleViewOrder(order)}
+                              className="h-9 px-4 bg-blue-600 hover:bg-blue-700"
+                            >
+                              <Eye className="h-4 w-4 mr-1.5" />
+                              View
+                            </Button>
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleViewOrder(order)}
-                            className="h-8 px-3"
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
                         </div>
-                      </div>
 
-                      {/* Content Row */}
-                      <div className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Payment & Type Info */}
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
+                        {/* Content Row - Horizontal Layout */}
+                        <div className="px-4 py-3 border-t border-gray-100">
+                          <div className="flex items-center justify-between gap-6">
+                            {/* Payment Method */}
+                            <div className="flex items-center gap-3 min-w-[140px]">
                               {order.paymentMethod === 'CASH' ? (
-                                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                  <Banknote className="h-4 w-4 text-green-600" />
+                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shadow-sm">
+                                  <Banknote className="h-5 w-5 text-green-600" />
                                 </div>
                               ) : order.paymentMethod === 'CARD' ? (
-                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                  <CreditCard className="h-4 w-4 text-blue-600" />
+                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shadow-sm">
+                                  <CreditCard className="h-5 w-5 text-blue-600" />
                                 </div>
                               ) : (
-                                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                  <CreditCard className="h-4 w-4 text-purple-600" />
+                                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shadow-sm">
+                                  <CreditCard className="h-5 w-5 text-purple-600" />
                                 </div>
                               )}
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{order.paymentMethod}</div>
-                                <div className="text-xs text-gray-500">Payment</div>
+                                <div className="text-xs text-gray-500 uppercase tracking-wide">Payment</div>
+                                <div className="text-sm font-bold text-gray-900">{order.paymentMethod}</div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Items Summary */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                              <Package className="h-4 w-4 text-orange-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{order.items.length} items</div>
-                              <div className="text-xs text-gray-500">
-                                {order.items.slice(0, 2).map(item => item.product.name).join(', ')}
-                                {order.items.length > 2 && ` +${order.items.length - 2} more`}
+                            {/* Divider */}
+                            <div className="h-10 w-px bg-gray-200" />
+
+                            {/* Items Summary - Takes more space */}
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+                                <Package className="h-5 w-5 text-orange-600" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs text-gray-500 uppercase tracking-wide">Items ({order.items.length})</div>
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {order.items.map((item, idx) => (
+                                    <span key={idx}>
+                                      {item.product.name} × {item.quantity}
+                                      {idx < order.items.length - 1 && ', '}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Tax Info */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <Receipt className="h-4 w-4 text-gray-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">${order.tax.toFixed(2)}</div>
-                              <div className="text-xs text-gray-500">Tax included</div>
+                            {/* Divider */}
+                            <div className="h-10 w-px bg-gray-200" />
+
+                            {/* Tax Info */}
+                            <div className="flex items-center gap-3 min-w-[120px]">
+                              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shadow-sm">
+                                <Receipt className="h-5 w-5 text-purple-600" />
+                              </div>
+                              <div>
+                                <div className="text-xs text-gray-500 uppercase tracking-wide">Tax</div>
+                                <div className="text-sm font-bold text-gray-900">${order.tax.toFixed(2)}</div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               ) : (
-                // Table View
-                <Card className="bg-white">
+                // Table View - Enhanced Design
+                <Card className="bg-white shadow-sm">
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <table className="w-full">
-                        <thead className="bg-gray-50 border-b">
+                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                           <tr>
-                            <th className="text-left p-4 font-semibold text-gray-900">Order</th>
-                            <th className="text-left p-4 font-semibold text-gray-900">Time</th>
-                            <th className="text-left p-4 font-semibold text-gray-900">Status</th>
-                            <th className="text-left p-4 font-semibold text-gray-900">Payment</th>
-                            <th className="text-left p-4 font-semibold text-gray-900">Items</th>
-                            <th className="text-left p-4 font-semibold text-gray-900">Tax</th>
-                            <th className="text-right p-4 font-semibold text-gray-900">Total</th>
-                            <th className="text-center p-4 font-semibold text-gray-900">Actions</th>
+                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Order</th>
+                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Time</th>
+                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Status</th>
+                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Payment</th>
+                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Items</th>
+                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Tax</th>
+                            <th className="text-right px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Total</th>
+                            <th className="text-center px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Action</th>
                           </tr>
                         </thead>
                         <tbody className={loadingPagination ? 'opacity-50' : ''}>
-                          {orders.map((order: Order) => (
-                            <tr key={order.id} className="border-b hover:bg-gray-50 transition-colors">
-                              <td className="p-4">
+                          {orders.map((order: Order, index: number) => (
+                            <tr key={order.id} className={`border-b border-gray-100 hover:bg-blue-50/50 transition-colors ${
+                              index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                            }`}>
+                              <td className="px-4 py-4">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-6 h-6 bg-blue-600 text-white rounded text-xs flex items-center justify-center font-bold">
-                                    #
+                                  <div className="w-8 h-8 bg-blue-600 text-white rounded-lg text-xs flex items-center justify-center font-bold shadow-sm">
+                                    <Receipt className="h-4 w-4" />
                                   </div>
-                                  <span className="font-medium text-gray-900">{order.orderNumber}</span>
+                                  <span className="font-bold text-gray-900">{order.orderNumber}</span>
                                 </div>
                               </td>
-                              <td className="p-4">
-                                <div className="text-sm text-gray-900">{moment(order.createdAt).format('MMM D')}</div>
-                                <div className="text-xs text-gray-500">{moment(order.createdAt).format('h:mm A')}</div>
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-gray-400" />
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900">{moment(order.createdAt).format('MMM D')}</div>
+                                    <div className="text-xs text-gray-500">{moment(order.createdAt).format('h:mm A')}</div>
+                                  </div>
+                                </div>
                               </td>
-                              <td className="p-4">
+                              <td className="px-4 py-4">
                                 <Badge 
-                                  className={`text-xs ${
+                                  className={`text-xs font-semibold px-2.5 py-1 ${
                                     order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
-                                      ? 'bg-green-100 text-green-700 border-green-200' 
+                                      ? 'bg-green-100 text-green-700 border-green-300' 
                                       : order.status === 'PENDING'
-                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                                      : 'bg-red-100 text-red-700 border-red-200'
+                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                                      : 'bg-red-100 text-red-700 border-red-300'
                                   }`}
                                 >
                                   {order.status}
                                 </Badge>
                               </td>
-                              <td className="p-4">
+                              <td className="px-4 py-4">
                                 <div className="flex items-center gap-2">
                                   {order.paymentMethod === 'CASH' ? (
-                                    <Banknote className="h-4 w-4 text-green-600" />
+                                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                      <Banknote className="h-4 w-4 text-green-600" />
+                                    </div>
                                   ) : (
-                                    <CreditCard className="h-4 w-4 text-blue-600" />
+                                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                      <CreditCard className="h-4 w-4 text-blue-600" />
+                                    </div>
                                   )}
-                                  <span className="text-sm text-gray-900">{order.paymentMethod}</span>
+                                  <span className="text-sm font-medium text-gray-900">{order.paymentMethod}</span>
                                 </div>
                               </td>
-                              <td className="p-4">
-                                <div className="text-sm text-gray-900">{order.items.length} items</div>
-                                <div className="text-xs text-gray-500 max-w-32 truncate">
-                                  {order.items.slice(0, 2).map(item => item.product.name).join(', ')}
-                                  {order.items.length > 2 && '...'}
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-2">
+                                  <Package className="h-4 w-4 text-orange-500" />
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</div>
+                                    <div className="text-xs text-gray-500 max-w-40 truncate">
+                                      {order.items.map((item, idx) => (
+                                        <span key={idx}>
+                                          {item.product.name}
+                                          {idx < order.items.length - 1 && ', '}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
                                 </div>
                               </td>
-                              <td className="p-4">
-                                <span className="text-sm text-gray-900">${order.tax.toFixed(2)}</span>
+                              <td className="px-4 py-4">
+                                <span className="text-sm font-semibold text-purple-600">${order.tax.toFixed(2)}</span>
                               </td>
-                              <td className="p-4 text-right">
+                              <td className="px-4 py-4 text-right">
                                 <div className="text-lg font-bold text-green-600">${order.total.toFixed(2)}</div>
                                 {order.discount && order.discount > 0 && (
-                                  <div className="text-xs text-green-600">-${order.discount.toFixed(2)}</div>
+                                  <div className="text-xs text-green-600 font-medium">-${order.discount.toFixed(2)}</div>
                                 )}
                               </td>
-                              <td className="p-4 text-center">
+                              <td className="px-4 py-4 text-center">
                                 <Button 
-                                  variant="outline" 
+                                  variant="default" 
                                   size="sm" 
                                   onClick={() => handleViewOrder(order)}
-                                  className="h-7 px-2"
+                                  className="h-8 px-3 bg-blue-600 hover:bg-blue-700"
                                 >
-                                  <Eye className="h-3 w-3" />
+                                  <Eye className="h-3.5 w-3.5 mr-1" />
+                                  View
                                 </Button>
                               </td>
                             </tr>

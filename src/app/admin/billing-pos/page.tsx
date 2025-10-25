@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RequirePermission } from "@/components/PermissionWrapper";
+import { useAdminApi } from "@/app/admin/use-admin-api";
 import { usePosData } from '@/hooks/usePosData';
 import { formatPhoneNumber, displayPhoneNumber } from '@/lib/utils/phoneUtils';
 import type { PosCartItem, PosCustomerData, PosSaleRequest, UserLookupResponse } from '@/types';
@@ -34,6 +35,7 @@ import {
 } from 'lucide-react';
 
 export default function BillingPage() {
+  const adminApiFetch = useAdminApi();
   const { data: posData, loading, error } = usePosData();
   const [cart, setCart] = useState<PosCartItem[]>([]);
   const [customer, setCustomer] = useState<PosCustomerData>({});
@@ -262,13 +264,17 @@ export default function BillingPage() {
     
     try {
       // Save sale to database
-      const response = await fetch('/api/admin/pos/sale', {
+      const response = await adminApiFetch('/api/admin/pos/sale', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(saleData)
       });
+
+      if (!response) {
+        throw new Error('No response from server');
+      }
 
       const result = await response.json();
 
@@ -352,9 +358,9 @@ export default function BillingPage() {
       ) : (
       <div className="flex h-full max-h-screen bg-gray-50">
         
-        {/* Alert Container - Fixed position at top */}
+        {/* Alert Container - Fixed position at top center */}
         {alerts.length > 0 && (
-          <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-full max-w-md px-4">
             {alerts.map((alert) => (
               <Alert 
                 key={alert.id} 
