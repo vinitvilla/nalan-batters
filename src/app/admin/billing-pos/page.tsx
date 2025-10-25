@@ -85,8 +85,8 @@ export default function BillingPage() {
 
   const categoryOptions = ['all', ...categories.map(cat => cat.name)];
 
-  // Get tax rate from config (default to 13% HST)
-  const originalTaxRate = posData?.config?.taxRate || 0.13; // Original rate before waiving
+  // Get tax rate from config (handle 0% tax rate properly)
+  const originalTaxRate = posData?.config?.taxRate !== undefined ? posData.config.taxRate : 0.13; // Default to 13% HST only if not configured
   const taxRate = posData?.config?.taxWaived ? 0 : originalTaxRate;
   const isTaxWaived = posData?.config?.taxWaived || false;
 

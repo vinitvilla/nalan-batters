@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         isDelete: false,
         isActive: true,
         title: {
-          in: ['convenienceCharge', 'taxPercent', 'deliveryCharge', 'freeDeliveryThreshold']
+          in: ['additionalCharges', 'freeDeliveryThreshold']
         }
       }
     });
@@ -55,15 +55,20 @@ export async function GET(request: NextRequest) {
       return acc;
     }, {} as Record<string, any>);
 
-    // Handle tax configuration with waive flag
+    // Handle tax configuration with waive flag from additionalCharges
     let taxRate = 0.13; // Default 13% HST
     let taxWaived = false;
     
-    if (configMap.taxPercent) {
-      const taxConfig = configMap.taxPercent;
+    const additionalCharges = configMap.additionalCharges;
+    if (additionalCharges && additionalCharges.taxPercent) {
+      const taxConfig = additionalCharges.taxPercent;
       if (taxConfig && typeof taxConfig === 'object') {
         taxWaived = taxConfig.waive === true;
-        taxRate = taxWaived ? 0 : (taxConfig.percent || 13) / 100;
+        const taxPercent = parseFloat(taxConfig.percent);
+        if (!isNaN(taxPercent) && taxPercent >= 0) {
+          // Allow 0% tax rate - only use default if config is invalid
+          taxRate = taxWaived ? 0 : taxPercent / 100;
+        }
       }
     }
 
@@ -71,8 +76,8 @@ export async function GET(request: NextRequest) {
     const posConfig = {
       taxRate: taxRate,
       taxWaived: taxWaived,
-      convenienceCharge: parseFloat(configMap.convenienceCharge) || 2.50,
-      deliveryCharge: parseFloat(configMap.deliveryCharge) || 5.00,
+      convenienceCharge: additionalCharges?.convenienceCharge?.amount || 2.50,
+      deliveryCharge: additionalCharges?.deliveryCharge?.amount || 5.00,
       freeDeliveryThreshold: parseFloat(configMap.freeDeliveryThreshold) || 50.00
     };
 
