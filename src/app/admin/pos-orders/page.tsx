@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { RequirePermission } from "@/components/PermissionWrapper";
+import { useAdminApi } from "@/app/admin/use-admin-api";
 import { 
   Receipt, 
   User, 
@@ -78,6 +79,7 @@ interface PaginationData {
 }
 
 export default function PosOrdersPage() {
+  const adminApiFetch = useAdminApi();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -118,7 +120,10 @@ export default function PosOrdersPage() {
         paymentMethod: payment === 'all' ? '' : payment
       });
       
-      const response = await fetch(`/api/admin/pos/orders?${params}`);
+      const response = await adminApiFetch(`/api/admin/pos/orders?${params}`);
+      if (!response) {
+        throw new Error('No response from server');
+      }
       const result = await response.json();
       
       if (result.success) {

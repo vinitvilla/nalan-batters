@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
+import { requireAdmin } from '@/lib/requireAdmin';
 
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
+    // Require admin authentication
+    const adminCheck = await requireAdmin(request);
+    if (adminCheck instanceof NextResponse) return adminCheck;
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -16,10 +21,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause for POS orders specifically
     const whereClause: any = {
-      orderType: 'PICKUP', // POS orders are pickup orders
-      user: {
-        fullName: 'Walk-in Customer' // POS orders use walk-in customer
-      },
+      orderType: 'POS', // Filter by order type POS (Point of Sale)
       isDelete: false
     };
 

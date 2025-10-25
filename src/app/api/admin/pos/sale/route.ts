@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
         orderNumber: orderNumber,
         userId: userId,
         addressId: storeAddress.id,
-        orderType: 'PICKUP',
+        orderType: 'POS',
         paymentMethod: saleData.paymentMethod.toUpperCase() as 'CASH' | 'CARD',
         total: saleData.total,
         tax: saleData.tax,
