@@ -30,8 +30,8 @@ export default function CheckoutPage() {
   const selectedAddress = useAddressStore((s) => s.selectedAddress);
   const selectedDeliveryDate = useOrderStore((s) => s.selectedDeliveryDate);
   const setSelectedDeliveryDate = useOrderStore((s) => s.setSelectedDeliveryDate);
-  const orderType = useOrderStore((s) => s.orderType);
-  const setOrderType = useOrderStore((s) => s.setOrderType);
+  const orderType = useOrderStore((s) => s.deliveryType);
+  const setOrderType = useOrderStore((s) => s.setDeliveryType);
 
   // Progress tracking
   const isLoggedIn = !!user;

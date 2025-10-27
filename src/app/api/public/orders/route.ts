@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createOrder } from "@/lib/utils/orderHelpers";
+import { prisma } from "@/lib/prisma";
 import moment from 'moment';
 
 export async function POST(req: NextRequest) {
@@ -33,10 +34,44 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // For pickup orders, use the default pickup location address
+        // For pickup orders, find or create the system pickup address
         let finalAddressId = addressId;
         if (orderType === 'PICKUP') {
-            finalAddressId = 'pickup-location-default';
+            // Try to find the system pickup address
+            const pickupAddress = await prisma.address.findFirst({
+                where: { 
+                    id: 'pickup-location-default'
+                }
+            });
+            
+            if (!pickupAddress) {
+                // If not found, create a system user and pickup address
+                const systemUser = await prisma.user.upsert({
+                    where: { phone: 'system-pickup' },
+                    update: {},
+                    create: {
+                        id: 'system-pickup-user',
+                        phone: 'system-pickup',
+                        fullName: 'Nalan Batters Store',
+                        role: 'ADMIN',
+                    },
+                });
+                
+                const newPickupAddress = await prisma.address.create({
+                    data: {
+                        id: 'pickup-location-default',
+                        userId: systemUser.id,
+                        street: 'STORE_PICKUP',
+                        city: 'Store Location',
+                        province: 'ON',
+                        country: 'Canada',
+                        postal: 'M1M1M1'
+                    }
+                });
+                finalAddressId = newPickupAddress.id;
+            } else {
+                finalAddressId = pickupAddress.id;
+            }
         }
 
         const order = await createOrder({ 

@@ -3,8 +3,8 @@ import { Truck, Store, MapPin, Clock } from 'lucide-react';
 import { useOrderStore } from '@/store/orderStore';
 
 export function OrderTypeSelector() {
-  const orderType = useOrderStore(s => s.orderType);
-  const setOrderType = useOrderStore(s => s.setOrderType);
+  const orderType = useOrderStore(s => s.deliveryType);
+  const setOrderType = useOrderStore(s => s.setDeliveryType);
 
   return (
     <div className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6 md:p-8">

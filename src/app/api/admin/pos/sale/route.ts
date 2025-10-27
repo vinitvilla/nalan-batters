@@ -127,18 +127,30 @@ export async function POST(request: NextRequest) {
       userId = walkInUser.id;
     }
 
-    // Create a default address for POS orders (store address)
+    // Use the system-wide pickup address for POS orders (not user-specific)
     let storeAddress = await prisma.address.findFirst({
       where: { 
-        userId: userId,
-        street: 'STORE_PICKUP'
+        id: 'pickup-location-default'
       }
     });
 
     if (!storeAddress) {
+      // If system pickup address doesn't exist, create it with a system user
+      const systemUser = await prisma.user.upsert({
+        where: { phone: 'system-pickup' },
+        update: {},
+        create: {
+          id: 'system-pickup-user',
+          phone: 'system-pickup',
+          fullName: 'Nalan Batters Store',
+          role: 'ADMIN',
+        },
+      });
+      
       storeAddress = await prisma.address.create({
         data: {
-          userId: userId,
+          id: 'pickup-location-default',
+          userId: systemUser.id,
           street: 'STORE_PICKUP',
           city: 'Store Location',
           province: 'ON',
