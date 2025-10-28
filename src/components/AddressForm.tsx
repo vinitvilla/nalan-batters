@@ -13,13 +13,14 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
   const setNewAddress = useAddressStore((s) => s.setNewAddress);
   const clearNewAddress = useAddressStore((s) => s.clearNewAddress);
   const [error, setError] = useState<string>("");
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
   const updateField = useCallback((field: keyof AddressFields, value: string) => {
     setNewAddress({ ...newAddress, [field]: value });
   }, [newAddress, setNewAddress]);
 
   const initAutocomplete = useCallback(() => {
-    if (!autocompleteRef.current || !window.google || !isLoaded) {
+    if (!autocompleteRef.current || !window.google) {
       return;
     }
     
@@ -105,7 +106,7 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
       console.error('Failed to initialize Google Places Autocomplete:', error);
       setError("Failed to load address autocomplete. Please try refreshing the page.");
     }
-  }, [clearNewAddress, setNewAddress, isLoaded]);
+  }, [clearNewAddress, setNewAddress]);
 
   useEffect(() => {
     // Initialize component state
@@ -121,20 +122,24 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
     `;
     document.head.appendChild(style);
 
-    // Only initialize autocomplete when Google Maps API is loaded and ref is available
-    if (isLoaded && autocompleteRef.current) {
-      // Small delay to ensure the DOM is ready
-      const timeoutId = setTimeout(() => {
-        initAutocomplete();
-      }, 100);
+    // Check if Google Maps is loaded with timeout
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds total (50 * 100ms)
+    
+    const checkGoogleMapsLoaded = () => {
+      attempts++;
       
-      return () => {
-        clearTimeout(timeoutId);
-        if (document.head.contains(style)) {
-          document.head.removeChild(style);
-        }
-      };
-    }
+      if (window.google && window.google.maps && window.google.maps.places) {
+        setIsGoogleMapsLoaded(true);
+      } else if (attempts < maxAttempts) {
+        // Retry after a short delay
+        setTimeout(checkGoogleMapsLoaded, 100);
+      } else {
+        setError("Failed to load address autocomplete. Please refresh the page.");
+      }
+    };
+    
+    checkGoogleMapsLoaded();
 
     // Cleanup function to remove the style when component unmounts
     return () => {
@@ -142,7 +147,13 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
         document.head.removeChild(style);
       }
     };
-  }, [isLoaded, initAutocomplete, clearNewAddress]);
+  }, [clearNewAddress]);
+
+  useEffect(() => {
+    if (isGoogleMapsLoaded && autocompleteRef.current) {
+      initAutocomplete();
+    }
+  }, [isGoogleMapsLoaded, initAutocomplete]);
 
   const validateAddress = useCallback((fields: AddressFields) => {
     const required: (keyof AddressFields)[] = ['street', 'city', 'province', 'country', 'postal'];
@@ -247,7 +258,7 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
       
       <div>
         <Label className="text-gray-900 font-medium mb-2 block">🏠 Start with your address</Label>
-        {!isLoaded ? (
+        {!isGoogleMapsLoaded ? (
           <div className="w-full border border-gray-200 rounded-lg text-gray-900 bg-gray-50 px-4 py-3 font-medium text-center">
             Loading address autocomplete...
           </div>

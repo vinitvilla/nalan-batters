@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useAddressStore } from "@/store/addressStore";
 import { AddressForm } from "@/components/AddressForm";
@@ -163,9 +163,9 @@ export function CheckoutContactDelivery({
                         <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
                           Add New Delivery Address
                         </DialogTitle>
-                        <p className="text-gray-600 text-base leading-relaxed">
+                        <DialogDescription className="text-gray-600 text-base leading-relaxed">
                           Enter your address details below. We&apos;ll save it securely for future orders!
-                        </p>
+                        </DialogDescription>
                       </DialogHeader>
                       <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
                         <AddressForm 
@@ -328,9 +328,9 @@ export function CheckoutContactDelivery({
                       <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
                         Add Your First Delivery Address
                       </DialogTitle>
-                      <p className="text-gray-600 text-base leading-relaxed">
+                      <DialogDescription className="text-gray-600 text-base leading-relaxed">
                         Enter your address details below. We&apos;ll save it securely for future orders!
-                      </p>
+                      </DialogDescription>
                     </DialogHeader>
                     <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
                       <AddressForm 
