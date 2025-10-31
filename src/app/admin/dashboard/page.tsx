@@ -240,18 +240,18 @@ export default function DashboardPage() {
         }],
     };
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="min-h-screen bg-gray-50">
             <div className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        <h1 className="text-3xl font-bold text-gray-900">
                             Nalan Batters Analytics
                         </h1>
                         <p className="text-gray-600 mt-1">Real-time business insights and performance metrics</p>
                     </div>
                     <button 
                         onClick={fetchDashboardData}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                        className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -262,14 +262,14 @@ export default function DashboardPage() {
                 
                 {/* Enhanced Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
+                    <div className="bg-gradient-to-br from-gray-800 to-black rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-medium text-blue-100 mb-2">Total Users</h3>
+                                <h3 className="text-sm font-medium text-gray-300 mb-2">Total Users</h3>
                                 <p className="text-3xl font-bold">{dashboardData.overview.totalUsers}</p>
-                                <p className="text-sm text-blue-100 mt-1">Registered customers</p>
+                                <p className="text-sm text-gray-400 mt-1">Registered customers</p>
                             </div>
-                            <div className="bg-white/20 rounded-lg p-3">
+                            <div className="bg-white/10 rounded-lg p-3">
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                                 </svg>
@@ -277,14 +277,14 @@ export default function DashboardPage() {
                         </div>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
+                    <div className="bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-medium text-green-100 mb-2">Total Orders</h3>
+                                <h3 className="text-sm font-medium text-gray-300 mb-2">Total Orders</h3>
                                 <p className="text-3xl font-bold">{dashboardData.overview.totalOrders}</p>
-                                <p className="text-sm text-green-100 mt-1">Today: {dashboardData.overview.todaysOrders}</p>
+                                <p className="text-sm text-gray-400 mt-1">Today: {dashboardData.overview.todaysOrders}</p>
                             </div>
-                            <div className="bg-white/20 rounded-lg p-3">
+                            <div className="bg-white/10 rounded-lg p-3">
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                 </svg>
@@ -292,16 +292,16 @@ export default function DashboardPage() {
                         </div>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
+                    <div className="bg-gradient-to-br from-gray-600 to-gray-800 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-medium text-purple-100 mb-2">Monthly Revenue</h3>
+                                <h3 className="text-sm font-medium text-gray-300 mb-2">Monthly Revenue</h3>
                                 <p className="text-3xl font-bold">${dashboardData.overview.monthlyRevenue.toLocaleString()}</p>
-                                <p className={`text-sm mt-1 ${dashboardData.overview.revenueGrowth >= 0 ? 'text-green-200' : 'text-red-200'}`}>
+                                <p className={`text-sm mt-1 ${dashboardData.overview.revenueGrowth >= 0 ? 'text-gray-300' : 'text-gray-400'}`}>
                                     {dashboardData.overview.revenueGrowth >= 0 ? '+' : ''}{dashboardData.overview.revenueGrowth}% from last month
                                 </p>
                             </div>
-                            <div className="bg-white/20 rounded-lg p-3">
+                            <div className="bg-white/10 rounded-lg p-3">
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                                 </svg>
@@ -309,16 +309,16 @@ export default function DashboardPage() {
                         </div>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
+                    <div className="bg-gradient-to-br from-gray-500 to-gray-700 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-medium text-orange-100 mb-2">Products</h3>
+                                <h3 className="text-sm font-medium text-gray-300 mb-2">Products</h3>
                                 <p className="text-3xl font-bold">{dashboardData.overview.activeProducts}</p>
-                                <p className="text-sm text-orange-100 mt-1">
+                                <p className="text-sm text-gray-400 mt-1">
                                     {dashboardData.overview.lowStockProducts} low stock
                                 </p>
                             </div>
-                            <div className="bg-white/20 rounded-lg p-3">
+                            <div className="bg-white/10 rounded-lg p-3">
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                 </svg>
@@ -333,7 +333,7 @@ export default function DashboardPage() {
                 <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold text-gray-800">Order Status</h2>
-                        <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-gray-800 rounded-full"></div>
                     </div>
                     <div className="h-64 sm:h-80">
                         <Doughnut 
@@ -361,7 +361,7 @@ export default function DashboardPage() {
                 <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold text-gray-800">Order Types</h2>
-                        <div className="w-3 h-3 bg-gradient-to-r from-green-500 to-blue-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-gray-700 rounded-full"></div>
                     </div>
                     <div className="h-64 sm:h-80">
                         <Pie 
@@ -388,7 +388,7 @@ export default function DashboardPage() {
                 <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold text-gray-800">Top Products</h2>
-                        <div className="w-3 h-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
                     </div>
                     <div className="h-64 sm:h-80">
                         <Bar 
@@ -418,7 +418,7 @@ export default function DashboardPage() {
                 <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100 lg:col-span-2">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold text-gray-800">Daily Revenue Trend (Last 7 Days)</h2>
-                        <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
                     </div>
                     <div className="h-64 sm:h-80">
                         <Line 
@@ -462,7 +462,7 @@ export default function DashboardPage() {
                 <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100 lg:col-span-2 xl:col-span-1">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold text-gray-800">Monthly Trends</h2>
-                        <div className="w-3 h-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
                     </div>
                     <div className="h-64 sm:h-80">
                         <Line 
@@ -519,7 +519,7 @@ export default function DashboardPage() {
                         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-semibold text-gray-800">Today's Hourly Orders</h2>
-                                <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+                                <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
                             </div>
                             <div className="h-64 sm:h-80">
                                 <Radar 
@@ -547,7 +547,7 @@ export default function DashboardPage() {
                         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-semibold text-gray-800">Sales by Category</h2>
-                                <div className="w-3 h-3 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full"></div>
+                                <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
                             </div>
                             <div className="h-64 sm:h-80">
                                 <PolarArea 
