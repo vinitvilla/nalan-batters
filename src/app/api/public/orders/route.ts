@@ -34,10 +34,10 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // For pickup orders, find or create the system pickup address
+        // For pickup orders, use the system pickup address
         let finalAddressId = addressId;
         if (orderType === 'PICKUP') {
-            // Try to find the system pickup address
+            // Find the system pickup address (should be created by seed)
             const pickupAddress = await prisma.address.findFirst({
                 where: { 
                     id: 'pickup-location-default'
@@ -45,33 +45,12 @@ export async function POST(req: NextRequest) {
             });
             
             if (!pickupAddress) {
-                // If not found, create a system user and pickup address
-                const systemUser = await prisma.user.upsert({
-                    where: { phone: 'system-pickup' },
-                    update: {},
-                    create: {
-                        id: 'system-pickup-user',
-                        phone: 'system-pickup',
-                        fullName: 'Nalan Batters Store',
-                        role: 'ADMIN',
-                    },
-                });
-                
-                const newPickupAddress = await prisma.address.create({
-                    data: {
-                        id: 'pickup-location-default',
-                        userId: systemUser.id,
-                        street: 'STORE_PICKUP',
-                        city: 'Store Location',
-                        province: 'ON',
-                        country: 'Canada',
-                        postal: 'M1M1M1'
-                    }
-                });
-                finalAddressId = newPickupAddress.id;
-            } else {
-                finalAddressId = pickupAddress.id;
+                return NextResponse.json({ 
+                    error: "Pickup location not configured. Please contact support." 
+                }, { status: 500 });
             }
+            
+            finalAddressId = pickupAddress.id;
         }
 
         const order = await createOrder({ 

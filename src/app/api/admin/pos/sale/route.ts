@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
       
       userId = user.id;
     } else {
-      // For anonymous walk-in customers, use a special system user or create one
-      let walkInUser = await prisma.user.findFirst({
+      // For anonymous walk-in customers, use the system walk-in user (should be created by seed)
+      const walkInUser = await prisma.user.findFirst({
         where: { 
           phone: 'WALK_IN_CUSTOMER',
           role: 'USER'
@@ -116,48 +116,27 @@ export async function POST(request: NextRequest) {
       });
 
       if (!walkInUser) {
-        walkInUser = await prisma.user.create({
-          data: {
-            phone: 'WALK_IN_CUSTOMER',
-            fullName: 'Walk-in Customer',
-            role: 'USER'
-          }
-        });
+        return NextResponse.json<PosSaleResponse>({
+          success: false,
+          error: 'Walk-in customer user not configured. Please contact support.'
+        }, { status: 500 });
       }
+      
       userId = walkInUser.id;
     }
 
     // Use the system-wide pickup address for POS orders (not user-specific)
-    let storeAddress = await prisma.address.findFirst({
+    const storeAddress = await prisma.address.findFirst({
       where: { 
         id: 'pickup-location-default'
       }
     });
 
     if (!storeAddress) {
-      // If system pickup address doesn't exist, create it with a system user
-      const systemUser = await prisma.user.upsert({
-        where: { phone: 'system-pickup' },
-        update: {},
-        create: {
-          id: 'system-pickup-user',
-          phone: 'system-pickup',
-          fullName: 'Nalan Batters Store',
-          role: 'ADMIN',
-        },
-      });
-      
-      storeAddress = await prisma.address.create({
-        data: {
-          id: 'pickup-location-default',
-          userId: systemUser.id,
-          street: 'STORE_PICKUP',
-          city: 'Store Location',
-          province: 'ON',
-          country: 'Canada',
-          postal: 'M1M1M1'
-        }
-      });
+      return NextResponse.json<PosSaleResponse>({
+        success: false,
+        error: 'Store pickup location not configured. Please contact support.'
+      }, { status: 500 });
     }
 
     // Generate unique order number

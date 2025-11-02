@@ -387,9 +387,9 @@ async function logDatabaseStatistics() {
     console.log(`   📦 Products: ${products}`);
     console.log(`   📁 Categories: ${categories}`);
     console.log(`   📋 Orders: ${orders}`);
-    console.log(`      📦 Delivery Orders: ${deliveryOrders}`);
-    console.log(`      🏪 Pickup Orders: ${pickupOrders}`);
-    console.log(`      🔢 POS Orders: ${posOrders}`);
+    console.log(`   📦 Delivery Orders: ${deliveryOrders}`);
+    console.log(`   🏪 Pickup Orders: ${pickupOrders}`);
+    console.log(`   🔢 POS Orders: ${posOrders}`);
     console.log(`   📄 Order Items: ${orderItems}`);
     console.log(`   🎫 Promo Codes: ${promoCodes}`);
     
