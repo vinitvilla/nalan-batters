@@ -322,7 +322,22 @@ export default function ConfigForm() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex flex-col items-end gap-1">
-                        <span className="text-xs text-muted-foreground">Status</span>
+                        <Badge 
+                          variant={config.isActive ? "default" : "secondary"}
+                          className={config.isActive 
+                            ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md" 
+                            : "bg-gray-200 text-gray-600"
+                          }
+                        >
+                          {config.isActive ? (
+                            <span className="flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Active
+                            </span>
+                          ) : (
+                            "Inactive"
+                          )}
+                        </Badge>
                         <Switch
                           checked={config.isActive}
                           onCheckedChange={() => handleToggle(idx)}
@@ -330,22 +345,6 @@ export default function ConfigForm() {
                           className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-orange-500 data-[state=checked]:to-orange-600 cursor-pointer"
                         />
                       </div>
-                      <Badge 
-                        variant={config.isActive ? "default" : "secondary"}
-                        className={config.isActive 
-                          ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md" 
-                          : "bg-gray-200 text-gray-600"
-                        }
-                      >
-                        {config.isActive ? (
-                          <span className="flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Active
-                          </span>
-                        ) : (
-                          "Inactive"
-                        )}
-                      </Badge>
                     </div>
                   </div>
                 </CardHeader>

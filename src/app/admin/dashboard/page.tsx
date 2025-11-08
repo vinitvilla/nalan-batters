@@ -78,7 +78,6 @@ export default function DashboardPage() {
             setDashboardData(data);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
-            console.error("Error fetching dashboard data:", error);
             toast.error("Failed to fetch dashboard data");
         } finally {
             setLoading(false);
