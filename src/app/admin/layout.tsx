@@ -44,14 +44,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
 
     return (
-        <div className="flex min-h-screen bg-muted">
+        <div className="flex min-h-screen bg-muted overflow-hidden">
             <AdminSidebar 
                 isOpen={sidebarOpen} 
                 onClose={() => setSidebarOpen(false)} 
             />
-            <div className="flex-1 flex flex-col lg:ml-0">
+            <div className="flex-1 flex flex-col lg:ml-64 h-screen overflow-hidden">
                 <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                     {children}
                 </main>
             </div>

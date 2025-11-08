@@ -61,6 +61,11 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         onClose(); // Close sidebar on mobile after navigation
     };
 
+    // Prevent scroll from propagating to the main page
+    const handleWheel = (e: React.WheelEvent) => {
+        e.stopPropagation();
+    };
+
     return (
         <>
             {/* Mobile Overlay */}
@@ -72,14 +77,18 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             )}
             
             {/* Redesigned Sidebar */}
-            <aside className={`
-                fixed lg:static top-0 left-0 h-100vh w-64 bg-primary
-                flex flex-col z-50 transition-all duration-300 ease-in-out
-                ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                shadow-xl border-r border-primary-foreground/10
-            `}>
+            <aside 
+                onWheel={handleWheel}
+                className={`
+                    fixed top-0 left-0 h-screen w-64 bg-primary
+                    flex flex-col z-50 transition-all duration-300 ease-in-out
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                    shadow-xl border-r border-primary-foreground/10
+                    overflow-hidden
+                `}
+            >
                 {/* Header Section */}
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                     {/* Background Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-foreground/5 to-transparent"></div>
                     
@@ -127,13 +136,14 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 </div>
                 
                 {/* Navigation Section */}
-                <ScrollArea className="flex-1 px-3">
-                    <nav className="space-y-1">
-                        {allowedNavItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = pathname === item.href;
-                            const isContactMessages = item.href === "/admin/contact-messages";
-                            const showBadge = isContactMessages && newMessagesCount > 0;
+                <div className="flex-1 overflow-hidden px-3 pb-4">
+                    <ScrollArea className="h-full [&>[data-slot=scroll-area-scrollbar]]:bg-primary-foreground/10 [&>[data-slot=scroll-area-thumb]]:bg-primary-foreground/40 [&>[data-slot=scroll-area-thumb]]:hover:bg-primary-foreground/60">
+                        <nav className="space-y-1 pr-2">
+                            {allowedNavItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = pathname === item.href;
+                                const isContactMessages = item.href === "/admin/contact-messages";
+                                const showBadge = isContactMessages && newMessagesCount > 0;
                             
                             return (
                                 <div key={item.href} className="relative">
@@ -199,6 +209,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                         })}
                     </nav>
                 </ScrollArea>
+                </div>
             </aside>
         </>
     );
