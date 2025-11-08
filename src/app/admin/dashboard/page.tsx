@@ -19,14 +19,14 @@ import { toast } from "sonner";
 
 // Register chart.js components
 ChartJS.register(
-    CategoryScale, 
-    LinearScale, 
-    BarElement, 
-    ArcElement, 
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    ArcElement,
     LineElement,
     PointElement,
     RadialLinearScale,
-    Tooltip, 
+    Tooltip,
     Legend,
     Filler
 );
@@ -44,11 +44,11 @@ interface DashboardData {
     charts: {
         orderStatus: Array<{ status: string; count: number }>;
         orderType: Array<{ type: string; count: number }>;
-        topProducts: Array<{ 
-            productId: string; 
-            name: string; 
-            quantity: number; 
-            orderCount: number 
+        topProducts: Array<{
+            productId: string;
+            name: string;
+            quantity: number;
+            orderCount: number
         }>;
         dailyRevenue: Array<{ label: string; revenue: number }>;
         hourlyOrders: Array<{ hour: string; count: number }>;
@@ -102,7 +102,7 @@ export default function DashboardPage() {
                 <h1 className="text-xl sm:text-2xl font-bold">Admin Dashboard</h1>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <p className="text-red-700">Error: {error || 'Failed to load data'}</p>
-                    <button 
+                    <button
                         onClick={fetchDashboardData}
                         className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                     >
@@ -249,7 +249,7 @@ export default function DashboardPage() {
                         </h1>
                         <p className="text-gray-600 mt-1">Real-time business insights and performance metrics</p>
                     </div>
-                    <button 
+                    <button
                         onClick={fetchDashboardData}
                         className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
                     >
@@ -259,7 +259,7 @@ export default function DashboardPage() {
                         Refresh
                     </button>
                 </div>
-                
+
                 {/* Enhanced Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="bg-gradient-to-br from-gray-800 to-black rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
                         <div className="flex items-center justify-between">
                             <div>
@@ -291,7 +291,7 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-gray-600 to-gray-800 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
                         <div className="flex items-center justify-between">
                             <div>
@@ -308,7 +308,7 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-gray-500 to-gray-700 rounded-xl shadow-lg p-6 text-white transform hover:scale-105 transition-all duration-300">
                         <div className="flex items-center justify-between">
                             <div>
@@ -326,290 +326,290 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </div>
-            
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                {/* Order Status Distribution */}
-                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-800">Order Status</h2>
-                        <div className="w-3 h-3 bg-gray-800 rounded-full"></div>
-                    </div>
-                    <div className="h-64 sm:h-80">
-                        <Doughnut 
-                            data={orderStatusData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom',
-                                        labels: {
-                                            padding: 20,
-                                            usePointStyle: true,
-                                            font: { size: 12 }
-                                        }
-                                    }
-                                },
-                                cutout: '60%',
-                            }}
-                        />
-                    </div>
-                </div>
-                
-                {/* Pickup vs Delivery */}
-                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-800">Order Types</h2>
-                        <div className="w-3 h-3 bg-gray-700 rounded-full"></div>
-                    </div>
-                    <div className="h-64 sm:h-80">
-                        <Pie 
-                            data={orderTypeData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom',
-                                        labels: {
-                                            padding: 20,
-                                            usePointStyle: true,
-                                            font: { size: 12 }
-                                        }
-                                    }
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-                
-                {/* Top Products */}
-                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-800">Top Products</h2>
-                        <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
-                    </div>
-                    <div className="h-64 sm:h-80">
-                        <Bar 
-                            data={topProductsData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: { display: false }
-                                },
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        ticks: { stepSize: 1 },
-                                        grid: { color: 'rgba(0,0,0,0.1)' }
-                                    },
-                                    x: {
-                                        grid: { display: false }
-                                    }
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
 
-                {/* Daily Revenue Trend */}
-                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100 lg:col-span-2">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-800">Daily Revenue Trend (Last 7 Days)</h2>
-                        <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-                    </div>
-                    <div className="h-64 sm:h-80">
-                        <Line 
-                            data={dailyRevenueData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        backgroundColor: 'rgba(0,0,0,0.8)',
-                                        titleColor: '#fff',
-                                        bodyColor: '#fff',
-                                    }
-                                },
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        grid: { color: 'rgba(0,0,0,0.1)' },
-                                        ticks: {
-                                            callback: function(value) {
-                                                return '₹' + value;
-                                            }
-                                        }
-                                    },
-                                    x: {
-                                        grid: { display: false }
-                                    }
-                                },
-                                elements: {
-                                    point: {
-                                        hoverRadius: 8
-                                    }
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-
-                {/* Monthly Trends */}
-                <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100 lg:col-span-2 xl:col-span-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-800">Monthly Trends</h2>
-                        <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                    </div>
-                    <div className="h-64 sm:h-80">
-                        <Line 
-                            data={monthlyTrendsData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                interaction: {
-                                    mode: 'index' as const,
-                                    intersect: false,
-                                },
-                                scales: {
-                                    y: {
-                                        type: 'linear' as const,
-                                        display: true,
-                                        position: 'left' as const,
-                                        title: {
-                                            display: true,
-                                            text: 'Orders'
-                                        }
-                                    },
-                                    y1: {
-                                        type: 'linear' as const,
-                                        display: true,
-                                        position: 'right' as const,
-                                        title: {
-                                            display: true,
-                                            text: 'Revenue (₹)'
-                                        },
-                                        grid: {
-                                            drawOnChartArea: false,
-                                        },
-                                    },
-                                },
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom' as const,
-                                        labels: {
-                                            usePointStyle: true
-                                        }
-                                    }
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Additional Advanced Charts */}
-            {(dashboardData.charts.hourlyOrders.length > 0 || dashboardData.charts.categoryDistribution.length > 0) && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-                    {/* Hourly Orders Distribution */}
-                    {dashboardData.charts.hourlyOrders.length > 0 && (
-                        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-semibold text-gray-800">Today's Hourly Orders</h2>
-                                <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
-                            </div>
-                            <div className="h-64 sm:h-80">
-                                <Radar 
-                                    data={hourlyOrdersData}
-                                    options={{
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        plugins: {
-                                            legend: { display: false }
-                                        },
-                                        scales: {
-                                            r: {
-                                                beginAtZero: true,
-                                                ticks: { stepSize: 1 }
-                                            }
-                                        }
-                                    }}
-                                />
-                            </div>
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                    {/* Order Status Distribution */}
+                    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-800">Order Status</h2>
+                            <div className="w-3 h-3 bg-gray-800 rounded-full"></div>
                         </div>
-                    )}
+                        <div className="h-64 sm:h-80">
+                            <Doughnut
+                                data={orderStatusData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom',
+                                            labels: {
+                                                padding: 20,
+                                                usePointStyle: true,
+                                                font: { size: 12 }
+                                            }
+                                        }
+                                    },
+                                    cutout: '60%',
+                                }}
+                            />
+                        </div>
+                    </div>
 
-                    {/* Category Distribution */}
-                    {dashboardData.charts.categoryDistribution.length > 0 && (
-                        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-semibold text-gray-800">Sales by Category</h2>
-                                <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-                            </div>
-                            <div className="h-64 sm:h-80">
-                                <PolarArea 
-                                    data={categoryData}
-                                    options={{
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        plugins: {
-                                            legend: {
-                                                position: 'bottom',
-                                                labels: {
-                                                    usePointStyle: true,
-                                                    padding: 20
+                    {/* Pickup vs Delivery */}
+                    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-800">Order Types</h2>
+                            <div className="w-3 h-3 bg-gray-700 rounded-full"></div>
+                        </div>
+                        <div className="h-64 sm:h-80">
+                            <Pie
+                                data={orderTypeData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom',
+                                            labels: {
+                                                padding: 20,
+                                                usePointStyle: true,
+                                                font: { size: 12 }
+                                            }
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Top Products */}
+                    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-800">Top Products</h2>
+                            <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                        </div>
+                        <div className="h-64 sm:h-80">
+                            <Bar
+                                data={topProductsData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: { stepSize: 1 },
+                                            grid: { color: 'rgba(0,0,0,0.1)' }
+                                        },
+                                        x: {
+                                            grid: { display: false }
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Daily Revenue Trend */}
+                    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100 lg:col-span-2">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-800">Daily Revenue Trend (Last 7 Days)</h2>
+                            <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                        </div>
+                        <div className="h-64 sm:h-80">
+                            <Line
+                                data={dailyRevenueData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: {
+                                            backgroundColor: 'rgba(0,0,0,0.8)',
+                                            titleColor: '#fff',
+                                            bodyColor: '#fff',
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            grid: { color: 'rgba(0,0,0,0.1)' },
+                                            ticks: {
+                                                callback: function (value) {
+                                                    return '₹' + value;
                                                 }
                                             }
+                                        },
+                                        x: {
+                                            grid: { display: false }
                                         }
-                                    }}
-                                />
-                            </div>
+                                    },
+                                    elements: {
+                                        point: {
+                                            hoverRadius: 8
+                                        }
+                                    }
+                                }}
+                            />
                         </div>
-                    )}
-                </div>
-            )}
+                    </div>
 
-            {/* Additional Info */}
-            {dashboardData.charts.topProducts.length > 0 && (
-                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h2 className="text-lg font-semibold mb-4">Top Selling Products This Month</h2>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Product Name
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Quantity Sold
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Orders
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {dashboardData.charts.topProducts.map((product, index) => (
-                                    <tr key={product.productId}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            #{index + 1} {product.name}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {product.quantity}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {product.orderCount}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    {/* Monthly Trends */}
+                    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100 lg:col-span-2 xl:col-span-1">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-800">Monthly Trends</h2>
+                            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                        </div>
+                        <div className="h-64 sm:h-80">
+                            <Line
+                                data={monthlyTrendsData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    interaction: {
+                                        mode: 'index' as const,
+                                        intersect: false,
+                                    },
+                                    scales: {
+                                        y: {
+                                            type: 'linear' as const,
+                                            display: true,
+                                            position: 'left' as const,
+                                            title: {
+                                                display: true,
+                                                text: 'Orders'
+                                            }
+                                        },
+                                        y1: {
+                                            type: 'linear' as const,
+                                            display: true,
+                                            position: 'right' as const,
+                                            title: {
+                                                display: true,
+                                                text: 'Revenue (₹)'
+                                            },
+                                            grid: {
+                                                drawOnChartArea: false,
+                                            },
+                                        },
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom' as const,
+                                            labels: {
+                                                usePointStyle: true
+                                            }
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
-            )}
+
+                {/* Additional Advanced Charts */}
+                {(dashboardData.charts.hourlyOrders.length > 0 || dashboardData.charts.categoryDistribution.length > 0) && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+                        {/* Hourly Orders Distribution */}
+                        {dashboardData.charts.hourlyOrders.length > 0 && (
+                            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-800">Today's Hourly Orders</h2>
+                                    <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                                </div>
+                                <div className="h-64 sm:h-80">
+                                    <Radar
+                                        data={hourlyOrdersData}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: { display: false }
+                                            },
+                                            scales: {
+                                                r: {
+                                                    beginAtZero: true,
+                                                    ticks: { stepSize: 1 }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Category Distribution */}
+                        {dashboardData.charts.categoryDistribution.length > 0 && (
+                            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-800">Sales by Category</h2>
+                                    <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                                </div>
+                                <div className="h-64 sm:h-80">
+                                    <PolarArea
+                                        data={categoryData}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: {
+                                                    position: 'bottom',
+                                                    labels: {
+                                                        usePointStyle: true,
+                                                        padding: 20
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Additional Info */}
+                {dashboardData.charts.topProducts.length > 0 && (
+                    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+                        <h2 className="text-lg font-semibold mb-4">Top Selling Products This Month</h2>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Product Name
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Quantity Sold
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Orders
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {dashboardData.charts.topProducts.map((product, index) => (
+                                        <tr key={product.productId}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                #{index + 1} {product.name}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {product.quantity}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {product.orderCount}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
