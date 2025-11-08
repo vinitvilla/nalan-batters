@@ -26,7 +26,8 @@ import {
   MessageSquare,
   Save,
   RotateCcw,
-  CheckCircle2
+  CheckCircle2,
+  Palette
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AdditionalChargesForm } from "@/components/AdditionalChargesForm";
@@ -184,50 +185,55 @@ export default function ConfigForm() {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-orange-50/20 to-gray-50">
-      {/* Action Bar */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-lg border-b shadow-sm flex-shrink-0">
-        <div className="px-4 lg:px-6 py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-2">
-              {hasChanges && (
-                <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 text-xs">
-                  Unsaved changes
-                </Badge>
-              )}
+      {/* Header with Action Buttons */}
+      <CardHeader className="border-b flex-shrink-0 bg-white">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 flex items-center justify-center">
+              <Palette className="w-4 h-4 text-white" />
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleDiscard}
-                disabled={saving || !hasChanges}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Discard
-              </Button>
-              <Button
-                onClick={handleSaveAll}
-                disabled={saving || !hasChanges}
-                size="sm"
-                className="gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg"
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
+            <div>
+              <CardTitle className="text-lg font-bold">Configuration Management</CardTitle>
+              <CardDescription>Manage application configuration and system settings</CardDescription>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            {hasChanges && (
+              <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 text-xs">
+                Unsaved changes
+              </Badge>
+            )}
+            <Button
+              onClick={handleDiscard}
+              disabled={saving || !hasChanges}
+              variant="outline"
+              size="sm"
+              className="gap-2 cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Discard
+            </Button>
+            <Button
+              onClick={handleSaveAll}
+              disabled={saving || !hasChanges}
+              size="sm"
+              className="gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg cursor-pointer"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
         </div>
-      </div>
+      </CardHeader>
 
       {/* Main Content Area with Fixed Layout */}
       <div className="flex-1 overflow-hidden">
@@ -254,7 +260,7 @@ export default function ConfigForm() {
                                 element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                               }
                             }}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                            className={`cursor-pointer w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                               activeSection === config.id
                                 ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg scale-105'
                                 : 'text-gray-700 hover:bg-gray-100 hover:scale-102'
@@ -321,7 +327,7 @@ export default function ConfigForm() {
                           checked={config.isActive}
                           onCheckedChange={() => handleToggle(idx)}
                           disabled={saving}
-                          className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-orange-500 data-[state=checked]:to-orange-600"
+                          className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-orange-500 data-[state=checked]:to-orange-600 cursor-pointer"
                         />
                       </div>
                       <Badge 
@@ -389,7 +395,7 @@ export default function ConfigForm() {
                                   setError(null);
                                 }}
                                 disabled={saving}
-                                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-orange-500 data-[state=checked]:to-orange-600"
+                                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-orange-500 data-[state=checked]:to-orange-600 cursor-pointer"
                               />
                               <Badge variant={val ? "default" : "secondary"} className={val ? "bg-green-500" : ""}>
                                 {val ? 'Enabled' : 'Disabled'}
@@ -422,7 +428,7 @@ export default function ConfigForm() {
                                       setError(null);
                                     }}
                                     disabled={saving}
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 cursor-pointer"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -438,7 +444,7 @@ export default function ConfigForm() {
                                   setError(null);
                                 }}
                                 disabled={saving}
-                                className="w-full border-dashed border-2 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300"
+                                className="w-full border-dashed border-2 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 cursor-pointer"
                               >
                                 <Plus className="w-4 h-4 mr-2" /> Add {key} Item
                               </Button>
