@@ -21,9 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`scroll-smooth ${poppins.variable}`}>
       <head>
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" 
-          rel="stylesheet" 
+        <link
+          href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap"
+          rel="stylesheet"
         />
         <link rel="icon" href="/icon-192x192.png" sizes="192x192" type="image/png" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
@@ -35,10 +35,6 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} antialiased`}
       >
-        <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-          strategy="beforeInteractive"
-        />
         <LayoutClient>{children}</LayoutClient>
       </body>
     </html>

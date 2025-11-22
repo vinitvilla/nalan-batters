@@ -10,7 +10,6 @@ import { userStore } from "@/store/userStore";
 import { useOrderStore } from "@/store/orderStore";
 import { useConfigStore } from "@/store/configStore";
 import { AddressFields } from "@/store/addressStore";
-import { DiscountType } from "@/generated/prisma";
 import moment from 'moment';
 
 export interface OrderSummaryProps {
@@ -21,7 +20,7 @@ export interface OrderSummaryProps {
   updateQuantity?: (id: string, quantity: number) => void;
 }
 
-export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress, updateQuantity }: OrderSummaryProps) {
+export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updateQuantity }: OrderSummaryProps) {
   // Store hooks
   const router = useRouter();
   const config = useConfigStore(s => s.configs);
@@ -42,13 +41,13 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
 
   // Derived values using orderStore calculations
   const calculations = getOrderCalculations(cartItems, config, selectedAddress, selectedDeliveryDate, deliveryType);
-  const { 
-    subtotal, 
-    tax, 
+  const {
+    subtotal,
+    tax,
     taxRate,
-    convenienceCharge, 
-    deliveryCharge, 
-    appliedDiscount, 
+    convenienceCharge,
+    deliveryCharge,
+    appliedDiscount,
     finalTotal,
     originalTax,
     originalConvenienceCharge,
@@ -62,7 +61,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
     if (cartItems.length === 0) return "Your cart is empty";
     if (deliveryType === 'DELIVERY' && !selectedAddress) return "Please select a delivery address";
     if (deliveryType === 'DELIVERY' && !selectedDeliveryDate) return "Please select a delivery date";
-    
+
     // Check if delivery is available for the selected address
     if (deliveryType === 'DELIVERY' && selectedAddress && config.freeDelivery) {
       const deliveryDates = getNextDeliveryDates(selectedAddress.city || '', config.freeDelivery);
@@ -70,7 +69,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
         return "Delivery is not available for this location";
       }
     }
-    
+
     return null;
   };
 
@@ -78,7 +77,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
   const getNextDeliveryDates = (city: string, freeDeliveryConfig: Record<string, unknown>): Array<{ date: string, day: string }> => {
     if (!city || !freeDeliveryConfig) return [];
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    
+
     // Use moment.js to get today in EST timezone
     const estToday = moment().utcOffset(-5).startOf('day');
     const todayDay = estToday.day(); // 0 = Sunday, 1 = Monday, etc.
@@ -99,9 +98,9 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
       if (daysUntilNextDay === 0) daysUntilNextDay = 7;
       for (let i = 0; i < count; i++) {
         const nextDayDate = moment(estToday).add(daysUntilNextDay, 'days');
-        allDates.push({ 
-          date: nextDayDate.format('YYYY-MM-DD'), 
-          day: dayName 
+        allDates.push({
+          date: nextDayDate.format('YYYY-MM-DD'),
+          day: dayName
         });
         daysUntilNextDay += 7;
       }
@@ -144,7 +143,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Order failed");
       useCartStore.getState().clearCart();
-      
+
       // Redirect to success page with orderNumber if available
       const orderNumber = data.order?.orderNumber;
       if (orderNumber) {
@@ -164,9 +163,9 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
     <Card className="mb-8 pt-0 shadow-2xl rounded-2xl border-2 border-yellow-300 bg-yellow-25 max-w-md mx-auto">
       <CardHeader className="bg-yellow-50 rounded-t-2xl p-4 border-b border-yellow-200">
         <CardTitle className="text-xl font-extrabold text-yellow-800 tracking-tight flex items-center gap-2">
-            <span className="w-7 h-7 bg-yellow-200 rounded-full text-yellow-800 flex items-center justify-center">
+          <span className="w-7 h-7 bg-yellow-200 rounded-full text-yellow-800 flex items-center justify-center">
             <ShoppingCart className="w-5 h-5" />
-            </span>
+          </span>
           Order Summary
         </CardTitle>
       </CardHeader>
@@ -194,7 +193,7 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
                   </span>
                 </div>
                 <span className="w-20 text-right font-bold text-yellow-800 text-base">
-                  ${ (item.price * item.quantity).toFixed(2) }
+                  ${(item.price * item.quantity).toFixed(2)}
                 </span>
                 <Button
                   variant="ghost"
@@ -309,82 +308,82 @@ export function OrderSummary({ cartItems, total, removeFromCart, selectedAddress
               <span>Total</span>
               <span>${finalTotal.toFixed(2)}</span>
             </div>
-          {/* Order Type and Date/Pickup Info */}
-          <div className="space-y-2">
-            {/* Order Type Display */}
-            {deliveryType && (
-              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 shadow-sm">
-                <span className="text-sm font-semibold text-blue-700 flex items-center gap-2">
-                  {deliveryType === 'PICKUP' ? '🏪' : '🚚'} Order Type: <span className="text-blue-800 font-bold">{deliveryType === 'PICKUP' ? 'Store Pickup' : 'Home Delivery'}</span>
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-1 h-auto cursor-pointer"
-                  onClick={() => {
-                    setDeliveryType(null); // Reset delivery type to force re-selection
-                    // Also clear delivery date when changing order type
-                    useOrderStore.getState().setSelectedDeliveryDate("");
-                  }}
-                  title="Change order type"
-                >
-                  <Edit2 className="w-3 h-3" />
-                </Button>
-              </div>
-            )}
-            
-            {/* Date/Pickup Info */}
-            {deliveryType === 'DELIVERY' && selectedDeliveryDate && (
-              <div className="flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 shadow-sm">
-                <span className="text-xs font-semibold text-yellow-700 flex items-center gap-2">
-                  <span className="flex w-5 h-5 bg-yellow-500 text-white rounded-full flex items-center justify-center mr-1">
-                    <Calendar className="w-4 h-4" />
+            {/* Order Type and Date/Pickup Info */}
+            <div className="space-y-2">
+              {/* Order Type Display */}
+              {deliveryType && (
+                <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 shadow-sm">
+                  <span className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+                    {deliveryType === 'PICKUP' ? '🏪' : '🚚'} Order Type: <span className="text-blue-800 font-bold">{deliveryType === 'PICKUP' ? 'Store Pickup' : 'Home Delivery'}</span>
                   </span>
-                  Delivery Date
-                </span>
-                <span className="text-sm font-bold text-yellow-800 tracking-wide bg-yellow-100 border border-yellow-300 rounded px-2 py-1 ml-2">
-                  {selectedDeliveryDate}
-                </span>
-              </div>
-            )}
-            
-            {deliveryType === 'PICKUP' && (
-              <div className="flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-sm">
-                <span className="text-xs font-semibold text-green-700 flex items-center gap-2">
-                  📞 We'll contact you when your order is ready for pickup
-                </span>
-              </div>
-            )}
-          </div>
-          
-          {/* Payment Method Info */}
-          <div className="flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 mt-3 mb-2 shadow-sm">
-            <span className="text-sm font-semibold text-green-700 flex items-center gap-2">
-              💰 Payment Method: <span className="text-green-800 font-bold">{deliveryType === 'PICKUP' ? 'Pay at Store' : 'Cash on Delivery'}</span>
-            </span>
-          </div>
-          
-          {/* Validation Message */}
-          {validationMessage && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3 mb-2">
-              <span className="text-sm text-amber-700 flex items-center gap-2">
-                ⚠️ {validationMessage}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-1 h-auto cursor-pointer"
+                    onClick={() => {
+                      setDeliveryType(null); // Reset delivery type to force re-selection
+                      // Also clear delivery date when changing order type
+                      useOrderStore.getState().setSelectedDeliveryDate("");
+                    }}
+                    title="Change order type"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Date/Pickup Info */}
+              {deliveryType === 'DELIVERY' && selectedDeliveryDate && (
+                <div className="flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 shadow-sm">
+                  <span className="text-xs font-semibold text-yellow-700 flex items-center gap-2">
+                    <span className="flex w-5 h-5 bg-yellow-500 text-white rounded-full flex items-center justify-center mr-1">
+                      <Calendar className="w-4 h-4" />
+                    </span>
+                    Delivery Date
+                  </span>
+                  <span className="text-sm font-bold text-yellow-800 tracking-wide bg-yellow-100 border border-yellow-300 rounded px-2 py-1 ml-2">
+                    {selectedDeliveryDate}
+                  </span>
+                </div>
+              )}
+
+              {deliveryType === 'PICKUP' && (
+                <div className="flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-sm">
+                  <span className="text-xs font-semibold text-green-700 flex items-center gap-2">
+                    📞 We'll contact you when your order is ready for pickup
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Payment Method Info */}
+            <div className="flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 mt-3 mb-2 shadow-sm">
+              <span className="text-sm font-semibold text-green-700 flex items-center gap-2">
+                💰 Payment Method: <span className="text-green-800 font-bold">{deliveryType === 'PICKUP' ? 'Pay at Store' : 'Cash on Delivery'}</span>
               </span>
             </div>
-          )}
-          
-          <Button
-            className="w-full mt-3 cursor-pointer bg-yellow-500 text-white font-bold text-base py-2 rounded-xl shadow-lg hover:bg-yellow-600 hover:scale-105 transition-all border border-yellow-500 hover:border-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            size="lg"
-            disabled={!isOrderReady}
-            onClick={handlePlaceOrder}
-          >
-            {placing ? "Placing..." : "Place Order"}
-          </Button>
-          {orderError && <div className="text-red-600 text-xs mt-2 text-center font-semibold">{orderError}</div>}
-        </div>
+
+            {/* Validation Message */}
+            {validationMessage && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3 mb-2">
+                <span className="text-sm text-amber-700 flex items-center gap-2">
+                  ⚠️ {validationMessage}
+                </span>
+              </div>
+            )}
+
+            <Button
+              className="w-full mt-3 cursor-pointer bg-yellow-500 text-white font-bold text-base py-2 rounded-xl shadow-lg hover:bg-yellow-600 hover:scale-105 transition-all border border-yellow-500 hover:border-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              size="lg"
+              disabled={!isOrderReady}
+              onClick={handlePlaceOrder}
+            >
+              {placing ? "Placing..." : "Place Order"}
+            </Button>
+            {orderError && <div className="text-red-600 text-xs mt-2 text-center font-semibold">{orderError}</div>}
+          </div>
         </>}
-        
+
         <Button
           variant="ghost"
           className="w-full cursor-pointer mt-2 text-yellow-700 hover:text-yellow-800 font-semibold text-xs hover:bg-yellow-50"

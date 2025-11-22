@@ -53,6 +53,7 @@ model Product {
   cartItems   CartItem[]
   orderItems  OrderItem[]
   category    Category    @relation(fields: [categoryId], references: [id])
+  isPopular   Boolean     @default(false)
 }
 
 model Order {

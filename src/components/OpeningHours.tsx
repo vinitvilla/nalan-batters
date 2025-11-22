@@ -31,14 +31,14 @@ export default function OpeningHours() {
 	const isCurrentlyOpen = () => {
 		const now = moment();
 		const currentTime = now.hour() + now.minute() / 60;
-		
+
 		const todayHours = hoursWithToday.find(h => h.isToday);
 		if (!todayHours) return false;
-		
+
 		// Simple check - open between 9AM and 9:30PM (most days)
 		const openTime = todayHours.day === 'Sunday' ? 9.5 : 9; // 9:30 AM on Sunday, 9 AM other days
 		const closeTime = 21.5; // 9:30 PM
-		
+
 		return currentTime >= openTime && currentTime <= closeTime;
 	};
 
@@ -49,7 +49,7 @@ export default function OpeningHours() {
 			<CardHeader className="pb-4 relative">
 				{/* Background decoration */}
 				<div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-200/20 to-yellow-200/20 rounded-full -translate-y-6 translate-x-6"></div>
-				
+
 				<div className="relative">
 					<CardTitle className="text-2xl font-bold flex items-center gap-2 mb-2 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent"
 						style={{ fontFamily: "'Dancing Script', cursive" }}>
@@ -58,14 +58,13 @@ export default function OpeningHours() {
 						</div>
 						Opening Hours
 					</CardTitle>
-					
+
 					{/* Status Badge */}
 					<div className="flex items-center gap-2">
-						<div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
-							isOpen 
-								? 'bg-green-100 text-green-700 border border-green-200' 
+						<div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${isOpen
+								? 'bg-green-100 text-green-700 border border-green-200'
 								: 'bg-red-100 text-red-700 border border-red-200'
-						}`}>
+							}`}>
 							<div className={`w-2 h-2 rounded-full ${isOpen ? 'bg-green-500' : 'bg-red-500'}`}></div>
 							{isOpen ? 'Open Now' : 'Closed'}
 						</div>
@@ -76,42 +75,39 @@ export default function OpeningHours() {
 					</div>
 				</div>
 			</CardHeader>
-			
+
 			<CardContent className="space-y-2">
 				<div className="space-y-1">
 					{hoursWithToday.map(({ day, time, isToday }) => (
 						<div
 							key={day}
-							className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
-								isToday 
-									? 'bg-amber-100/80 border border-amber-200 shadow-sm' 
+							className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${isToday
+									? 'bg-amber-100/80 border border-amber-200 shadow-sm'
 									: 'bg-white/50 hover:bg-white/70'
-							}`}
+								}`}
 						>
 							<div className="flex items-center gap-3">
 								{isToday && (
 									<div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
 								)}
-								<span className={`font-semibold text-sm ${
-									isToday ? 'text-amber-800' : 'text-gray-700'
-								}`}>
+								<span className={`font-semibold text-sm ${isToday ? 'text-amber-800' : 'text-gray-700'
+									}`}>
 									{day}
 								</span>
 							</div>
-							<span className={`text-sm font-medium ${
-								isToday ? 'text-amber-700' : 'text-gray-600'
-							}`}>
+							<span className={`text-sm font-medium ${isToday ? 'text-amber-700' : 'text-gray-600'
+								}`}>
 								{time}
 							</span>
 						</div>
 					))}
 				</div>
-				
+
 				{/* Footer info */}
 				<div className="mt-4 pt-3 border-t border-amber-200/50">
 					<p className="text-xs text-amber-600/80 text-center flex items-center justify-center gap-1">
 						<Clock className="w-3 h-3" />
-						We're here to serve you fresh batters daily!
+						We&apos;re here to serve you fresh batters daily!
 					</p>
 				</div>
 			</CardContent>

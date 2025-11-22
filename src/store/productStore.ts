@@ -10,6 +10,7 @@ interface Product {
   imageUrl?: string;
   stock?: number;
   isActive: boolean;
+  isPopular?: boolean;
 }
 
 interface Category {
@@ -43,21 +44,21 @@ export const useProductStore = create(
         const method = product.id ? "PUT" : "POST";
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        
+
         const res = await fetch("/api/admin/products", {
           method,
           headers,
           credentials: "include",
           body: JSON.stringify(product),
         });
-        
+
         if (!res.ok) {
           const errorData = await res.text();
           throw new Error(`Failed to save product: ${res.status} ${errorData}`);
         }
-        
+
         const updatedProduct = await res.json();
-        
+
         set((state) => ({
           products: state.products.some(p => p.id === updatedProduct.id)
             ? state.products.map(p => p.id === updatedProduct.id ? updatedProduct : p)

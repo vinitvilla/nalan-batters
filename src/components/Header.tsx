@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import CartButton from "./CartButton";
 import MainNav from "./MainNav";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ShoppingBag, Home, UtensilsCrossed, Phone } from "lucide-react";
+import { Menu, X, Home, UtensilsCrossed, Phone } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { userStore } from "@/store/userStore";
@@ -20,7 +20,6 @@ export default function Header() {
   const cartButtonRef = useRef<{ openDropdown: () => void }>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const user = userStore((s) => s.user);
 
   // Handle scroll effect for header background
   useEffect(() => {
@@ -45,8 +44,8 @@ export default function Header() {
       {/* Main Header */}
       <header className={`
         fixed top-0 left-0 right-0 z-50 transition-all duration-300
-        ${scrolled 
-          ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-100' 
+        ${scrolled
+          ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-100'
           : 'bg-white/80 backdrop-blur-md'
         }
       `}>
@@ -60,9 +59,9 @@ export default function Header() {
             >
               <div className="relative">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                  <Image 
-                    src="/icon.svg" 
-                    alt="Nalan Batters Logo" 
+                  <Image
+                    src="/icon.svg"
+                    alt="Nalan Batters Logo"
                     width={40}
                     height={40}
                     className="w-8 h-8 lg:w-10 lg:h-10 transition-all duration-300 group-hover:rotate-6"
@@ -73,8 +72,8 @@ export default function Header() {
                 </div>
               </div>
               <div className="hidden sm:flex flex-col">
-                <span 
-                  className="font-bold text-xl lg:text-2xl tracking-wide bg-gradient-to-r from-gray-800 via-orange-600 to-amber-600 bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105" 
+                <span
+                  className="font-bold text-xl lg:text-2xl tracking-wide bg-gradient-to-r from-gray-800 via-orange-600 to-amber-600 bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105"
                   style={{ fontFamily: "'Dancing Script', cursive" }}
                 >
                   Nalan Batters
@@ -93,7 +92,7 @@ export default function Header() {
               {/* User Login */}
               <UserLoginButton />
               <CartButton ref={cartButtonRef} />
-              
+
               {/* Mobile Menu Toggle */}
               <Button
                 variant="ghost"
@@ -103,15 +102,13 @@ export default function Header() {
                 onClick={() => setMobileNavOpen(!mobileNavOpen)}
               >
                 <div className="relative w-6 h-6">
-                  <Menu 
-                    className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${
-                      mobileNavOpen ? 'rotate-180 opacity-0' : 'rotate-0 opacity-100'
-                    }`} 
+                  <Menu
+                    className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${mobileNavOpen ? 'rotate-180 opacity-0' : 'rotate-0 opacity-100'
+                      }`}
                   />
-                  <X 
-                    className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${
-                      mobileNavOpen ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'
-                    }`} 
+                  <X
+                    className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${mobileNavOpen ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'
+                      }`}
                   />
                 </div>
               </Button>
@@ -126,11 +123,11 @@ export default function Header() {
         ${mobileNavOpen ? 'visible opacity-100' : 'invisible opacity-0'}
       `}>
         {/* Backdrop */}
-        <div 
+        <div
           className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           onClick={() => setMobileNavOpen(false)}
         />
-        
+
         {/* Navigation Panel */}
         <div className={`
           absolute top-0 right-0 w-80 max-w-[85vw] h-full bg-white shadow-2xl
@@ -141,9 +138,9 @@ export default function Header() {
           <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md">
-                <Image 
-                  src="/icon.svg" 
-                  alt="Nalan Batters Logo" 
+                <Image
+                  src="/icon.svg"
+                  alt="Nalan Batters Logo"
                   width={32}
                   height={32}
                   className="w-8 h-8"
