@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
-import { Order, ORDER_STATUSES } from "../types";
+import { AdminOrderResponse, ORDER_STATUSES } from "@/types/order";
+import type { OrderStatus } from "@/generated/prisma";
 import { Separator } from "@radix-ui/react-separator";
 import { Copy, Calendar, User, Phone, MapPin, Package, CreditCard, Clock, ArrowLeft, Edit3, CheckCircle2, AlertCircle, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,7 @@ export default function OrderDetailPage() {
     const orderId = params?.orderId as string;
     const token = userStore((s) => s.token);
     const adminApiFetch = useAdminApi();
-    const [order, setOrder] = useState<Order | null>(null);
+    const [order, setOrder] = useState<AdminOrderResponse | null>(null);
     const [status, setStatus] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -65,7 +66,7 @@ export default function OrderDetailPage() {
             }
             
             // Update local order state with new status
-            setOrder(prev => prev ? { ...prev, status: uppercaseStatus } : null);
+            setOrder(prev => prev ? { ...prev, status: uppercaseStatus as OrderStatus } : null);
             setStatus(uppercaseStatus); // Update the local status state as well
             toast.success("Order status updated successfully");
         } catch (error) {
@@ -332,7 +333,7 @@ export default function OrderDetailPage() {
                                                                     </div>
                                                                     <div className="flex-1">
                                                                         <h4 className="font-semibold text-gray-900 text-lg group-hover:text-black transition-colors">
-                                                                            {item.product?.name || item.name || `Product ${item.productId}`}
+                                                                            {item.product?.name || `Product ${item.productId}`}
                                                                         </h4>
                                                                         <div className="flex items-center gap-3 mt-1">
                                                                             <p className="text-gray-600 text-sm">Unit Price: {formatCurrency(item.price)}</p>

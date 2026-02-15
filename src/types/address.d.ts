@@ -3,11 +3,12 @@ export interface Address {
   id: string;
   userId: string;
   street: string;
+  unit?: string | null;
   city: string;
   province: string;
   country: string;
   postal: string;
-  isDelete: boolean;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ export interface AddressResponse {
   id: string;
   userId: string;
   street: string;
+  unit?: string | null;
   city: string;
   province: string;
   country: string;
@@ -28,6 +30,7 @@ export interface AddressResponse {
 // Address creation/update types
 export interface CreateAddressData {
   street: string;
+  unit?: string;
   city: string;
   province: string;
   country: string;
@@ -36,6 +39,7 @@ export interface CreateAddressData {
 
 export interface UpdateAddressData {
   street?: string;
+  unit?: string;
   city?: string;
   province?: string;
   country?: string;

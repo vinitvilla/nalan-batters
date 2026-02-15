@@ -1,3 +1,9 @@
+import type {
+  OrderStatus,
+  DeliveryType,
+  OrderSource,
+  PaymentMethod,
+} from '@/generated/prisma';
 import type { User, UserResponse } from './user';
 import type { Address, AddressResponse } from './address';
 import type { Product, ProductResponse } from './product';
@@ -7,15 +13,19 @@ export interface Order {
   id: string;
   userId: string;
   addressId: string;
-  deliveryType: 'DELIVERY' | 'PICKUP';
-  orderType: 'POS' | 'ONLINE';
-  paymentMethod: 'CASH' | 'CARD';
+  deliveryType: DeliveryType;
+  orderType: OrderSource;
+  paymentMethod: PaymentMethod;
   total: number;
   tax: number;
   discount: number | null;
-  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED';
+  status: OrderStatus;
   convenienceCharges: number;
   deliveryCharges: number;
+  orderNumber: string;
+  deliveryDate?: Date | null;
+  promoCodeId?: string | null;
+  driverId?: string | null;
   isDelete: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -26,20 +36,25 @@ export interface OrderResponse {
   id: string;
   userId: string;
   addressId: string;
-  deliveryType: 'DELIVERY' | 'PICKUP';
-  orderType: 'POS' | 'ONLINE';
-  paymentMethod: 'CASH' | 'CARD';
+  deliveryType: DeliveryType;
+  orderType: OrderSource;
+  paymentMethod: PaymentMethod;
   total: number;
   tax: number;
   discount: number | null;
-  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED';
+  status: OrderStatus;
   convenienceCharges: number;
   deliveryCharges: number;
+  orderNumber: string;
+  deliveryDate?: string | null;
+  promoCodeId?: string | null;
+  driverId?: string | null;
   createdAt: string;
   updatedAt: string;
   user?: UserResponse;
   address?: AddressResponse;
   items?: OrderItemResponse[];
+  driver?: UserResponse;
 }
 
 // Order with relationships
@@ -77,14 +92,16 @@ export interface OrderItemWithProduct extends OrderItem {
 export interface CreateOrderData {
   userId: string;
   addressId: string;
-  deliveryType: 'DELIVERY' | 'PICKUP';
-  orderType: 'POS' | 'ONLINE';
-  paymentMethod: 'CASH' | 'CARD';
+  deliveryType: DeliveryType;
+  orderType: OrderSource;
+  paymentMethod: PaymentMethod;
   total: number;
   tax: number;
   discount?: number;
   convenienceCharges?: number;
   deliveryCharges?: number;
+  deliveryDate?: Date | string;
+  promoCodeId?: string;
   items: CreateOrderItemData[];
 }
 
@@ -112,3 +129,38 @@ export interface OrderCalculations {
   isConvenienceWaived: boolean;
   isDeliveryWaived: boolean;
 }
+
+// Admin-specific order response with embedded relationships
+// Used for delivery management UI where full address object is needed
+export interface AdminOrderResponse extends OrderResponse {
+  user: UserResponse;
+  address?: {
+    street?: string;
+    unit?: string;
+    city?: string;
+    province?: string;
+    postal?: string;
+    country?: string;
+  };
+  driver?: {
+    id: string;
+    fullName: string;
+    phone: string;
+  };
+  items: Array<{
+    id: string;
+    productId: string;
+    product?: { name: string };
+    quantity: number;
+    price: number;
+  }>;
+  promoCode?: {
+    code: string;
+    discount: number;
+  };
+}
+
+// Order status constants
+export const ORDER_STATUSES = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
+export const ORDER_STATUS_FILTERS = ["all", ...ORDER_STATUSES] as const;
+export type OrderStatusFilter = typeof ORDER_STATUS_FILTERS[number];

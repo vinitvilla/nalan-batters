@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { userStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import { useAdminApi } from "@/app/admin/use-admin-api";
-import { Order, ORDER_STATUS_FILTERS, ORDER_STATUSES } from "./types";
+import { AdminOrderResponse, ORDER_STATUS_FILTERS, ORDER_STATUSES } from "@/types/order";
+import type { OrderStatus } from "@/generated/prisma";
 import { MoreVertical, Package, Phone, Truck, Clock, MapPin, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -20,7 +21,7 @@ import { EnhancedPagination } from "@/components/ui/enhanced-pagination";
 import moment from "moment";
 
 export default function OrdersPage() {
-    const [orders, setOrders] = useState<Order[]>([]);
+    const [orders, setOrders] = useState<AdminOrderResponse[]>([]);
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [status, setStatus] = useState("all");
@@ -87,7 +88,7 @@ export default function OrdersPage() {
             // Handle both new paginated response and old response format
             if (data.orders && data.pagination) {
                 // New paginated response
-                const mappedOrders = data.orders.map((order: Order) => ({
+                const mappedOrders = data.orders.map((order: AdminOrderResponse) => ({
                     ...order,
                     fullName: order.user?.fullName || "",
                     phone: order.user?.phone || "",
@@ -97,7 +98,7 @@ export default function OrdersPage() {
                 setTotalItems(data.pagination.totalCount);
             } else {
                 // Fallback for old response format
-                const orders = (Array.isArray(data) ? data : data.orders || []).map((order: Order) => ({
+                const orders = (Array.isArray(data) ? data : data.orders || []).map((order: AdminOrderResponse) => ({
                     ...order,
                     fullName: order.user?.fullName || "",
                     phone: order.user?.phone || "",
@@ -145,10 +146,10 @@ export default function OrdersPage() {
             }
             
             // Update the order in the local state
-            setOrders(prevOrders => 
-                prevOrders.map(order => 
-                    order.id === orderId 
-                        ? { ...order, status: newStatus.toUpperCase() }
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order.id === orderId
+                        ? { ...order, status: newStatus.toUpperCase() as OrderStatus }
                         : order
                 )
             );

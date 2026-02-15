@@ -28,11 +28,12 @@ describe('OrderSummary', () => {
   const mockUpdate = vi.fn();
   const mockAddress = {
     id: 'addr1',
-    name: 'John Doe',
     street: '123 Main St',
+    unit: 'Apt 4B',
     city: 'Toronto',
-    postalCode: 'M5V 2T6',
-    phone: '1234567890'
+    province: 'ON',
+    country: 'Canada',
+    postal: 'M5V 2T6'
   };
 
   beforeEach(() => {

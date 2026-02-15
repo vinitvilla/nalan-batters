@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
-import { Order } from "@/app/admin/orders/types";
+import { AdminOrderResponse, ORDER_STATUSES } from "@/types/order";
+import type { OrderStatus } from "@/generated/prisma";
 import {
     Truck,
     MapPin,
@@ -32,9 +33,9 @@ import moment from "moment";
 import DeliveryMapView from "../../../components/DeliveryMapView";
 
 export default function DeliveryPage() {
-    const [todayOrders, setTodayOrders] = useState<Order[]>([]);
-    const [tomorrowOrders, setTomorrowOrders] = useState<Order[]>([]);
-    const [selectedDateOrders, setSelectedDateOrders] = useState<Order[]>([]);
+    const [todayOrders, setTodayOrders] = useState<AdminOrderResponse[]>([]);
+    const [tomorrowOrders, setTomorrowOrders] = useState<AdminOrderResponse[]>([]);
+    const [selectedDateOrders, setSelectedDateOrders] = useState<AdminOrderResponse[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(false);
@@ -48,7 +49,7 @@ export default function DeliveryPage() {
     const adminApiFetch = useAdminApi();
 
     // Filter orders by search term
-    const filterOrders = (orders: Order[]) => {
+    const filterOrders = (orders: AdminOrderResponse[]) => {
         if (!search) return orders;
 
         const searchLower = search.toLowerCase();
@@ -70,13 +71,13 @@ export default function DeliveryPage() {
             const response = await adminApiFetch(`/api/admin/orders?deliveryDate=${today}&limit=1000`);
             const data = await response?.json();
             const orders = (Array.isArray(data) ? data : data?.orders || data?.data || [])
-                .filter((order: Order) =>
+                .filter((order: AdminOrderResponse) =>
                     order.deliveryDate &&
                     order.address &&
                     order.status !== 'CANCELLED' &&
-                    order.orderType !== 'PICKUP'
+                    order.deliveryType !== 'PICKUP'
                 )
-                .map((order: Order) => ({
+                .map((order: AdminOrderResponse) => ({
                     ...order,
                     fullName: order.user?.fullName || "",
                     phone: order.user?.phone || "",
@@ -97,13 +98,13 @@ export default function DeliveryPage() {
             const response = await adminApiFetch(`/api/admin/orders?deliveryDate=${tomorrow}&limit=1000`);
             const data = await response?.json();
             const orders = (Array.isArray(data) ? data : data?.orders || data?.data || [])
-                .filter((order: Order) =>
+                .filter((order: AdminOrderResponse) =>
                     order.deliveryDate &&
                     order.address &&
                     order.status !== 'CANCELLED' &&
-                    order.orderType !== 'PICKUP'
+                    order.deliveryType !== 'PICKUP'
                 )
-                .map((order: Order) => ({
+                .map((order: AdminOrderResponse) => ({
                     ...order,
                     fullName: order.user?.fullName || "",
                     phone: order.user?.phone || "",
@@ -141,7 +142,7 @@ export default function DeliveryPage() {
 
             if (!res || !res.ok) throw new Error("Failed to assign driver");
 
-            const updateOrder = (orders: Order[]) =>
+            const updateOrder = (orders: AdminOrderResponse[]) =>
                 orders.map(order =>
                     order.id === orderId
                         ? { ...order, driverId, driver: drivers.find(d => d.id === driverId) }
@@ -168,13 +169,13 @@ export default function DeliveryPage() {
             const response = await adminApiFetch(`/api/admin/orders?deliveryDate=${date}&limit=1000`);
             const data = await response?.json();
             const orders = (Array.isArray(data) ? data : data?.orders || data?.data || [])
-                .filter((order: Order) =>
+                .filter((order: AdminOrderResponse) =>
                     order.deliveryDate &&
                     order.address &&
                     order.status !== 'CANCELLED' &&
-                    order.orderType !== 'PICKUP'
+                    order.deliveryType !== 'PICKUP'
                 )
-                .map((order: Order) => ({
+                .map((order: AdminOrderResponse) => ({
                     ...order,
                     fullName: order.user?.fullName || "",
                     phone: order.user?.phone || "",
@@ -219,10 +220,10 @@ export default function DeliveryPage() {
             }
 
             // Update the order in all relevant state arrays
-            const updateOrder = (orders: Order[]) =>
+            const updateOrder = (orders: AdminOrderResponse[]) =>
                 orders.map(order =>
                     order.id === orderId
-                        ? { ...order, status: newStatus.toUpperCase() }
+                        ? { ...order, status: newStatus.toUpperCase() as OrderStatus }
                         : order
                 );
 
@@ -266,7 +267,7 @@ export default function DeliveryPage() {
     };
 
     // Render orders table
-    const renderOrdersTable = (orders: Order[]) => {
+    const renderOrdersTable = (orders: AdminOrderResponse[]) => {
         const filteredOrders = filterOrders(orders);
 
         if (filteredOrders.length === 0) {

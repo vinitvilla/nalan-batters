@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { MapIcon, MapPin, User, Phone, Package } from "lucide-react";
-import { Order } from "@/app/admin/orders/types";
+import { AdminOrderResponse } from "@/types/order";
 import { useLoadScript, GoogleMap, Marker, InfoWindow, MarkerClusterer } from "@react-google-maps/api";
 import { formatCurrency, formatPhoneNumber } from "@/lib/utils/commonFunctions";
 
@@ -32,16 +32,16 @@ const mapOptions = {
 };
 
 interface DeliveryMapViewProps {
-    orders: Order[];
+    orders: AdminOrderResponse[];
     title: string;
 }
 
 interface MarkerData {
     id: string;
     position: { lat: number; lng: number };
-    orders: Order[]; // Changed to support multiple orders at same location
+    orders: AdminOrderResponse[]; // Changed to support multiple orders at same location
     address: string;
-    originalOrder?: Order; // Keep track of the original order for backward compatibility
+    originalOrder?: AdminOrderResponse; // Keep track of the original order for backward compatibility
 }
 
 export default function DeliveryMapView({ orders, title }: DeliveryMapViewProps) {
@@ -85,7 +85,7 @@ export default function DeliveryMapView({ orders, title }: DeliveryMapViewProps)
                 }
                 acc[address].push(order);
                 return acc;
-            }, {} as Record<string, Order[]>);
+            }, {} as Record<string, AdminOrderResponse[]>);
 
             const markerPromises = Object.entries(addressGroups).map(async ([address, ordersAtAddress]) => {
                 return new Promise<MarkerData | null>((resolve) => {
@@ -166,7 +166,7 @@ export default function DeliveryMapView({ orders, title }: DeliveryMapViewProps)
         setSelectedMarker(null);
     };
 
-    const getMarkerIcon = (orders: Order[]) => {
+    const getMarkerIcon = (orders: AdminOrderResponse[]) => {
         if (orders.length === 1) {
             const status = orders[0].status;
             const baseIcon = {
