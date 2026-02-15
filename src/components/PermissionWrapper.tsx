@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { userStore } from '@/store/userStore';
+import { useUserRole } from '@/hooks/useUserRole';
 import { hasPermission, Permission } from '@/lib/permissions';
 
 interface RequirePermissionProps {
@@ -9,7 +9,7 @@ interface RequirePermissionProps {
 }
 
 export function RequirePermission({ permission, children, fallback = null }: RequirePermissionProps) {
-  const { userRole } = userStore();
+  const { userRole } = useUserRole();
   
   if (!hasPermission(userRole, permission)) {
     return <>{fallback}</>;
@@ -25,7 +25,7 @@ interface RequireRoleProps {
 }
 
 export function RequireRole({ roles, children, fallback = null }: RequireRoleProps) {
-  const { userRole } = userStore();
+  const { userRole } = useUserRole();
   
   if (!userRole || !roles.includes(userRole)) {
     return <>{fallback}</>;

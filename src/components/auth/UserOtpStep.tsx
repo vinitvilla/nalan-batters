@@ -51,7 +51,6 @@ export function UserOtpStep({ onUserFound, onUserNotFound, onBack, confirmationR
           }))
         );
       }
-      if (user.role) userStore.getState().setIsAdmin(user.role === USER_ROLE.ADMIN);
       onUserFound(user); // Pass the complete user object from API
     } else {
       userStore.getState().setId(firebaseUser.user.uid);

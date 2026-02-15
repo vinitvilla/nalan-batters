@@ -4,6 +4,7 @@ import { LogOut, Home, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { userStore } from "@/store/userStore";
 import { useSignOut } from "@/hooks/useSignOut";
+import { useUserRole } from "@/hooks/useUserRole";
 
 type HeaderProps = {
   onMenuToggle?: () => void;
@@ -12,7 +13,8 @@ type HeaderProps = {
 const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const router = useRouter();
   const signOut = useSignOut();
-  const { user, userRole, isManager } = userStore();
+  const { user } = userStore();
+  const { userRole, isManager } = useUserRole();
 
   return (
     <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b bg-white sticky top-0 z-30 shadow-sm">

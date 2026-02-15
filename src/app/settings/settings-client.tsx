@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,9 +24,7 @@ export default function SettingsPageClient() {
   const user = userStore((s) => s.user);
   const fullName = userStore((s) => s.fullName);
   const phone = userStore((s) => s.phone);
-  const userRole = userStore((s) => s.userRole);
-  const isAdmin = userStore((s) => s.isAdmin);
-  const isManager = userStore((s) => s.isManager);
+  const { userRole, isAdmin, isManager } = useUserRole();
   const defaultAddress = userStore((s) => s.defaultAddress);
   const setUser = userStore((s) => s.setUser);
   const setDefaultAddress = userStore((s) => s.setDefaultAddress);

@@ -16,7 +16,6 @@ interface CartState {
   removeFromCart: (id: string) => void;
   clearCart: () => void;
   updateQuantity: (id: string, quantity: number) => void;
-  cartCount: number;
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -73,7 +72,6 @@ export const useCartStore = create(
       });
       if (userId) get().syncCartToDB();
     },
-    cartCount: 0,
     isCartOpen: false,
     openCart: () => set({ isCartOpen: true }),
     closeCart: () => set({ isCartOpen: false }),

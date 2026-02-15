@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNewMessagesCount } from "@/hooks/useNewMessagesCount";
-import { userStore } from "@/store/userStore";
+import { useUserRole } from "@/hooks/useUserRole";
 import { hasPermission, Permission } from "@/lib/permissions";
 import { 
     X, 
@@ -52,7 +52,7 @@ const navItems: NavItem[] = [
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
     const { newMessagesCount } = useNewMessagesCount();
-    const { userRole, isManager } = userStore();
+    const { userRole, isManager } = useUserRole();
 
     // Filter nav items based on user permissions
     const allowedNavItems = navItems.filter(item => hasPermission(userRole, item.permission));

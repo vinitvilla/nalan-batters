@@ -1,26 +1,21 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { UserResponse } from "@/types/user";
-import { USER_ROLE } from "@/constants/userRole";
+import { formatPhoneNumber } from "@/services/user/phoneFormatter.service";
 
 interface UserState {
   id: string | null;
   user: UserResponse | null;
   token: string | null;
-  fullName: string;
-  phone: string;
-  isAdmin: boolean;
-  isManager: boolean;
-  hasAdminAccess: boolean; // Helper for admin or manager access
-  userRole: string | null;
   loading: boolean;
   defaultAddress: any | null;
+  // Computed properties for convenience (derived from user)
+  phone: string;
+  fullName: string;
   setId: (id: string) => void;
   setUser: (user: UserResponse | null) => void;
   setToken: (token: string | null) => void;
-  setFullName: (name: string) => void;
   setPhone: (phone: string) => void;
-  setIsAdmin: (isAdmin: boolean) => void;
   setLoading: (loading: boolean) => void;
   setDefaultAddress: (address: any | null) => void;
   reset: () => void;
@@ -32,29 +27,16 @@ export const userStore = create(
       id: null,
       user: null,
       token: null,
-      fullName: "",
-      phone: "",
-      isAdmin: false,
-      isManager: false,
-      hasAdminAccess: false,
-      userRole: null,
       loading: true,
       defaultAddress: null,
+      phone: "",
+      fullName: "",
       setUser: (user) => {
-        const isAdmin = user?.role === USER_ROLE.ADMIN;
-        const isManager = user?.role === USER_ROLE.MANAGER;
-        const hasAdminAccess = isAdmin || isManager;
-        const userRole = user?.role || null;
-        
         set((state) => ({
           user,
           id: user?.id,
+          phone: user?.phone ? formatPhoneNumber(user.phone) : "",
           fullName: user?.fullName || "",
-          phone: user?.phone ? (user.phone.startsWith("+1") ? user.phone : "+1" + user.phone.replace(/^\+?1?/, "")) : "",
-          isAdmin,
-          isManager,
-          hasAdminAccess,
-          userRole,
           // Keep existing defaultAddress, it's managed separately
         }));
       },
@@ -72,22 +54,16 @@ export const userStore = create(
         }
       },
       setId: (id: string) => set({ id }),
-      setFullName: (fullName: string) => set({ fullName }),
-      setPhone: (phone: string) => set({ phone: phone.startsWith("+1") ? phone : "+1" + phone.replace(/^\+?1?/, "") }),
-      setIsAdmin: (isAdmin: boolean) => set({ isAdmin }),
+      setPhone: (phone: string) => set({ phone: formatPhoneNumber(phone) }),
       setLoading: (loading: boolean) => set({ loading }),
       setDefaultAddress: (address) => set({ defaultAddress: address }),
-      reset: () => set({ 
-        id: null, 
-        user: null, 
-        token: null, 
-        fullName: "", 
-        phone: "", 
-        isAdmin: false, 
-        isManager: false, 
-        hasAdminAccess: false, 
-        userRole: null, 
-        loading: false 
+      reset: () => set({
+        id: null,
+        user: null,
+        token: null,
+        phone: "",
+        fullName: "",
+        loading: false
       }),
     }),
     { name: "UserStore" }
