@@ -21,6 +21,7 @@ model User {
   cart             Cart?
   orders           Order[]
   defaultAddress   Address?  @relation("DefaultAddress", fields: [defaultAddressId], references: [id])
+  driverOrders     Order[]   @relation("DriverOrders")
 }
 
 model Address {
@@ -79,6 +80,8 @@ model Order {
   promoCode          PromoCode?    @relation(fields: [promoCodeId], references: [id])
   user               User          @relation(fields: [userId], references: [id])
   items              OrderItem[]
+  driverId           String?
+  driver             User?         @relation("DriverOrders", fields: [driverId], references: [id])
 }
 
 model OrderItem {
@@ -171,6 +174,7 @@ enum UserRole {
   USER
   ADMIN
   MANAGER
+  DRIVER
 }
 
 enum OrderStatus {

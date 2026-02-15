@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,13 +11,13 @@ import { toast } from "sonner";
 import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { Order } from "@/app/admin/orders/types";
-import { 
-    Truck, 
-    MapPin, 
-    Clock, 
-    Package, 
-    Phone, 
-    User, 
+import {
+    Truck,
+    MapPin,
+    Clock,
+    Package,
+    Phone,
+    User,
     Calendar,
     AlertTriangle,
     CheckCircle2,
@@ -40,16 +40,19 @@ export default function DeliveryPage() {
     const [loading, setLoading] = useState(false);
     const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
     const [currentView, setCurrentView] = useState<'list' | 'map'>('list');
-    
+    const [drivers, setDrivers] = useState<{ id: string, fullName: string, phone: string }[]>([]);
+    const [assigningDriver, setAssigningDriver] = useState<string | null>(null);
+
+
     const token = userStore((s) => s.token);
     const adminApiFetch = useAdminApi();
 
     // Filter orders by search term
     const filterOrders = (orders: Order[]) => {
         if (!search) return orders;
-        
+
         const searchLower = search.toLowerCase();
-        return orders.filter(order => 
+        return orders.filter(order =>
             order.user?.fullName?.toLowerCase().includes(searchLower) ||
             order.user?.phone?.toLowerCase().includes(searchLower) ||
             order.orderNumber?.toLowerCase().includes(searchLower) ||
@@ -59,7 +62,7 @@ export default function DeliveryPage() {
     };
 
     // Fetch orders for today
-    const fetchTodayOrders = async () => {
+    const fetchTodayOrders = useCallback(async () => {
         if (!token) return;
         setLoading(true);
         try {
@@ -67,9 +70,9 @@ export default function DeliveryPage() {
             const response = await adminApiFetch(`/api/admin/orders?deliveryDate=${today}&limit=1000`);
             const data = await response?.json();
             const orders = (Array.isArray(data) ? data : data?.orders || data?.data || [])
-                .filter((order: Order) => 
-                    order.deliveryDate && 
-                    order.address && 
+                .filter((order: Order) =>
+                    order.deliveryDate &&
+                    order.address &&
                     order.status !== 'CANCELLED' &&
                     order.orderType !== 'PICKUP'
                 )
@@ -79,24 +82,24 @@ export default function DeliveryPage() {
                     phone: order.user?.phone || "",
                 }));
             setTodayOrders(orders);
-        } catch (error) {
+        } catch {
             toast.error("Failed to fetch today's deliveries");
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, adminApiFetch]);
 
     // Fetch orders for tomorrow
-    const fetchTomorrowOrders = async () => {
+    const fetchTomorrowOrders = useCallback(async () => {
         if (!token) return;
         try {
             const tomorrow = moment().add(1, 'day').format('YYYY-MM-DD');
             const response = await adminApiFetch(`/api/admin/orders?deliveryDate=${tomorrow}&limit=1000`);
             const data = await response?.json();
             const orders = (Array.isArray(data) ? data : data?.orders || data?.data || [])
-                .filter((order: Order) => 
-                    order.deliveryDate && 
-                    order.address && 
+                .filter((order: Order) =>
+                    order.deliveryDate &&
+                    order.address &&
                     order.status !== 'CANCELLED' &&
                     order.orderType !== 'PICKUP'
                 )
@@ -106,22 +109,68 @@ export default function DeliveryPage() {
                     phone: order.user?.phone || "",
                 }));
             setTomorrowOrders(orders);
-        } catch (error) {
+        } catch {
             toast.error("Failed to fetch tomorrow's deliveries");
+        }
+    }, [token, adminApiFetch]);
+
+    // Fetch drivers
+    const fetchDrivers = useCallback(async () => {
+        if (!token) return;
+        try {
+            const response = await adminApiFetch('/api/admin/users/drivers');
+            const data = await response?.json();
+            if (Array.isArray(data)) {
+                setDrivers(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch drivers", error);
+        }
+    }, [token, adminApiFetch]);
+
+    // Assign driver
+    const handleAssignDriver = async (orderId: string, driverId: string) => {
+        if (!token) return;
+        setAssigningDriver(orderId);
+        try {
+            const res = await adminApiFetch('/api/admin/orders/assign', {
+                method: 'POST',
+                body: JSON.stringify({ orderId, driverId }),
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            });
+
+            if (!res || !res.ok) throw new Error("Failed to assign driver");
+
+            const updateOrder = (orders: Order[]) =>
+                orders.map(order =>
+                    order.id === orderId
+                        ? { ...order, driverId, driver: drivers.find(d => d.id === driverId) }
+                        : order
+                );
+
+            setTodayOrders(updateOrder);
+            setTomorrowOrders(updateOrder);
+            setSelectedDateOrders(updateOrder);
+
+            toast.success("Driver assigned successfully");
+        } catch {
+            toast.error("Failed to assign driver");
+        } finally {
+            setAssigningDriver(null);
         }
     };
 
     // Fetch orders for selected date
-    const fetchOrdersForDate = async (date: string) => {
+    const fetchOrdersForDate = useCallback(async (date: string) => {
         if (!token || !date) return;
         setLoading(true);
         try {
             const response = await adminApiFetch(`/api/admin/orders?deliveryDate=${date}&limit=1000`);
             const data = await response?.json();
             const orders = (Array.isArray(data) ? data : data?.orders || data?.data || [])
-                .filter((order: Order) => 
-                    order.deliveryDate && 
-                    order.address && 
+                .filter((order: Order) =>
+                    order.deliveryDate &&
+                    order.address &&
                     order.status !== 'CANCELLED' &&
                     order.orderType !== 'PICKUP'
                 )
@@ -131,30 +180,31 @@ export default function DeliveryPage() {
                     phone: order.user?.phone || "",
                 }));
             setSelectedDateOrders(orders);
-        } catch (error) {
+        } catch {
             toast.error("Failed to fetch deliveries for selected date");
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, adminApiFetch]);
 
     useEffect(() => {
         if (!token) return;
         fetchTodayOrders();
         fetchTomorrowOrders();
-    }, [token]);
+        fetchDrivers();
+    }, [token, fetchTodayOrders, fetchTomorrowOrders, fetchDrivers]);
 
     useEffect(() => {
         if (selectedDate) {
             fetchOrdersForDate(selectedDate);
         }
-    }, [selectedDate, token]);
+    }, [selectedDate, token, fetchOrdersForDate]);
 
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         if (!token) return;
-        
+
         setUpdatingStatus(orderId);
-        
+
         try {
             const res = await adminApiFetch(`/api/admin/orders/${orderId}`, {
                 method: "PUT",
@@ -162,24 +212,24 @@ export default function DeliveryPage() {
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 credentials: "include",
             });
-            
+
             if (!res || !res.ok) {
                 const errorData = await res?.json?.();
                 throw new Error(errorData?.message || "Failed to update order status");
             }
-            
+
             // Update the order in all relevant state arrays
-            const updateOrder = (orders: Order[]) => 
-                orders.map(order => 
-                    order.id === orderId 
+            const updateOrder = (orders: Order[]) =>
+                orders.map(order =>
+                    order.id === orderId
                         ? { ...order, status: newStatus.toUpperCase() }
                         : order
                 );
-            
+
             setTodayOrders(updateOrder);
             setTomorrowOrders(updateOrder);
             setSelectedDateOrders(updateOrder);
-            
+
             toast.success("Order status updated successfully");
         } catch (error) {
             console.error("Error updating order status:", error);
@@ -218,7 +268,7 @@ export default function DeliveryPage() {
     // Render orders table
     const renderOrdersTable = (orders: Order[]) => {
         const filteredOrders = filterOrders(orders);
-        
+
         if (filteredOrders.length === 0) {
             return (
                 <div className="text-center py-8 text-gray-500">
@@ -238,6 +288,7 @@ export default function DeliveryPage() {
                             <TableHead>Delivery Address</TableHead>
                             <TableHead>Delivery Date</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Driver</TableHead>
                             <TableHead>Total</TableHead>
                             <TableHead>Actions</TableHead>
                         </TableRow>
@@ -289,6 +340,25 @@ export default function DeliveryPage() {
                                 </TableCell>
                                 <TableCell>
                                     {getStatusBadge(order.status)}
+                                </TableCell>
+                                <TableCell>
+                                    <Select
+                                        disabled={assigningDriver === order.id}
+                                        value={order.driverId || "unassigned"}
+                                        onValueChange={(driverId) => handleAssignDriver(order.id, driverId)}
+                                    >
+                                        <SelectTrigger className="w-40">
+                                            <SelectValue placeholder="Assign Driver" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                                            {drivers.map(driver => (
+                                                <SelectItem key={driver.id} value={driver.id}>
+                                                    {driver.fullName}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </TableCell>
                                 <TableCell>
                                     <span className="font-medium">${formatCurrency(order.total)}</span>
@@ -357,7 +427,7 @@ export default function DeliveryPage() {
                             </h1>
                             <p className="text-gray-500 text-sm mt-1">Manage and track order deliveries</p>
                         </div>
-                        
+
                         <div className="flex items-center gap-4">
                             {/* Search */}
                             <Input
@@ -373,176 +443,176 @@ export default function DeliveryPage() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-            {/* Simple Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Today's Deliveries</CardTitle>
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{todayOrders.length}</div>
-                        <p className="text-xs text-muted-foreground">
-                            {moment().format('dddd, MMM DD')}
-                        </p>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Tomorrow's Deliveries</CardTitle>
-                        <Truck className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{tomorrowOrders.length}</div>
-                        <p className="text-xs text-muted-foreground">
-                            {moment().add(1, 'day').format('dddd, MMM DD')}
-                        </p>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {[...todayOrders, ...tomorrowOrders, ...selectedDateOrders]
-                                .filter(order => order.status === 'PENDING').length}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            Requires attention
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Simple Tabs */}
-            <Tabs defaultValue="today" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="today" className="flex items-center gap-2 cursor-pointer">
-                        <Calendar className="w-4 h-4" />
-                        Today ({todayOrders.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="tomorrow" className="flex items-center gap-2 cursor-pointer">
-                        <Truck className="w-4 h-4" />
-                        Tomorrow ({tomorrowOrders.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="custom" className="flex items-center gap-2 cursor-pointer">
-                        <MapPin className="w-4 h-4" />
-                        Custom Date ({selectedDateOrders.length})
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="today" className="space-y-4">
+                {/* Simple Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="w-5 h-5" />
-                                    Today's Deliveries - {moment().format('dddd, MMMM DD, YYYY')}
-                                </div>
-                                <ViewToggle />
-                            </CardTitle>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Today&apos;s Deliveries</CardTitle>
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            {loading ? (
-                                <div className="flex justify-center py-8">
-                                    <RefreshCw className="w-6 h-6 animate-spin" />
-                                </div>
-                            ) : currentView === 'list' ? (
-                                renderOrdersTable(todayOrders)
-                            ) : (
-                                <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
-                                    <DeliveryMapView
-                                        orders={todayOrders.filter(order => order.address && order.status !== 'CANCELLED')}
-                                        title="Today's Deliveries"
-                                    />
-                                </div>
-                            )}
+                            <div className="text-2xl font-bold">{todayOrders.length}</div>
+                            <p className="text-xs text-muted-foreground">
+                                {moment().format('dddd, MMM DD')}
+                            </p>
                         </CardContent>
                     </Card>
-                </TabsContent>
 
-                <TabsContent value="tomorrow" className="space-y-4">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Truck className="w-5 h-5" />
-                                    Tomorrow's Deliveries - {moment().add(1, 'day').format('dddd, MMMM DD, YYYY')}
-                                </div>
-                                <ViewToggle />
-                            </CardTitle>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Tomorrow&apos;s Deliveries</CardTitle>
+                            <Truck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            {loading ? (
-                                <div className="flex justify-center py-8">
-                                    <RefreshCw className="w-6 h-6 animate-spin" />
-                                </div>
-                            ) : currentView === 'list' ? (
-                                renderOrdersTable(tomorrowOrders)
-                            ) : (
-                                <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
-                                    <DeliveryMapView
-                                        orders={tomorrowOrders.filter(order => order.address && order.status !== 'CANCELLED')}
-                                        title="Tomorrow's Deliveries"
-                                    />
-                                </div>
-                            )}
+                            <div className="text-2xl font-bold">{tomorrowOrders.length}</div>
+                            <p className="text-xs text-muted-foreground">
+                                {moment().add(1, 'day').format('dddd, MMM DD')}
+                            </p>
                         </CardContent>
                     </Card>
-                </TabsContent>
 
-                <TabsContent value="custom" className="space-y-4">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <MapPin className="w-5 h-5" />
-                                    Custom Date Deliveries
-                                </div>
-                                <ViewToggle />
-                            </CardTitle>
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    type="date"
-                                    value={selectedDate}
-                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                    className="max-w-xs"
-                                />
-                                {selectedDate && (
-                                    <span className="text-sm text-gray-600">
-                                        - {moment(selectedDate).format('dddd, MMMM DD, YYYY')}
-                                    </span>
-                                )}
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+                            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">
+                                {[...todayOrders, ...tomorrowOrders, ...selectedDateOrders]
+                                    .filter(order => order.status === 'PENDING').length}
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            {!selectedDate ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                    <p>Select a date to view deliveries</p>
-                                </div>
-                            ) : loading ? (
-                                <div className="flex justify-center py-8">
-                                    <RefreshCw className="w-6 h-6 animate-spin" />
-                                </div>
-                            ) : currentView === 'list' ? (
-                                renderOrdersTable(selectedDateOrders)
-                            ) : (
-                                <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
-                                    <DeliveryMapView
-                                        orders={selectedDateOrders.filter(order => order.address && order.status !== 'CANCELLED')}
-                                        title={`Deliveries for ${moment(selectedDate).format('MMM DD, YYYY')}`}
-                                    />
-                                </div>
-                            )}
+                            <p className="text-xs text-muted-foreground">
+                                Requires attention
+                            </p>
                         </CardContent>
                     </Card>
-                </TabsContent>
-            </Tabs>
+                </div>
+
+                {/* Simple Tabs */}
+                <Tabs defaultValue="today" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="today" className="flex items-center gap-2 cursor-pointer">
+                            <Calendar className="w-4 h-4" />
+                            Today ({todayOrders.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="tomorrow" className="flex items-center gap-2 cursor-pointer">
+                            <Truck className="w-4 h-4" />
+                            Tomorrow ({tomorrowOrders.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="custom" className="flex items-center gap-2 cursor-pointer">
+                            <MapPin className="w-4 h-4" />
+                            Custom Date ({selectedDateOrders.length})
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="today" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="w-5 h-5" />
+                                        Today&apos;s Deliveries - {moment().format('dddd, MMMM DD, YYYY')}
+                                    </div>
+                                    <ViewToggle />
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {loading ? (
+                                    <div className="flex justify-center py-8">
+                                        <RefreshCw className="w-6 h-6 animate-spin" />
+                                    </div>
+                                ) : currentView === 'list' ? (
+                                    renderOrdersTable(todayOrders)
+                                ) : (
+                                    <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
+                                        <DeliveryMapView
+                                            orders={todayOrders.filter(order => order.address && order.status !== 'CANCELLED')}
+                                            title="Today&apos;s Deliveries"
+                                        />
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="tomorrow" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Truck className="w-5 h-5" />
+                                        Tomorrow&apos;s Deliveries - {moment().add(1, 'day').format('dddd, MMMM DD, YYYY')}
+                                    </div>
+                                    <ViewToggle />
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {loading ? (
+                                    <div className="flex justify-center py-8">
+                                        <RefreshCw className="w-6 h-6 animate-spin" />
+                                    </div>
+                                ) : currentView === 'list' ? (
+                                    renderOrdersTable(tomorrowOrders)
+                                ) : (
+                                    <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
+                                        <DeliveryMapView
+                                            orders={tomorrowOrders.filter(order => order.address && order.status !== 'CANCELLED')}
+                                            title="Tomorrow&apos;s Deliveries"
+                                        />
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="custom" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="w-5 h-5" />
+                                        Custom Date Deliveries
+                                    </div>
+                                    <ViewToggle />
+                                </CardTitle>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        type="date"
+                                        value={selectedDate}
+                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        className="max-w-xs"
+                                    />
+                                    {selectedDate && (
+                                        <span className="text-sm text-gray-600">
+                                            - {moment(selectedDate).format('dddd, MMMM DD, YYYY')}
+                                        </span>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {!selectedDate ? (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                        <p>Select a date to view deliveries</p>
+                                    </div>
+                                ) : loading ? (
+                                    <div className="flex justify-center py-8">
+                                        <RefreshCw className="w-6 h-6 animate-spin" />
+                                    </div>
+                                ) : currentView === 'list' ? (
+                                    renderOrdersTable(selectedDateOrders)
+                                ) : (
+                                    <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
+                                        <DeliveryMapView
+                                            orders={selectedDateOrders.filter(order => order.address && order.status !== 'CANCELLED')}
+                                            title={`Deliveries for ${moment(selectedDate).format('MMM DD, YYYY')}`}
+                                        />
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
 
 
             </div>

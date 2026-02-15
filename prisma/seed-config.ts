@@ -161,8 +161,6 @@ async function seedConfigData(prismaClient?: PrismaClient) {
   }
 }
 
-if (require.main === module) {
-  seedConfigData();
-}
+seedConfigData();
 
 export { seedConfigData };

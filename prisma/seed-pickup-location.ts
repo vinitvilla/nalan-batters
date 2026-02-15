@@ -72,8 +72,6 @@ async function seedPickupLocation(prismaClient?: PrismaClient) {
   }
 }
 
-if (require.main === module) {
-  seedPickupLocation();
-}
+seedPickupLocation();
 
 export { seedPickupLocation };

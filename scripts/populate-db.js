@@ -1,5 +1,5 @@
-const { PrismaClient } = require('../src/generated/prisma');
-const { faker } = require('@faker-js/faker');
+import { PrismaClient } from '../src/generated/prisma/index.js';
+import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
 
@@ -1546,12 +1546,10 @@ async function populateDatabase() {
 // ===== SCRIPT EXECUTION =====
 
 // Run if called directly
-if (require.main === module) {
-  populateDatabase()
-    .catch((e) => {
-      console.error(e);
-      process.exit(1);
-    });
-}
+populateDatabase()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
 
-module.exports = { populateDatabase };
+export { populateDatabase };

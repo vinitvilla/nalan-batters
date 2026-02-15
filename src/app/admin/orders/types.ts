@@ -35,6 +35,12 @@ export type Order = {
         code: string;
         discount: number;
     };
+    driverId?: string;
+    driver?: {
+        id: string;
+        fullName: string;
+        phone: string;
+    };
 };
 
 // Valid order statuses that match the Prisma OrderStatus enum
