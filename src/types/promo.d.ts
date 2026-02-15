@@ -7,3 +7,16 @@ export interface PromoState {
   discount: number;
   discountType: DiscountType;
 }
+
+// Promo code validation result
+export interface PromoCodeResult {
+  valid: boolean;
+  error?: string;
+  promo?: {
+    id: string;
+    code: string;
+    discountType: DiscountType;
+    discount: number;
+    maxDiscount?: number;
+  };
+}
