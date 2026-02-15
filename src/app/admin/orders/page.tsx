@@ -18,73 +18,48 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { capitalize, formatCurrency, formatPhoneNumber, formatDate, formatDateOnly } from "@/lib/utils/commonFunctions";
 import { DateFilter } from "@/components/ui/date-filter";
 import { EnhancedPagination } from "@/components/ui/enhanced-pagination";
+import { useOrderFilters } from "@/hooks/useOrderFilters";
+import { StatusBadge } from "@/components/shared";
 import moment from "moment";
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState<AdminOrderResponse[]>([]);
-    const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [status, setStatus] = useState("all");
-    const [orderType, setOrderType] = useState("all");
-    const [paymentMethod, setPaymentMethod] = useState("all");
     const [loading, setLoading] = useState(false);
     const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
-    
-    // Date filter state
-    const [dateFilter, setDateFilter] = useState({
-        startDate: '',
-        endDate: '',
-        quickFilter: 'all'
-    });
-    
-    // Pagination state
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(25);
-    const [totalPages, setTotalPages] = useState(0);
-    const [totalItems, setTotalItems] = useState(0);
-    
-    // Sorting state
-    const [sortBy, setSortBy] = useState<string>("createdAt");
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-    
+
     const token = userStore((s) => s.token);
     const adminApiFetch = useAdminApi();
     const router = useRouter();
 
-    // Debounce search input
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(search);
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [search]);
+    // Use custom hook for filters, pagination, and sorting
+    const {
+        filters,
+        pagination,
+        setSearch,
+        setStatus,
+        setOrderType,
+        setPaymentMethod,
+        setDateFilter,
+        handleSort,
+        handlePageChange,
+        handleItemsPerPageChange,
+        buildQueryParams,
+        setTotalPages,
+        setTotalItems,
+    } = useOrderFilters();
 
     // Fetch orders with pagination and filters
     const fetchOrders = async () => {
         if (!token) return;
         setLoading(true);
-        
+
         try {
-            const params = new URLSearchParams({
-                page: currentPage.toString(),
-                limit: itemsPerPage.toString(),
-            });
-
-            if (search) params.append('search', debouncedSearch);
-            if (status !== 'all') params.append('status', status);
-            if (orderType !== 'all') params.append('orderType', orderType);
-            if (paymentMethod !== 'all') params.append('paymentMethod', paymentMethod);
-            if (dateFilter.startDate) params.append('startDate', dateFilter.startDate);
-            if (dateFilter.endDate) params.append('endDate', dateFilter.endDate);
-            if (sortBy) params.append('sortBy', sortBy);
-            if (sortOrder) params.append('sortOrder', sortOrder);
-
+            const params = buildQueryParams();
             const response = await adminApiFetch(`/api/admin/orders?${params.toString()}`);
             if (!response) throw new Error("No response from server");
-            
+
             const data = await response.json();
-            
+
             // Handle both new paginated response and old response format
             if (data.orders && data.pagination) {
                 // New paginated response
@@ -104,7 +79,7 @@ export default function OrdersPage() {
                     phone: order.user?.phone || "",
                 }));
                 setOrders(orders);
-                setTotalPages(Math.ceil(orders.length / itemsPerPage));
+                setTotalPages(Math.ceil(orders.length / pagination.itemsPerPage));
                 setTotalItems(orders.length);
             }
         } catch (error) {
@@ -118,20 +93,13 @@ export default function OrdersPage() {
     // Fetch orders when dependencies change
     useEffect(() => {
         fetchOrders();
-    }, [token, currentPage, itemsPerPage, debouncedSearch, status, orderType, paymentMethod, dateFilter, sortBy, sortOrder]);
-
-    // Reset to first page when filters change (except page and itemsPerPage)
-    useEffect(() => {
-        if (currentPage !== 1) {
-            setCurrentPage(1);
-        }
-    }, [debouncedSearch, status, orderType, paymentMethod, dateFilter, sortBy, sortOrder]);
+    }, [token, pagination.currentPage, pagination.itemsPerPage, filters.debouncedSearch, filters.status, filters.orderType, filters.paymentMethod, filters.dateFilter, filters.sortBy, filters.sortOrder]);
 
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         if (!token) return;
-        
+
         setUpdatingStatus(orderId);
-        
+
         try {
             const res = await adminApiFetch(`/api/admin/orders/${orderId}`, {
                 method: "PUT",
@@ -139,12 +107,12 @@ export default function OrdersPage() {
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 credentials: "include",
             });
-            
+
             if (!res || !res.ok) {
                 const errorData = await res?.json?.();
                 throw new Error(errorData?.message || "Failed to update order status");
             }
-            
+
             // Update the order in the local state
             setOrders(prevOrders =>
                 prevOrders.map(order =>
@@ -153,7 +121,7 @@ export default function OrdersPage() {
                         : order
                 )
             );
-            
+
             toast.success("Order status updated successfully");
         } catch (error) {
             console.error("Error updating order status:", error);
@@ -163,36 +131,12 @@ export default function OrdersPage() {
         }
     };
 
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-    };
-
-    const handleItemsPerPageChange = (newItemsPerPage: number) => {
-        setItemsPerPage(newItemsPerPage);
-        setCurrentPage(1);
-    };
-
-    const handleDateFilterChange = (newDateFilter: typeof dateFilter) => {
-        setDateFilter(newDateFilter);
-    };
-
-    const handleSort = (column: string) => {
-        if (sortBy === column) {
-            // Toggle sort order if same column
-            setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-        } else {
-            // Set new column and default to desc
-            setSortBy(column);
-            setSortOrder("desc");
-        }
-    };
-
     const getSortIcon = (column: string) => {
-        if (sortBy !== column) {
+        if (filters.sortBy !== column) {
             return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
         }
-        return sortOrder === "asc" ? 
-            <ArrowUp className="w-4 h-4 text-blue-600" /> : 
+        return filters.sortOrder === "asc" ?
+            <ArrowUp className="w-4 h-4 text-blue-600" /> :
             <ArrowDown className="w-4 h-4 text-blue-600" />;
     };
 
@@ -213,12 +157,12 @@ export default function OrdersPage() {
                             <div className="flex-1 max-w-md">
                                 <Input
                                     placeholder="Search by customer name, phone, or order number..."
-                                    value={search}
+                                    value={filters.search}
                                     onChange={e => setSearch(e.target.value)}
                                     className="h-11 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 />
                             </div>
-                            <Tabs value={status} onValueChange={setStatus} className="w-full md:w-auto">
+                            <Tabs value={filters.status} onValueChange={setStatus} className="w-full md:w-auto">
                                 <TabsList className="flex w-full md:w-auto bg-gray-100 p-1 rounded-lg">
                                     {ORDER_STATUS_FILTERS.map(s => (
                                         <TabsTrigger 
@@ -236,7 +180,7 @@ export default function OrdersPage() {
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex flex-col">
                                 <label className="text-sm font-medium mb-2">Order Type</label>
-                                <Select value={orderType} onValueChange={setOrderType}>
+                                <Select value={filters.orderType} onValueChange={setOrderType}>
                                     <SelectTrigger className="w-full md:w-32">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -250,7 +194,7 @@ export default function OrdersPage() {
                             
                             <div className="flex flex-col">
                                 <label className="text-sm font-medium mb-2">Payment Method</label>
-                                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                <Select value={filters.paymentMethod} onValueChange={setPaymentMethod}>
                                     <SelectTrigger className="w-full md:w-32">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -265,7 +209,7 @@ export default function OrdersPage() {
                             
                             <div className="flex flex-col">
                                 <label className="text-sm font-medium mb-2">Sort By</label>
-                                <Select value={sortBy} onValueChange={setSortBy}>
+                                <Select value={filters.sortBy} onValueChange={handleSort}>
                                     <SelectTrigger className="w-full md:w-40">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -283,7 +227,7 @@ export default function OrdersPage() {
                             
                             <div className="flex flex-col">
                                 <label className="text-sm font-medium mb-2">Order</label>
-                                <Select value={sortOrder} onValueChange={(value: "asc" | "desc") => setSortOrder(value)}>
+                                <Select value={filters.sortOrder} onValueChange={() => handleSort(filters.sortBy)}>
                                     <SelectTrigger className="w-full md:w-32">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -295,8 +239,8 @@ export default function OrdersPage() {
                             </div>
                             
                             <DateFilter
-                                dateFilter={dateFilter}
-                                onDateFilterChange={handleDateFilterChange}
+                                dateFilter={filters.dateFilter}
+                                onDateFilterChange={setDateFilter}
                                 className="w-full md:w-auto"
                             />
                         </div>
@@ -678,10 +622,10 @@ export default function OrdersPage() {
                     
                     {/* Enhanced Pagination */}
                     <EnhancedPagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalItems={totalItems}
-                        itemsPerPage={itemsPerPage}
+                        currentPage={pagination.currentPage}
+                        totalPages={pagination.totalPages}
+                        totalItems={pagination.totalItems}
+                        itemsPerPage={pagination.itemsPerPage}
                         onPageChange={handlePageChange}
                         onItemsPerPageChange={handleItemsPerPageChange}
                     />
