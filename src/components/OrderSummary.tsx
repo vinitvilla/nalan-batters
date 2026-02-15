@@ -1,17 +1,14 @@
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar, ShoppingCart, Trash2, Edit2 } from "lucide-react";
-import { useCartStore } from "@/store/cartStore";
-import { userStore } from "@/store/userStore";
 import { useOrderStore } from "@/store/orderStore";
 import { useConfigStore } from "@/store/configStore";
 import { AddressFields } from "@/store/addressStore";
-import moment from 'moment';
-import { getNextAvailableDeliveryDates } from '@/services/order/delivery.service';
+import { usePromoCode } from "@/hooks/usePromoCode";
+import { useOrderPlacement } from "@/hooks/useOrderPlacement";
 
 export interface OrderSummaryProps {
   cartItems: Array<{ id: string; name: string; price: number; quantity: number }>;
@@ -25,20 +22,15 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
   // Store hooks
   const router = useRouter();
   const config = useConfigStore(s => s.configs);
-  const user = userStore(s => s.user);
   const selectedDeliveryDate = useOrderStore(s => s.selectedDeliveryDate);
   const deliveryType = useOrderStore(s => s.deliveryType);
   const setDeliveryType = useOrderStore(s => s.setDeliveryType);
-  const promo = useOrderStore(s => s.promo);
   const setPromo = useOrderStore(s => s.setPromo);
-  const clearPromo = useOrderStore(s => s.clearPromo);
   const getOrderCalculations = useOrderStore(s => s.getOrderCalculations);
 
-  // State hooks
-  const [placing, setPlacing] = useState(false);
-  const [orderError, setOrderError] = useState("");
-  const [promoError, setPromoError] = useState(false);
-  const [applyingPromo, setApplyingPromo] = useState(false);
+  // Custom hooks
+  const { promo, applyingPromo, promoError, applyPromo, clearPromo } = usePromoCode();
+  const { placing, orderError, getOrderValidationMessage, placeOrder } = useOrderPlacement();
 
   // Derived values using orderStore calculations
   const calculations = getOrderCalculations(cartItems, config, selectedAddress, selectedDeliveryDate, deliveryType);
@@ -57,62 +49,14 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
     isConvenienceWaived,
     isDeliveryWaived
   } = calculations;
-  // Check what's missing for order completion
-  const getOrderValidationMessage = () => {
-    if (cartItems.length === 0) return "Your cart is empty";
-    if (deliveryType === 'DELIVERY' && !selectedAddress) return "Please select a delivery address";
-    if (deliveryType === 'DELIVERY' && !selectedDeliveryDate) return "Please select a delivery date";
 
-    // Check if delivery is available for the selected address
-    if (deliveryType === 'DELIVERY' && selectedAddress && config.freeDelivery) {
-      const deliveryDates = getNextAvailableDeliveryDates(selectedAddress.city || '', config.freeDelivery, 4);
-      if (deliveryDates.length === 0) {
-        return "Delivery is not available for this location";
-      }
-    }
-
-    return null;
-  };
-
-  // Deleted: getNextDeliveryDates - now using delivery.service
-
-  const validationMessage = getOrderValidationMessage();
+  // Validation message and order ready state
+  const validationMessage = getOrderValidationMessage(cartItems, selectedAddress, config);
   const isOrderReady = !validationMessage && !placing;
 
   // Place order handler
   async function handlePlaceOrder() {
-    setPlacing(true);
-    setOrderError("");
-    try {
-      const res = await fetch("/api/public/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user?.id,
-          addressId: selectedAddress?.id,
-          items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity, price: i.price })),
-          promoCodeId: promo.applied && promo.id ? promo.id : null,
-          deliveryDate: selectedDeliveryDate,
-          orderType: 'ONLINE', // This is an online order from the website
-          deliveryType: deliveryType,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Order failed");
-      useCartStore.getState().clearCart();
-
-      // Redirect to success page with orderNumber if available
-      const orderNumber = data.order?.orderNumber;
-      if (orderNumber) {
-        router.push(`/order-success?orderNumber=${encodeURIComponent(orderNumber)}`);
-      } else {
-        router.push("/order-success");
-      }
-    } catch (err: any) {
-      setOrderError(err.message || "Order failed");
-    } finally {
-      setPlacing(false);
-    }
+    await placeOrder(cartItems, selectedAddress);
   }
 
   // --- Render ---
@@ -186,12 +130,7 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
                 size="sm"
                 disabled={promo.applied || !promo.code || applyingPromo}
                 className={`rounded-lg font-bold px-4 py-2 transition-all shadow ${promo.applied ? 'bg-green-600 text-white' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
-                onClick={async () => {
-                  setApplyingPromo(true);
-                  const result = await useOrderStore.getState().applyPromo(promo.code);
-                  setPromoError(!result.success);
-                  setApplyingPromo(false);
-                }}
+                onClick={() => applyPromo(promo.code)}
               >
                 {promo.applied ? (
                   <span className="flex items-center gap-1"><span className="inline-block w-4 h-4 bg-green-500 rounded-full text-white flex items-center justify-center text-xs">✔</span>Applied</span>
