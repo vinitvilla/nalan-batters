@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { DiscountType, OrderStatus } from "@/generated/prisma";
 import moment from 'moment';
+import { getAllConfigs, parseChargeConfig, parseFreeDeliveryConfig } from '@/services/config/config.service';
+import { isFreeDeliveryEligible, isDeliveryAvailable } from '@/services/order/delivery.service';
+import { calculateOrderCharges, calculateDiscountAmount, calculateOrderTotal } from '@/services/order/orderCalculation.service';
+import { validateAndApplyPromoCode, incrementPromoUsage } from '@/services/order/promoCode.service';
 
 // --- Order Number Generation ---
 /**
@@ -279,142 +283,9 @@ async function validateOrderItems(items: Array<{ productId: string; quantity: nu
     return products;
 }
 
-/**
- * Returns config object mapped by title.
- */
-async function getConfigObject() {
-    const configArr = await prisma.config.findMany({
-        where: { isDelete: false }
-    });
-    return configArr.reduce((acc, curr) => {
-        acc[curr.title] = curr;
-        return acc;
-    }, {} as Record<string, typeof configArr[number]>);
-}
-
-/**
- * Safely extracts a field from config value, with fallback and waive logic.
- */
-function getConfigField(configObj: any, key: string, field: string, fallback: number) {
-    const entry = configObj[key]?.value;
-    if (entry && typeof entry === 'object') {
-        if (entry.waive === true) return 0;
-        if (field in entry) return Number(entry[field]);
-    }
-    return fallback;
-}
-
-/**
- * Validates if delivery is available for the given address and date
- */
-function validateDeliveryAvailability(address: any, deliveryDate: Date, freeDeliveryConfig: any, orderType: string): boolean {
-    // For pickup orders, no delivery validation needed
-    if (orderType === 'PICKUP') return true;
-    
-    // For delivery orders, check if the date and location are supported
-    if (!address?.city || !freeDeliveryConfig || !deliveryDate) {
-        return false;
-    }
-    
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayName = daysOfWeek[deliveryDate.getDay()];
-    
-    const areasForDay = freeDeliveryConfig[dayName];
-    if (!Array.isArray(areasForDay) || areasForDay.length === 0) {
-        return false;
-    }
-    
-    return areasForDay.some((area: string) => 
-        area.toLowerCase().includes(address.city.toLowerCase()) ||
-        address.city.toLowerCase().includes(area.toLowerCase())
-    );
-}
-
-/**
- * Checks if an address qualifies for free delivery on a given date
- */
-function isEligibleForFreeDelivery(address: any, deliveryDate: Date, freeDeliveryConfig: any): boolean {
-    if (!address?.city || !freeDeliveryConfig || !deliveryDate) return false;
-    
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayName = daysOfWeek[deliveryDate.getDay()];
-    
-    const areasForDay = freeDeliveryConfig[dayName];
-    if (!Array.isArray(areasForDay)) return false;
-    
-    return areasForDay.some((area: string) => 
-        area.toLowerCase().includes(address.city.toLowerCase()) ||
-        address.city.toLowerCase().includes(area.toLowerCase())
-    );
-}
-
-/**
- * Calculates charges (tax, convenience, delivery) from config and subtotal.
- * Applies waive logic and free delivery eligibility.
- */
-function calculateCharges(config: any, subtotal: number, address: any = null, deliveryDate: Date | null = null) {
-    // Get base rates with waive logic
-    const taxPercentValue = getConfigField(config, 'taxPercent', 'percent', 13);
-    const TAX_RATE = taxPercentValue ? taxPercentValue / 100 : 0;
-    let convenienceCharges = getConfigField(config, 'convenienceCharge', 'amount', 0);
-    let deliveryCharges = getConfigField(config, 'deliveryCharge', 'amount', 0);
-    
-    // Apply free delivery logic
-    if (address && deliveryDate && deliveryCharges > 0) {
-        const freeDeliveryConfig = config.freeDelivery?.value;
-        if (isEligibleForFreeDelivery(address, deliveryDate, freeDeliveryConfig)) {
-            deliveryCharges = 0;
-            // Also waive convenience charge for free delivery areas
-            convenienceCharges = 0;
-        }
-    }
-    
-    const tax = +(subtotal * TAX_RATE).toFixed(2);
-    return { TAX_RATE, convenienceCharges, deliveryCharges, tax };
-}
-
-/**
- * Calculates discount and type from promo code.
- */
-async function calculateDiscount(subtotal: number, promoCodeId?: string) {
-    let discount = 0;
-    let discountType: DiscountType | undefined;
-    if (promoCodeId) {
-        const promo = await prisma.promoCode.findFirst({ 
-            where: { 
-                id: promoCodeId,
-                isDeleted: false 
-            } 
-        });
-        if (promo && promo.isActive && (!promo.expiresAt || moment(promo.expiresAt).isSameOrAfter(moment()))) {
-            // Check minimum order amount
-            if (promo.minOrderAmount && subtotal < Number(promo.minOrderAmount)) {
-                return { discount: 0, discountType: undefined };
-            }
-            
-            // Check usage limit
-            if (promo.usageLimit && promo.currentUsage >= promo.usageLimit) {
-                return { discount: 0, discountType: undefined };
-            }
-            
-            discountType = promo.discountType;
-            if (promo.discountType === DiscountType.PERCENTAGE) {
-                discount = +(subtotal * (Number(promo.discount) / 100)).toFixed(2);
-                // Apply max discount limit if set
-                if (promo.maxDiscount && discount > Number(promo.maxDiscount)) {
-                    discount = Number(promo.maxDiscount);
-                }
-            } else {
-                discount = Number(promo.discount);
-                // For fixed amount discounts, maxDiscount acts as the discount amount limit
-                if (promo.maxDiscount && discount > Number(promo.maxDiscount)) {
-                    discount = Number(promo.maxDiscount);
-                }
-            }
-        }
-    }
-    return { discount, discountType };
-}
+// Deleted: getConfigObject, getConfigField, validateDeliveryAvailability,
+// isEligibleForFreeDelivery, calculateCharges, calculateDiscount
+// Now using services: config.service, delivery.service, orderCalculation.service, promoCode.service
 
 /**
  * Reduces product stock after order placement.
@@ -457,30 +328,55 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
     // Validate items
     const products = await validateOrderItems(items);
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const config = await getConfigObject();
-    
+
+    // Get config using service
+    const configs = await getAllConfigs();
+    const chargeConfig = parseChargeConfig(configs);
+    const freeDeliveryConfig = parseFreeDeliveryConfig(configs);
+
     // Get address information for delivery validation and free delivery calculation
     const address = await prisma.address.findFirst({
         where: { id: addressId }
     });
-    
+
     // For delivery orders, validate that delivery is available
     if (orderType === 'DELIVERY') {
         if (!validDeliveryDate) {
             throw new Error("Delivery date is required for delivery orders");
         }
-        
-        const freeDeliveryConfig = config.freeDelivery?.value;
-        if (!validateDeliveryAvailability(address, validDeliveryDate, freeDeliveryConfig, orderType || 'DELIVERY')) {
+
+        if (!address || !isDeliveryAvailable(validDeliveryDate, address.city, freeDeliveryConfig)) {
             throw new Error("Delivery is not available for the selected date and location. Please choose a different date or location.");
         }
     }
-    
-    const { TAX_RATE, convenienceCharges, deliveryCharges, tax } = calculateCharges(config, subtotal, address, validDeliveryDate);
-    const { discount } = await calculateDiscount(subtotal, promoCodeId);
+
+    // Check if eligible for free delivery using service
+    const isFreeDelivery = address && validDeliveryDate
+        ? isFreeDeliveryEligible(validDeliveryDate, address.city, orderType || 'DELIVERY', freeDeliveryConfig)
+        : false;
+
+    // Calculate charges using service
+    const charges = calculateOrderCharges(subtotal, chargeConfig, isFreeDelivery, orderType || 'DELIVERY');
+
+    // Handle promo code using service
+    let discount = 0;
+    if (promoCodeId) {
+        const promoResult = await validateAndApplyPromoCode(promoCodeId, subtotal);
+        if (promoResult.valid && promoResult.promo) {
+            discount = calculateDiscountAmount(
+                subtotal,
+                promoResult.promo.discountType,
+                promoResult.promo.discount,
+                promoResult.promo.maxDiscount
+            );
+        }
+    }
 
     // Generate unique order number
     const orderNumber = await generateUniqueOrderNumber();
+
+    // Calculate total
+    const totals = calculateOrderTotal(subtotal, charges, discount, chargeConfig.taxPercent.percent);
 
     // Prepare order data
     const orderData: any = {
@@ -488,10 +384,10 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
         userId,
         addressId,
         promoCodeId,
-        total: +(subtotal + tax + convenienceCharges + deliveryCharges - discount).toFixed(2),
-        tax,
-        convenienceCharges,
-        deliveryCharges,
+        total: totals.finalTotal,
+        tax: charges.tax,
+        convenienceCharges: charges.convenienceCharge,
+        deliveryCharges: charges.deliveryCharge,
         discount,
         status: OrderStatus.PENDING,
         orderType: orderType || 'DELIVERY', // Default to DELIVERY for online orders
@@ -512,13 +408,10 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
         include: { items: true }
     });
     await reduceProductStock(items);
-    
+
     // Increment promo code usage if applicable
     if (promoCodeId && discount > 0) {
-        await prisma.promoCode.update({
-            where: { id: promoCodeId },
-            data: { currentUsage: { increment: 1 } }
-        });
+        await incrementPromoUsage(promoCodeId);
     }
     
     return order;

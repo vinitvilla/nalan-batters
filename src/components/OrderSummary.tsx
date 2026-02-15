@@ -11,6 +11,7 @@ import { useOrderStore } from "@/store/orderStore";
 import { useConfigStore } from "@/store/configStore";
 import { AddressFields } from "@/store/addressStore";
 import moment from 'moment';
+import { getNextAvailableDeliveryDates } from '@/services/order/delivery.service';
 
 export interface OrderSummaryProps {
   cartItems: Array<{ id: string; name: string; price: number; quantity: number }>;
@@ -64,7 +65,7 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
 
     // Check if delivery is available for the selected address
     if (deliveryType === 'DELIVERY' && selectedAddress && config.freeDelivery) {
-      const deliveryDates = getNextDeliveryDates(selectedAddress.city || '', config.freeDelivery);
+      const deliveryDates = getNextAvailableDeliveryDates(selectedAddress.city || '', config.freeDelivery, 4);
       if (deliveryDates.length === 0) {
         return "Delivery is not available for this location";
       }
@@ -73,51 +74,7 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
     return null;
   };
 
-  // Helper function to calculate delivery dates (copied from CheckoutContactDelivery)
-  const getNextDeliveryDates = (city: string, freeDeliveryConfig: Record<string, unknown>): Array<{ date: string, day: string }> => {
-    if (!city || !freeDeliveryConfig) return [];
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-    // Use moment.js to get today in EST timezone
-    const estToday = moment().utcOffset(-5).startOf('day');
-    const todayDay = estToday.day(); // 0 = Sunday, 1 = Monday, etc.
-    const count = 4;
-
-    // Find all delivery days for the city
-    const matchedDays = Object.entries(freeDeliveryConfig)
-      .filter(([, cities]) => Array.isArray(cities) && cities.some((c: string) => c.toLowerCase().includes(city.toLowerCase())))
-      .map(([day]) => day);
-    if (matchedDays.length === 0) return [];
-
-    // For each matched day, get the next 4 dates
-    let allDates: Array<{ date: string, day: string }> = [];
-    matchedDays.forEach(dayName => {
-      if (!daysOfWeek.includes(dayName)) return;
-      const targetDay = daysOfWeek.indexOf(dayName);
-      let daysUntilNextDay = (targetDay - todayDay + 7) % 7;
-      if (daysUntilNextDay === 0) daysUntilNextDay = 7;
-      for (let i = 0; i < count; i++) {
-        const nextDayDate = moment(estToday).add(daysUntilNextDay, 'days');
-        allDates.push({
-          date: nextDayDate.format('YYYY-MM-DD'),
-          day: dayName
-        });
-        daysUntilNextDay += 7;
-      }
-    });
-    allDates = allDates.sort((a, b) => a.date.localeCompare(b.date));
-    // Only keep unique dates, up to 4
-    const uniqueDates: Array<{ date: string, day: string }> = [];
-    const seen = new Set();
-    for (const d of allDates) {
-      if (!seen.has(d.date)) {
-        uniqueDates.push(d);
-        seen.add(d.date);
-      }
-      if (uniqueDates.length === 4) break;
-    }
-    return uniqueDates;
-  };
+  // Deleted: getNextDeliveryDates - now using delivery.service
 
   const validationMessage = getOrderValidationMessage();
   const isOrderReady = !validationMessage && !placing;
