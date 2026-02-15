@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { AdminOrderResponse, ORDER_STATUSES } from "@/types/order";
 import type { OrderStatus } from "@/generated/prisma";
+import { StatusBadge } from "@/components/shared";
 import {
     Truck,
     MapPin,
@@ -240,26 +240,6 @@ export default function DeliveryPage() {
         }
     };
 
-
-
-    // Get status badge variant
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'PENDING':
-                return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
-            case 'CONFIRMED':
-                return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><CheckCircle2 className="w-3 h-3 mr-1" />Confirmed</Badge>;
-            case 'SHIPPED':
-                return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200"><Truck className="w-3 h-3 mr-1" />Shipped</Badge>;
-            case 'DELIVERED':
-                return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><Package className="w-3 h-3 mr-1" />Delivered</Badge>;
-            case 'CANCELLED':
-                return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="w-3 h-3 mr-1" />Cancelled</Badge>;
-            default:
-                return <Badge variant="outline">{status}</Badge>;
-        }
-    };
-
     // Format date for display (date only, no time)
     const formatDeliveryDate = (date: string | Date | null | undefined) => {
         if (!date) return 'N/A';
@@ -340,7 +320,7 @@ export default function DeliveryPage() {
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    {getStatusBadge(order.status)}
+                                    <StatusBadge status={order.status} />
                                 </TableCell>
                                 <TableCell>
                                     <Select

@@ -9,6 +9,7 @@ import { useConfigStore } from "@/store/configStore";
 import { AddressFields } from "@/store/addressStore";
 import { usePromoCode } from "@/hooks/usePromoCode";
 import { useOrderPlacement } from "@/hooks/useOrderPlacement";
+import { ChargeRow } from "@/components/shared";
 
 export interface OrderSummaryProps {
   cartItems: Array<{ id: string; name: string; price: number; quantity: number }>;
@@ -148,43 +149,25 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
             {promo.applied && (
               <div className="text-xs text-green-600 font-semibold mb-1">Promo code applied!</div>
             )}
-            <div className="flex justify-between text-xs text-yellow-700">
-              <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-xs text-yellow-700">
-              <span>Tax ({Math.round(taxRate * 100)}%)</span>
-              {isTaxWaived ? (
-                <div className="flex items-center gap-2">
-                  <span className="line-through text-red-500">${originalTax.toFixed(2)}</span>
-                  <span className="text-green-600 font-semibold">$0.00</span>
-                </div>
-              ) : (
-                <span>${tax.toFixed(2)}</span>
-              )}
-            </div>
-            <div className="flex justify-between text-xs text-yellow-700">
-              <span>Convenience Charge</span>
-              {isConvenienceWaived ? (
-                <div className="flex items-center gap-2">
-                  <span className="line-through text-red-500">${originalConvenienceCharge.toFixed(2)}</span>
-                  <span className="text-green-600 font-semibold">$0.00</span>
-                </div>
-              ) : (
-                <span>${convenienceCharge.toFixed(2)}</span>
-              )}
-            </div>
-            <div className="flex justify-between text-xs text-yellow-700">
-              <span>Delivery Charge</span>
-              {isDeliveryWaived ? (
-                <div className="flex items-center gap-2">
-                  <span className="line-through text-red-500">${originalDeliveryCharge.toFixed(2)}</span>
-                  <span className="text-green-600 font-semibold">$0.00</span>
-                </div>
-              ) : (
-                <span>${deliveryCharge.toFixed(2)}</span>
-              )}
-            </div>
+            <ChargeRow label="Subtotal" amount={subtotal} />
+            <ChargeRow
+              label={`Tax (${Math.round(taxRate * 100)}%)`}
+              amount={tax}
+              isWaived={isTaxWaived}
+              originalAmount={originalTax}
+            />
+            <ChargeRow
+              label="Convenience Charge"
+              amount={convenienceCharge}
+              isWaived={isConvenienceWaived}
+              originalAmount={originalConvenienceCharge}
+            />
+            <ChargeRow
+              label="Delivery Charge"
+              amount={deliveryCharge}
+              isWaived={isDeliveryWaived}
+              originalAmount={originalDeliveryCharge}
+            />
             {!!appliedDiscount && (
               <div className="flex justify-between text-xs text-green-700">
                 <div>Promo Discount
