@@ -37,6 +37,9 @@ function validateConfiguration() {
  * Adjust these values to control the amount of test data generated
  */
 const CONFIG = {
+  /** Whether to generate mock test data (users, orders, etc.) */
+  GENERATE_MOCK_DATA: false,
+
   /** Number of mock users to create (1-10000) */
   USERS_COUNT: 50,
   /** Minimum orders per day for online orders (realistic range) */
@@ -55,11 +58,13 @@ const CONFIG = {
   USER_ORDER_PROBABILITY: 0.1, // 10% chance per user per day
 };
 
+// ===== MOCK DATA CONSTANTS =====
+
 /**
- * Product data configuration for seeding the database
- * These represent the core products offered by the business
+ * Mock product data for testing
+ * These represent sample products for development/testing
  */
-const PRODUCT_DATA = [
+const MOCK_PRODUCT_DATA = [
   {
     name: "1.5L Dosa Batter",
     description: "Fresh 1.5L dosa batter made with premium ingredients.",
@@ -99,10 +104,10 @@ const PRODUCT_DATA = [
 ];
 
 /**
- * Promo code data configuration for business promotions
- * Includes various discount types and conditions for testing
+ * Mock promo code data for testing
+ * Includes various discount types and conditions for development/testing
  */
-const PROMO_CODE_DATA = [
+const MOCK_PROMO_CODE_DATA = [
   {
     code: 'WELCOME10',
     discount: 10.00,
@@ -187,10 +192,10 @@ const PROMO_CODE_DATA = [
 ];
 
 /**
- * Realistic distribution patterns for various order attributes
+ * Mock distribution patterns for generating realistic test orders
  * Based on typical e-commerce and food delivery business patterns
  */
-const DISTRIBUTIONS = {
+const MOCK_DISTRIBUTIONS = {
   /** Order status distribution (percentage weights) */
   ORDER_STATUS: {
     DELIVERED: 60,    // Most orders are completed
@@ -217,10 +222,10 @@ const DISTRIBUTIONS = {
 };
 
 /**
- * Time-based order patterns to simulate realistic ordering behavior
+ * Mock time-based order patterns to simulate realistic test data
  * Higher numbers indicate more orders during that time period
  */
-const TIME_PATTERNS = {
+const MOCK_TIME_PATTERNS = {
   /** Hourly order distribution (0-23 hours) */
   HOURLY: {
     0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 2,           // Late night/early morning - very low
@@ -263,21 +268,21 @@ const TIME_PATTERNS = {
 function getWeightedRandom(weights) {
   const items = Object.keys(weights);
   const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
-  
+
   if (totalWeight === 0) {
     return items[Math.floor(Math.random() * items.length)];
   }
-  
+
   const random = Math.random() * totalWeight;
   let weightSum = 0;
-  
+
   for (const item of items) {
     weightSum += weights[item];
     if (random <= weightSum) {
       return item;
     }
   }
-  
+
   return items[items.length - 1];
 }
 
@@ -294,11 +299,11 @@ function generateCanadianPhoneNumber() {
     '613', '343',         // Eastern Ontario
     '705', '249'          // Northern Ontario
   ];
-  
+
   const areaCode = faker.helpers.arrayElement(areaCodes);
   const exchange = faker.string.numeric(3, { leadingZeros: false, bannedDigits: ['0', '1'] });
   const number = faker.string.numeric(4);
-  
+
   return `+1${areaCode}${exchange}${number}`;
 }
 
@@ -323,21 +328,21 @@ function generatePosOrderNumber() {
 async function generateUniquePosOrderNumber() {
   let attempts = 0;
   let orderNumber;
-  
+
   do {
     orderNumber = generatePosOrderNumber();
     const existing = await prisma.order.findFirst({
       where: { orderNumber },
       select: { id: true }
     });
-    
+
     if (!existing) {
       return orderNumber;
     }
-    
+
     attempts++;
   } while (attempts < 50);
-  
+
   throw new Error('Failed to generate unique POS order number after 50 attempts');
 }
 
@@ -366,7 +371,7 @@ function calculateHST(amount) {
 async function logDatabaseStatistics() {
   try {
     console.log('\n📊 Database Statistics:');
-    
+
     const stats = await Promise.all([
       prisma.user.count(),
       prisma.address.count(),
@@ -379,9 +384,9 @@ async function logDatabaseStatistics() {
       prisma.order.count({ where: { deliveryType: 'PICKUP' } }),
       prisma.order.count({ where: { orderType: 'POS' } }),
     ]);
-    
+
     const [users, addresses, products, categories, orders, orderItems, promoCodes, deliveryOrders, pickupOrders, posOrders] = stats;
-    
+
     console.log(`   👥 Users: ${users}`);
     console.log(`   🏠 Addresses: ${addresses}`);
     console.log(`   📦 Products: ${products}`);
@@ -392,7 +397,7 @@ async function logDatabaseStatistics() {
     console.log(`   🔢 POS Orders: ${posOrders}`);
     console.log(`   📄 Order Items: ${orderItems}`);
     console.log(`   🎫 Promo Codes: ${promoCodes}`);
-    
+
   } catch (error) {
     console.warn('⚠️  Could not fetch database statistics:', error.message);
   }
@@ -529,62 +534,63 @@ function generateRealGTAAddress() {
   ];
 
   // Randomly select an address from the array
-    const randomIndex = Math.floor(Math.random() * gtaAddresses.length);
-    const address = gtaAddresses[randomIndex];
+  const randomIndex = Math.floor(Math.random() * gtaAddresses.length);
+  const address = gtaAddresses[randomIndex];
 
-    // Format the address
-    return {
-      street: address.street,
-      unit: address.unit,
-      city: address.city,
-      province: 'ON',
-      country: 'Canada',
-      postal: address.postal,
-      // fullAddress: address.unit 
-      //   ? `${address.unit}, ${address.street}, ${address.city}, ON ${address.postal}`
-      //   : `${address.street}, ${address.city}, ON ${address.postal}`
-    };
-  }
+  // Format the address
+  return {
+    street: address.street,
+    unit: address.unit,
+    city: address.city,
+    province: 'ON',
+    country: 'Canada',
+    postal: address.postal,
+    // fullAddress: address.unit 
+    //   ? `${address.unit}, ${address.street}, ${address.city}, ON ${address.postal}`
+    //   : `${address.street}, ${address.city}, ON ${address.postal}`
+  };
+}
 
-// ===== DATA CLEANUP FUNCTIONS =====
+// ===== ESSENTIAL SYSTEM DATA FUNCTIONS =====
 
 /**
  * Completely clears all data except config and Firebase admin users
+ * NOTE: This is a destructive operation used for fresh database setup
  */
 async function truncateAllData() {
   console.log('🗑️  Completely clearing all data for fresh start...');
-  
+
   try {
     // Delete in correct order to avoid foreign key constraints
     await prisma.orderItem.deleteMany();
     await prisma.order.deleteMany();
     await prisma.cartItem.deleteMany();
     await prisma.cart.deleteMany();
-    
+
     // Delete all addresses
     await prisma.address.deleteMany();
-    
+
     // Delete all users except Firebase admin users that might exist
     const firebaseAdmins = await prisma.user.findMany({
-      where: { 
+      where: {
         role: 'ADMIN',
         phone: { not: 'system-pickup' }
       }
     });
-    
+
     await prisma.user.deleteMany({
       where: {
         id: { notIn: firebaseAdmins.map(admin => admin.id) }
       }
     });
-    
+
     // Delete promo codes
     await prisma.promoCode.deleteMany();
-    
+
     // Delete products and categories
     await prisma.product.deleteMany();
     await prisma.category.deleteMany();
-    
+
     console.log('✅ All data cleared successfully (preserved Firebase admin users and config)');
   } catch (error) {
     console.error('❌ Error truncating data:', error);
@@ -592,21 +598,21 @@ async function truncateAllData() {
   }
 }
 
-// ===== SEED DATA CREATION FUNCTIONS =====
+// ===== MOCK DATA CREATION FUNCTIONS =====
 
 /**
  * Creates the main product category (Dosa Batter)
  * @returns {Object} - Created category object
  */
-async function createCategories() {
+async function createMockCategories() {
   console.log('📁 Creating categories...');
-  
+
   const category = await prisma.category.upsert({
     where: { name: "Dosa Batter" },
     update: {},
     create: { name: "Dosa Batter" },
   });
-  
+
   console.log('✅ Categories created');
   return category;
 }
@@ -615,33 +621,34 @@ async function createCategories() {
  * Creates the main products (different sizes of dosa batter)
  * @param {Object} category - Category object to associate products with
  */
-async function createProducts(category) {
+async function createMockProducts(category) {
   console.log('📦 Creating products...');
-  
-  const productsData = PRODUCT_DATA.map(product => ({
+
+  const productsData = MOCK_PRODUCT_DATA.map(product => ({
     ...product,
     imageUrl: "",
     isActive: true,
     categoryId: category.id,
   }));
-  
+
   await prisma.product.createMany({
     data: productsData,
     skipDuplicates: true,
   });
-  
+
   console.log('✅ Products created');
 }
 
 /**
- * Creates system user and default pickup address
+ * Creates system user and default pickup address (ESSENTIAL)
+ * This is required for the application to function properly
  * @returns {Object} - System user and pickup address objects
  */
 async function createSystemUserAndAddresses() {
   console.log('🏠 Creating system user and addresses...');
-  
+
   const defaultAddressId = 'pickup-location-default';
-  
+
   // Create system user for the pickup location
   const systemUser = await prisma.user.upsert({
     where: { phone: 'system-pickup' },
@@ -653,7 +660,7 @@ async function createSystemUserAndAddresses() {
       role: 'ADMIN',
     },
   });
-  
+
   // Create the default pickup address
   const pickupAddress = await prisma.address.upsert({
     where: { id: defaultAddressId },
@@ -678,7 +685,7 @@ async function createSystemUserAndAddresses() {
       defaultAddressId: defaultAddressId,
     },
   });
-  
+
   console.log('✅ System user and addresses created');
   return { systemUser, pickupAddress };
 }
@@ -689,16 +696,16 @@ async function createSystemUserAndAddresses() {
  */
 async function createMockPromoCodes() {
   console.log('🎫 Creating promo codes...');
-  
+
   const createdPromoCodes = [];
-  for (const promoData of PROMO_CODE_DATA) {
+  for (const promoData of MOCK_PROMO_CODE_DATA) {
     const { expiresAt, ...data } = promoData;
-    
+
     // Calculate expiration date
-    const expirationDate = expiresAt > 0 
+    const expirationDate = expiresAt > 0
       ? new Date(Date.now() + expiresAt * 24 * 60 * 60 * 1000)
       : new Date(Date.now() + expiresAt * 24 * 60 * 60 * 1000); // negative for expired
-    
+
     const promoCode = await prisma.promoCode.create({
       data: {
         ...data,
@@ -708,7 +715,7 @@ async function createMockPromoCodes() {
     });
     createdPromoCodes.push(promoCode);
   }
-  
+
   console.log(`✅ Created ${createdPromoCodes.length} promo codes`);
   return createdPromoCodes;
 }
@@ -722,14 +729,14 @@ async function createMockPromoCodes() {
  */
 async function createMockUsers() {
   console.log('👥 Creating mock users...');
-  
+
   const users = [];
   const addresses = [];
-  
+
   for (let i = 0; i < CONFIG.USERS_COUNT; i++) {
     const phone = generateCanadianPhoneNumber();
     const fullName = faker.person.fullName();
-    
+
     const user = await prisma.user.create({
       data: {
         phone,
@@ -737,9 +744,9 @@ async function createMockUsers() {
         role: 'USER',
       },
     });
-    
+
     users.push(user);
-    
+
     // Create 1-3 addresses per user for better distribution
     const addressCount = Math.floor(Math.random() * CONFIG.MAX_ADDRESSES_PER_USER) + 1;
     for (let j = 0; j < addressCount; j++) {
@@ -750,27 +757,28 @@ async function createMockUsers() {
           isDeleted: false,
         },
       });
-      
+
       addresses.push(address);
     }
-    
+
     if ((i + 1) % 10 === 0) {
       console.log(`✅ Created ${i + 1}/${CONFIG.USERS_COUNT} users with addresses`);
     }
   }
-  
+
   console.log(`📊 Created ${users.length} users with ${addresses.length} total addresses`);
   return { users, addresses };
 }
 
 /**
- * Creates walk-in customer for POS orders
+ * Creates walk-in customer for POS orders (ESSENTIAL)
+ * This customer is used for all POS transactions
  * @returns {Object} - Walk-in customer object
  */
 async function createWalkInCustomer() {
   // Check if walk-in customer already exists
   let walkInUser = await prisma.user.findFirst({
-    where: { 
+    where: {
       phone: 'WALK_IN_CUSTOMER',
       role: 'USER'
     }
@@ -790,14 +798,14 @@ async function createWalkInCustomer() {
 }
 
 /**
- * Creates store address for POS orders
+ * Creates store address for POS orders (ESSENTIAL)
  * @param {string} userId - User ID to associate address with
  * @returns {Object} - Store address object
  */
 async function createStoreAddress(userId) {
   // Check if store address already exists
   let storeAddress = await prisma.address.findFirst({
-    where: { 
+    where: {
       userId: userId,
       street: 'STORE_PICKUP'
     }
@@ -835,8 +843,8 @@ async function createStoreAddress(userId) {
  */
 function generateOrdersForDate(date, products, users, addresses, promoCodes, deliveryConfig, usedUsersForDate = new Set()) {
   const dayOfWeek = date.getDay();
-  const baseDayMultiplier = TIME_PATTERNS.DAILY[dayOfWeek] / 10;
-  
+  const baseDayMultiplier = MOCK_TIME_PATTERNS.DAILY[dayOfWeek] / 10;
+
   // Create a map of user addresses for faster lookup
   const userAddressMap = new Map();
   addresses.forEach(address => {
@@ -857,63 +865,63 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
   console.log(`   � Users with orders today: ${usedUsersForDate.size}`);
   console.log(`   👥 Available users: ${availableUsers.length}/${users.length}`);
   console.log(`   🎯 Target orders: ${targetOrderCount}`);
-  
+
   // Create array of available users (only one order per user per day)
   // For each user, select ONE delivery option (either delivery to one address OR pickup)
   const availableCombos = [];
-  
+
   for (const user of availableUsers) {
     const userAddresses = userAddressMap.get(user.id) || [];
     const pickupAddress = addresses.find(addr => addr.id === 'pickup-location-default');
-    
+
     // Collect all possible options for this user
     const userOptions = [];
-    
+
     // Add delivery options
     for (const address of userAddresses) {
       userOptions.push({ user, address, deliveryType: 'DELIVERY' });
     }
-    
+
     // Add pickup option
     if (pickupAddress) {
       userOptions.push({ user, address: pickupAddress, deliveryType: 'PICKUP' });
     }
-    
+
     // If this user has any valid options, select ONE randomly
     if (userOptions.length > 0) {
       const selectedOption = userOptions[Math.floor(Math.random() * userOptions.length)];
       availableCombos.push(selectedOption);
     }
   }
-  
+
   console.log(`   📋 Available combos: ${availableCombos.length}`);
-  
+
   // Shuffle available combinations for random selection
   const shuffledCombos = availableCombos.sort(() => Math.random() - 0.5);
 
   // Take only the number of combinations we need for orders
   const selectedCombos = shuffledCombos.slice(0, Math.min(targetOrderCount, shuffledCombos.length));
-  
+
   console.log(`   ✅ Selected combos: ${selectedCombos.length}`);
 
   for (const { user, address: selectedAddress, deliveryType } of selectedCombos) {
     // Generate realistic order time based on hourly patterns
-    const hour = getWeightedRandom(TIME_PATTERNS.HOURLY);
+    const hour = getWeightedRandom(MOCK_TIME_PATTERNS.HOURLY);
     const minute = Math.floor(Math.random() * 60);
     const orderTime = new Date(date);
     orderTime.setHours(parseInt(hour), minute, 0, 0);
-    
+
     // Skip future dates
     if (orderTime > new Date()) continue;
-    
+
     // Delivery type and address are already determined from the pre-selected combo
-    const status = getWeightedRandom(DISTRIBUTIONS.ORDER_STATUS);
-    const paymentMethod = getWeightedRandom(DISTRIBUTIONS.PAYMENT_METHOD);
-    
+    const status = getWeightedRandom(MOCK_DISTRIBUTIONS.ORDER_STATUS);
+    const paymentMethod = getWeightedRandom(MOCK_DISTRIBUTIONS.PAYMENT_METHOD);
+
     // Address is already determined from the pre-filtered selection
     const finalAddress = selectedAddress;
     let deliveryDate = null;
-    
+
     if (deliveryType === 'PICKUP') {
       // Pickup orders can have a pickup date (same day or next day)
       deliveryDate = new Date(orderTime);
@@ -923,11 +931,11 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
     } else {
       // DELIVERY - validate the delivery date
       const validDeliveryDate = findNextValidDeliveryDate(selectedAddress, orderTime, deliveryConfig);
-      
+
       if (!validDeliveryDate) continue; // Skip if address cannot be delivered to on this date
-      
+
       deliveryDate = validDeliveryDate;
-      
+
       // Adjust delivery date based on order status for realism
       if (status === 'DELIVERED') {
         const maxDeliveryDate = new Date();
@@ -950,7 +958,7 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
           }
         }
       }
-      
+
       // For pending/confirmed orders, delivery date should be in future (if order is recent)
       if ((status === 'PENDING' || status === 'CONFIRMED') && orderTime > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) {
         const futureValidDate = findNextValidDeliveryDate(selectedAddress, new Date(), deliveryConfig);
@@ -959,38 +967,38 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
         }
       }
     }
-    
+
     if (!finalAddress) continue; // Safety check
-    
+
     // Mark this user as having an order today to prevent duplicates (critical constraint enforcement)
     usedUsersForDate.add(user.id);
-    
+
     // Generate order items (1-4 items per order)
     const itemCount = Math.floor(Math.random() * 4) + 1;
     const orderItems = [];
     let subtotal = 0;
-    
+
     for (let j = 0; j < itemCount; j++) {
       const product = products[Math.floor(Math.random() * products.length)];
       const quantity = Math.floor(Math.random() * 3) + 1; // 1-3 quantity
       const price = parseFloat(product.price);
-      
+
       orderItems.push({
         productId: product.id,
         quantity,
         price: product.price,
       });
-      
+
       subtotal += price * quantity;
     }
-    
+
     // Calculate charges and discounts
     let deliveryCharges = 0;
     let convenienceCharges = 0;
     let tax = 0;
     let discount = 0;
     let promoCodeId = null;
-    
+
     // Add delivery charges for delivery orders
     if (deliveryType === 'DELIVERY') {
       deliveryCharges = Math.floor(Math.random() * 5) + 3; // $3-7 delivery charge
@@ -999,23 +1007,23 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
         deliveryCharges = 0;
       }
     }
-    
+
     // Add convenience charges (random 10% chance)
     if (Math.random() < 0.1) {
       convenienceCharges = 2.50; // Fixed convenience charge
     }
-    
+
     // Apply promo code (30% chance)
     if (Math.random() < 0.3 && promoCodes.length > 0) {
-      const availablePromoCodes = promoCodes.filter(promo => 
-        promo.isActive && 
+      const availablePromoCodes = promoCodes.filter(promo =>
+        promo.isActive &&
         (!promo.expiresAt || promo.expiresAt > orderTime)
       );
-      
+
       if (availablePromoCodes.length > 0) {
         const promoCode = availablePromoCodes[Math.floor(Math.random() * availablePromoCodes.length)];
         promoCodeId = promoCode.id;
-        
+
         if (promoCode.discountType === 'PERCENTAGE') {
           discount = subtotal * (parseFloat(promoCode.discount) / 100);
           // Cap percentage discounts at 50% of subtotal for reasonableness
@@ -1025,14 +1033,14 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
         }
       }
     }
-    
+
     // Calculate tax (13% HST on subtotal + charges - discount)
     const taxableAmount = Math.max(0, subtotal + deliveryCharges + convenienceCharges - discount);
     tax = calculateHST(taxableAmount);
-    
+
     // Calculate final total: subtotal + charges + tax - discount
     const totalAmount = subtotal + deliveryCharges + convenienceCharges + tax - discount;
-    
+
     orders.push({
       userId: user.id,
       addressId: finalAddress.id,
@@ -1052,7 +1060,7 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
       items: orderItems,
     });
   }
-  
+
   return orders;
 }
 
@@ -1066,61 +1074,61 @@ function generateOrdersForDate(date, products, users, addresses, promoCodes, del
  */
 function generatePosOrdersForDate(date, products, walkInUser, storeAddress) {
   const dayOfWeek = date.getDay();
-  
+
   // POS orders only during business hours (skip Sundays and late nights)
   if (dayOfWeek === 0) return []; // No POS orders on Sunday
-  
-  const baseDayMultiplier = TIME_PATTERNS.DAILY[dayOfWeek] / 10;
+
+  const baseDayMultiplier = MOCK_TIME_PATTERNS.DAILY[dayOfWeek] / 10;
   const baseOrderCount = Math.floor(
     (CONFIG.POS_ORDERS_PER_DAY_MIN + Math.random() * (CONFIG.POS_ORDERS_PER_DAY_MAX - CONFIG.POS_ORDERS_PER_DAY_MIN)) * baseDayMultiplier
   );
-  
+
   const orders = [];
-  
+
   for (let i = 0; i < baseOrderCount; i++) {
     // Generate realistic POS order time based on business hours
-    const hour = getWeightedRandom(TIME_PATTERNS.POS_HOURLY);
-    
+    const hour = getWeightedRandom(MOCK_TIME_PATTERNS.POS_HOURLY);
+
     // Skip if hour is 0 (no POS orders at midnight)
     if (hour === '0') continue;
-    
+
     const minute = Math.floor(Math.random() * 60);
     const orderTime = new Date(date);
     orderTime.setHours(parseInt(hour), minute, 0, 0);
-    
+
     // Skip future dates
     if (orderTime > new Date()) continue;
-    
-    const paymentMethod = getWeightedRandom(DISTRIBUTIONS.POS_PAYMENT);
-    
+
+    const paymentMethod = getWeightedRandom(MOCK_DISTRIBUTIONS.POS_PAYMENT);
+
     // Generate order items (1-3 items per POS order - typically smaller than online orders)
     const itemCount = Math.floor(Math.random() * 3) + 1;
     const orderItems = [];
     let subtotal = 0;
-    
+
     for (let j = 0; j < itemCount; j++) {
       const product = products[Math.floor(Math.random() * products.length)];
       const quantity = Math.floor(Math.random() * 2) + 1; // 1-2 quantity for POS
       const price = parseFloat(product.price);
-      
+
       orderItems.push({
         productId: product.id,
         quantity,
         price: product.price,
       });
-      
+
       subtotal += price * quantity;
     }
-    
+
     // Calculate tax (13% HST on subtotal - no other charges for POS)
     const tax = calculateHST(subtotal);
-    
+
     // Calculate final total: subtotal + tax (no delivery or convenience charges for POS)
     const totalAmount = subtotal + tax;
-    
+
     // Generate unique POS order number
     const orderNumber = generatePosOrderNumber();
-    
+
     orders.push({
       orderNumber,
       userId: walkInUser.id,
@@ -1141,7 +1149,7 @@ function generatePosOrdersForDate(date, products, walkInUser, storeAddress) {
       items: orderItems,
     });
   }
-  
+
   return orders;
 }
 
@@ -1155,58 +1163,58 @@ function generatePosOrdersForDate(date, products, walkInUser, storeAddress) {
  */
 async function createMockOrders(users, addresses, promoCodes) {
   console.log('📦 Creating mock online orders with one order per user per day...');
-  
+
   if (!users.length || !addresses.length) {
     throw new Error('Cannot create orders without users and addresses');
   }
-  
+
   // Load delivery configuration for validation
   const deliveryConfig = await loadDeliveryConfig();
   console.log('🚚 Loaded delivery configuration for order validation');
-  
+
   // Get available products
   const products = await prisma.product.findMany({
     where: { isActive: true, isDelete: false },
   });
-  
+
   if (products.length === 0) {
     throw new Error('No active products found. Please ensure products are created first.');
   }
-  
+
   console.log(`📄 Using ${promoCodes.length} promo codes for order generation`);
   console.log(`👥 Creating orders for ${users.length} users with max one order per user per address per day`);
-  
+
   const today = new Date();
   const startDate = new Date(today);
   startDate.setDate(today.getDate() - CONFIG.DAYS_TO_SIMULATE);
-  
+
   let orderNumberCounter = 1;
   let totalOrdersCreated = 0;
   let skippedDeliveryOrders = 0;
-  
+
   // Track which users have orders for each date to enforce one order per user per day
   const globalUsedUsers = new Map(); // Map<dateString, Set<userId>>
-  
+
   // Generate orders for each day
   for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
     const currentDate = new Date(d);
     const dateString = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-    
+
     // Initialize tracking for this date
     if (!globalUsedUsers.has(dateString)) {
       globalUsedUsers.set(dateString, new Set());
     }
-    
+
     const usedUsersForDate = globalUsedUsers.get(dateString);
     const orders = generateOrdersForDate(currentDate, products, users, addresses, promoCodes, deliveryConfig, usedUsersForDate);
-    
+
     console.log(`📅 ${dateString}: Generated ${orders.length} orders from ${users.length} eligible users`);
-    
+
     // Batch create orders for better performance
     const orderCreationPromises = orders.map(async (orderData) => {
       try {
         const { items, ...orderFields } = orderData;
-        
+
         // Create order with unique incremental number
         const order = await prisma.order.create({
           data: {
@@ -1214,7 +1222,7 @@ async function createMockOrders(users, addresses, promoCodes) {
             orderNumber: (orderNumberCounter++).toString().padStart(5, '0'),
           },
         });
-        
+
         // Create order items in batch
         const orderItemsData = items.map(item => ({
           orderId: order.id,
@@ -1222,37 +1230,37 @@ async function createMockOrders(users, addresses, promoCodes) {
           quantity: item.quantity,
           price: item.price,
         }));
-        
+
         await prisma.orderItem.createMany({
           data: orderItemsData,
         });
-        
+
         return true;
       } catch (error) {
         console.error(`❌ Failed to create order: ${error.message}`);
         return false;
       }
     });
-    
+
     const results = await Promise.allSettled(orderCreationPromises);
     const successfulOrders = results.filter(result => result.status === 'fulfilled' && result.value).length;
     totalOrdersCreated += successfulOrders;
-    
+
     // Progress update every 10 days
     if ((currentDate.getDate() - startDate.getDate()) % 10 === 0) {
       const daysCompleted = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
       console.log(`📈 Day ${daysCompleted}/${CONFIG.DAYS_TO_SIMULATE}: ${totalOrdersCreated} orders created`);
     }
   }
-  
+
   if (skippedDeliveryOrders > 0) {
     console.log(`⚠️  Skipped ${skippedDeliveryOrders} delivery orders due to invalid delivery dates`);
   }
-  
+
   // Calculate average orders per day and per user
   const avgOrdersPerDay = (totalOrdersCreated / CONFIG.DAYS_TO_SIMULATE).toFixed(1);
   const avgOrdersPerUser = (totalOrdersCreated / users.length).toFixed(1);
-  
+
   console.log(`🎉 Created ${totalOrdersCreated} online orders over ${CONFIG.DAYS_TO_SIMULATE} days`);
   console.log(`📊 Average: ${avgOrdersPerDay} orders/day, ${avgOrdersPerUser} orders/user total`);
   console.log(`🎯 One order per user per day constraint: ENFORCED`);
@@ -1267,44 +1275,44 @@ async function createMockOrders(users, addresses, promoCodes) {
  */
 async function createMockPosOrders(walkInUser, storeAddress) {
   console.log('🏪 Creating mock POS orders...');
-  
+
   if (!walkInUser || !storeAddress) {
     throw new Error('Walk-in user and store address are required for POS orders');
   }
-  
+
   // Get available products
   const products = await prisma.product.findMany({
     where: { isActive: true, isDelete: false },
   });
-  
+
   if (products.length === 0) {
     throw new Error('No active products found. Please ensure products are created first.');
   }
-  
+
   const today = new Date();
   const startDate = new Date(today);
   startDate.setDate(today.getDate() - CONFIG.DAYS_TO_SIMULATE);
-  
+
   let totalPosOrdersCreated = 0;
-  
+
   // Generate POS orders for each day
   for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
     const currentDate = new Date(d);
     const orders = generatePosOrdersForDate(currentDate, products, walkInUser, storeAddress);
-    
+
     // Batch create POS orders for better performance
     const posOrderCreationPromises = orders.map(async (orderData) => {
       try {
         const { items, ...orderFields } = orderData;
-        
+
         // Generate unique order number
         orderFields.orderNumber = await generateUniquePosOrderNumber();
-        
+
         // Create order
         const order = await prisma.order.create({
           data: orderFields,
         });
-        
+
         // Create order items in batch
         const orderItemsData = items.map(item => ({
           orderId: order.id,
@@ -1312,29 +1320,29 @@ async function createMockPosOrders(walkInUser, storeAddress) {
           quantity: item.quantity,
           price: item.price,
         }));
-        
+
         await prisma.orderItem.createMany({
           data: orderItemsData,
         });
-        
+
         return true;
       } catch (error) {
         console.error(`❌ Failed to create POS order: ${error.message}`);
         return false;
       }
     });
-    
+
     const results = await Promise.allSettled(posOrderCreationPromises);
     const successfulOrders = results.filter(result => result.status === 'fulfilled' && result.value).length;
     totalPosOrdersCreated += successfulOrders;
-    
+
     // Progress update every 30 days
     if ((currentDate.getDate() - startDate.getDate()) % 30 === 0) {
       const daysCompleted = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
       console.log(`🏪 Day ${daysCompleted}/${CONFIG.DAYS_TO_SIMULATE}: ${totalPosOrdersCreated} POS orders created`);
     }
   }
-  
+
   console.log(`🎉 Created ${totalPosOrdersCreated} POS orders over ${CONFIG.DAYS_TO_SIMULATE} days`);
   return totalPosOrdersCreated;
 }
@@ -1344,45 +1352,45 @@ async function createMockPosOrders(walkInUser, storeAddress) {
 /**
  * Updates product stock levels to realistic values
  */
-async function updateProductStock() {
+async function updateMockProductStock() {
   console.log('📦 Updating product stock levels...');
-  
+
   const products = await prisma.product.findMany();
-  
+
   for (const product of products) {
     // Random stock between 5 and 200
     const stock = Math.floor(Math.random() * 195) + 5;
-    
+
     await prisma.product.update({
       where: { id: product.id },
       data: { stock },
     });
   }
-  
+
   console.log(`✅ Updated stock for ${products.length} products`);
 }
 
 // ===== DELIVERY VALIDATION HELPERS =====
 
 /**
- * Loads the delivery configuration from the database
+ * Loads delivery configuration from database (ESSENTIAL)
  * @returns {Promise<Object>} Delivery configuration object with city-day mappings
  */
 async function loadDeliveryConfig() {
   try {
     const config = await prisma.config.findFirst({
-      where: { 
+      where: {
         title: 'freeDelivery',
         isActive: true,
-        isDelete: false 
+        isDelete: false
       }
     });
-    
+
     if (!config?.value) {
       console.warn('⚠️  No delivery config found, using empty configuration');
       return {};
     }
-    
+
     return config.value;
   } catch (error) {
     console.warn('⚠️  Could not load delivery config:', error.message);
@@ -1401,17 +1409,17 @@ function validateDeliveryAvailability(address, deliveryDate, deliveryConfig) {
   if (!address?.city || !deliveryConfig || !deliveryDate) {
     return false;
   }
-  
+
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const dayName = daysOfWeek[deliveryDate.getDay()];
-  
+
   const areasForDay = deliveryConfig[dayName];
   if (!Array.isArray(areasForDay) || areasForDay.length === 0) {
     return false;
   }
-  
+
   // Check if the address city matches any of the delivery areas for this day
-  return areasForDay.some(area => 
+  return areasForDay.some(area =>
     area.toLowerCase().includes(address.city.toLowerCase()) ||
     address.city.toLowerCase().includes(area.toLowerCase())
   );
@@ -1429,7 +1437,7 @@ function findNextValidDeliveryDate(address, startDate, deliveryConfig, maxDaysTo
   for (let i = 1; i <= maxDaysToCheck; i++) {
     const testDate = new Date(startDate);
     testDate.setDate(testDate.getDate() + i);
-    
+
     if (validateDeliveryAvailability(address, testDate, deliveryConfig)) {
       return testDate;
     }
@@ -1446,92 +1454,130 @@ function findNextValidDeliveryDate(address, startDate, deliveryConfig, maxDaysTo
  */
 async function populateDatabase() {
   const startTime = Date.now();
-  
+
   try {
     console.log('🚀 Starting complete database setup with seed and mock data...');
-    
+
     // Validate configuration before starting
     validateConfiguration();
-    
-    console.log(`📊 Configuration: ${CONFIG.USERS_COUNT} users, ${CONFIG.DAYS_TO_SIMULATE} days of data`);
-    console.log(`📊 Orders per day: ${CONFIG.ORDERS_PER_DAY_MIN}-${CONFIG.ORDERS_PER_DAY_MAX} online (max 1 per user), ${CONFIG.POS_ORDERS_PER_DAY_MIN}-${CONFIG.POS_ORDERS_PER_DAY_MAX} POS`);
-    console.log(`📊 User order probability: ${(CONFIG.USER_ORDER_PROBABILITY * 100).toFixed(0)}% per day, Max addresses per user: ${CONFIG.MAX_ADDRESSES_PER_USER}`);
-    
-    // Step 0: Complete data wipe
-    console.log('\n🗑️  Step 1/8: Clearing existing data...');
-    await truncateAllData();
-    
-    // Step 1: Create seed data (categories, products, addresses, config)
-    console.log('\n📁 Step 2/8: Creating core data structure...');
-    const category = await createCategories();
-    await createProducts(category);
-    const { systemUser, pickupAddress } = await createSystemUserAndAddresses();
-    
-    // Step 2: Create promo codes (dynamic business data)
-    console.log('\n🎫 Step 3/8: Creating promotional codes...');
-    const promoCodes = await createMockPromoCodes();
-    
-    // Step 3: Create mock users and addresses
-    console.log('\n👥 Step 4/8: Creating mock users and addresses...');
-    const { users, addresses } = await createMockUsers();
-    
-    if (users.length === 0 || addresses.length === 0) {
-      throw new Error('Failed to create sufficient users or addresses for order generation');
+
+    console.log(`📊 Configuration: Generate Mock Data = ${CONFIG.GENERATE_MOCK_DATA}`);
+    if (CONFIG.GENERATE_MOCK_DATA) {
+      console.log(`📊 Mock Data Settings: ${CONFIG.USERS_COUNT} users, ${CONFIG.DAYS_TO_SIMULATE} days of data`);
+      console.log(`📊 Orders per day: ${CONFIG.ORDERS_PER_DAY_MIN}-${CONFIG.ORDERS_PER_DAY_MAX} online (max 1 per user), ${CONFIG.POS_ORDERS_PER_DAY_MIN}-${CONFIG.POS_ORDERS_PER_DAY_MAX} POS`);
+      console.log(`📊 User order probability: ${(CONFIG.USER_ORDER_PROBABILITY * 100).toFixed(0)}% per day, Max addresses per user: ${CONFIG.MAX_ADDRESSES_PER_USER}`);
     }
-    
-    // Step 4: Create online orders with realistic patterns
-    console.log('\n📦 Step 5/8: Creating online orders with delivery validation...');
-    const orderCount = await createMockOrders(users, addresses, promoCodes);
-    
-    // Step 5: Create walk-in customer for POS orders
-    console.log('\n🚶 Step 6/8: Setting up POS order infrastructure...');
+
+    // Step 0: Complete data wipe
+    console.log('\n🗑️  Step 1/3: Clearing existing data...');
+    await truncateAllData();
+
+    // ===== ESSENTIAL SYSTEM DATA =====
+    console.log('\n🏗️  Step 2/3: Creating essential system data...');
+    const { systemUser, pickupAddress } = await createSystemUserAndAddresses();
     const walkInUser = await createWalkInCustomer();
     const storeAddress = await createStoreAddress(walkInUser.id);
-    
-    // Step 6: Create POS orders
-    console.log('\n🏪 Step 7/8: Creating POS orders...');
-    const posOrderCount = await createMockPosOrders(walkInUser, storeAddress);
-    
-    // Step 7: Update product stock levels
-    console.log('\n📦 Step 8/8: Updating product stock levels...');
-    await updateProductStock();
-    
+    console.log('✅ Essential system data created');
+
+    // ===== MOCK TEST DATA (OPTIONAL) =====
+    let category, promoCodes, users, addresses, orderCount, posOrderCount;
+
+    if (CONFIG.GENERATE_MOCK_DATA) {
+      console.log('\n🎭 Step 3/3: Creating mock test data...');
+
+      // Create mock categories and products
+      console.log('   📁 Creating mock categories and products...');
+      category = await createMockCategories();
+      await createMockProducts(category);
+
+      // Create mock promo codes
+      console.log('   🎫 Creating mock promo codes...');
+      promoCodes = await createMockPromoCodes();
+
+      // Create mock users and addresses
+      console.log('   👥 Creating mock users and addresses...');
+      ({ users, addresses } = await createMockUsers());
+
+      if (users.length === 0 || addresses.length === 0) {
+        throw new Error('Failed to create sufficient users or addresses for order generation');
+      }
+
+      // Create online orders with realistic patterns
+      console.log('   📦 Creating mock online orders...');
+      orderCount = await createMockOrders(users, addresses, promoCodes);
+
+      // Create POS orders
+      console.log('   🏪 Creating mock POS orders...');
+      posOrderCount = await createMockPosOrders(walkInUser, storeAddress);
+
+      // Update product stock levels
+      console.log('   📦 Updating mock product stock levels...');
+      await updateMockProductStock();
+
+      console.log('✅ Mock test data created');
+    } else {
+      console.log('\n⏭️  Step 3/3: Skipping mock data generation (GENERATE_MOCK_DATA = false)');
+      promoCodes = [];
+      users = [];
+      addresses = [];
+      orderCount = 0;
+      posOrderCount = 0;
+    }
+
     const endTime = Date.now();
     const duration = ((endTime - startTime) / 1000).toFixed(2);
-    
+
     // Log database statistics
     await logDatabaseStatistics();
-    
+
     // Success summary
-    console.log('\n🎉 Complete database setup completed successfully!');
+    console.log('\n🎉 Database setup completed successfully!');
     console.log('📈 Summary:');
-    console.log(`   📁 Categories created: 1`);
-    console.log(`   📦 Products created: ${PRODUCT_DATA.length}`);
-    console.log(`   🏠 System addresses created: 1`);
-    console.log(`   🎫 Promo codes created: ${promoCodes.length}`);
-    console.log(`   👥 Mock users created: ${users.length}`);
-    console.log(`   🏠 User addresses created: ${addresses.length}`);
-    console.log(`   📦 Online orders created: ${orderCount}`);
-    console.log(`   🏪 POS orders created: ${posOrderCount}`);
-    console.log(`   📊 Total orders: ${orderCount + posOrderCount}`);
+    console.log(`   🏗️  Essential System Data:`);
+    console.log(`      👤 System user: created`);
+    console.log(`      🏠 System pickup address: created`);
+    console.log(`      � Walk-in customer: created`);
+    console.log(`      🏠 Store address: created`);
+
+    if (CONFIG.GENERATE_MOCK_DATA) {
+      console.log(`   🎭 Mock Test Data:`);
+      console.log(`      📁 Categories created: 1`);
+      console.log(`      📦 Products created: ${MOCK_PRODUCT_DATA.length}`);
+      console.log(`      🎫 Promo codes created: ${promoCodes.length}`);
+      console.log(`      👥 Mock users created: ${users.length}`);
+      console.log(`      🏠 User addresses created: ${addresses.length}`);
+      console.log(`      📦 Online orders created: ${orderCount}`);
+      console.log(`      🏪 POS orders created: ${posOrderCount}`);
+      console.log(`      📊 Total orders: ${orderCount + posOrderCount}`);
+    } else {
+      console.log(`   🎭 Mock Test Data: SKIPPED`);
+    }
+
     console.log(`   ⏱️  Duration: ${duration} seconds`);
-    console.log('\n💡 Database is now completely set up with both seed and mock data!');
-    console.log('💡 You can view the data in the admin dashboard or run tests!');
-    
+    console.log('\n💡 Database setup complete!');
+
+    if (CONFIG.GENERATE_MOCK_DATA) {
+      console.log('💡 Database populated with essential system data AND mock test data.');
+      console.log('💡 You can view the data in Prisma Studio or the admin dashboard.');
+    } else {
+      console.log('💡 Database populated with essential system data only (no mock data).');
+      console.log('💡 Set GENERATE_MOCK_DATA = true to include test users and orders.');
+    }
+
   } catch (error) {
     console.error('\n❌ Database population failed:');
     console.error(`   Error: ${error.message}`);
-    
+
     if (error.stack) {
       console.error(`   Stack: ${error.stack}`);
     }
-    
+
     console.error('\n🔧 Troubleshooting tips:');
     console.error('   1. Ensure database is running and accessible');
     console.error('   2. Check database connection string and credentials');
     console.error('   3. Verify Prisma schema is up to date (run: npx prisma generate)');
     console.error('   4. Check if all required dependencies are installed');
-    
+
     throw error;
   } finally {
     try {

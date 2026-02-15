@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { userStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import { useAdminApi } from "@/app/admin/use-admin-api";
-import { AdminOrderResponse, ORDER_STATUS_FILTERS, ORDER_STATUSES } from "@/types/order";
+import { AdminOrderResponse } from "@/types/order";
+import { ORDER_STATUS_FILTERS, ORDER_STATUSES } from "@/constants/order";
 import type { OrderStatus } from "@/generated/prisma";
 import { MoreVertical, Package, Phone, Truck, Clock, MapPin, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -146,7 +147,7 @@ export default function OrdersPage() {
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Orders</h1>
                 <p className="text-gray-600">Manage and track all customer orders in one place</p>
             </div>
-            
+
             <Card className="shadow-lg border-0 bg-white">
                 <CardHeader className="border-b border-gray-200 pb-6">
                     <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">Order Management</CardTitle>
@@ -165,9 +166,9 @@ export default function OrdersPage() {
                             <Tabs value={filters.status} onValueChange={setStatus} className="w-full md:w-auto">
                                 <TabsList className="flex w-full md:w-auto bg-gray-100 p-1 rounded-lg">
                                     {ORDER_STATUS_FILTERS.map(s => (
-                                        <TabsTrigger 
-                                            key={s} 
-                                            value={s} 
+                                        <TabsTrigger
+                                            key={s}
+                                            value={s}
                                             className="flex-1 md:flex-none cursor-pointer text-xs sm:text-sm font-medium px-3 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all"
                                         >
                                             {capitalize(s)}
@@ -176,7 +177,7 @@ export default function OrdersPage() {
                                 </TabsList>
                             </Tabs>
                         </div>
-                        
+
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex flex-col">
                                 <label className="text-sm font-medium mb-2">Order Type</label>
@@ -191,7 +192,7 @@ export default function OrdersPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            
+
                             <div className="flex flex-col">
                                 <label className="text-sm font-medium mb-2">Payment Method</label>
                                 <Select value={filters.paymentMethod} onValueChange={setPaymentMethod}>
@@ -206,7 +207,7 @@ export default function OrdersPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            
+
                             <div className="flex flex-col">
                                 <label className="text-sm font-medium mb-2">Sort By</label>
                                 <Select value={filters.sortBy} onValueChange={handleSort}>
@@ -224,7 +225,7 @@ export default function OrdersPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            
+
                             <div className="flex flex-col">
                                 <label className="text-sm font-medium mb-2">Order</label>
                                 <Select value={filters.sortOrder} onValueChange={() => handleSort(filters.sortBy)}>
@@ -237,7 +238,7 @@ export default function OrdersPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            
+
                             <DateFilter
                                 dateFilter={filters.dateFilter}
                                 onDateFilterChange={setDateFilter}
@@ -245,7 +246,7 @@ export default function OrdersPage() {
                             />
                         </div>
                     </div>
-                    
+
                     {/* Mobile Card View */}
                     <div className="block lg:hidden space-y-4">
                         {loading ? (
@@ -287,8 +288,8 @@ export default function OrdersPage() {
                                             </div>
                                         </div>
                                         <div className="text-right space-y-3">
-                                            <Select 
-                                                value={order.status} 
+                                            <Select
+                                                value={order.status}
                                                 onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}
                                                 disabled={updatingStatus === order.id}
                                             >
@@ -308,17 +309,16 @@ export default function OrdersPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-3">
                                             <div>
                                                 <span className="text-xs text-gray-500 uppercase font-medium tracking-wide">Type</span>
                                                 <div className="mt-1">
-                                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                                                        (order as any).orderType === 'delivery' 
-                                                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                    }`}>
+                                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${(order as any).orderType === 'delivery'
+                                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        }`}>
                                                         {(order as any).orderType === 'delivery' ? (
                                                             <Truck className="w-3 h-3 mr-1" />
                                                         ) : (
@@ -372,7 +372,7 @@ export default function OrdersPage() {
                             ))
                         )}
                     </div>
-                    
+
                     {/* Desktop Table View */}
                     <div className="hidden lg:block">
                         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
@@ -476,150 +476,148 @@ export default function OrdersPage() {
                                         </TableRow>
                                     ) : (
                                         orders.map((order, index) => (
-                                        <TableRow
-                                            key={order.id}
-                                            className={`cursor-pointer hover:bg-blue-50/50 transition-all duration-200 border-b border-gray-100 group ${
-                                                index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                                            }`}
-                                            onClick={(e) => {
-                                                const target = e.target as HTMLElement;
-                                                if (target.closest('[role="combobox"]') || target.closest('[role="option"]') || target.closest('.select-trigger') || target.closest('[data-radix-menu-trigger]')) {
-                                                    return;
-                                                }
-                                                router.push(`/admin/orders/${order.id}`);
-                                            }}
-                                        >
-                                            <TableCell className="py-4 px-4">
-                                                <div className="font-mono text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-200 whitespace-nowrap">
-                                                    #{order.orderNumber || "N/A"}
-                                                </div>
-                                            </TableCell>
-                                            
-                                            <TableCell className="py-4 px-4">
-                                                <div className="space-y-1">
-                                                    <div className="font-semibold text-gray-900 text-sm">
-                                                        {order.user.fullName}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600 flex items-center gap-1">
-                                                        <Phone className="w-3 h-3" />
-                                                        {formatPhoneNumber(order.user.phone)}
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            
-                                            <TableCell className="py-4 px-4">
-                                                <Select 
-                                                    value={order.status} 
-                                                    onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}
-                                                    disabled={updatingStatus === order.id}
-                                                >
-                                                    <SelectTrigger className="w-28 h-8 select-trigger border-gray-300 bg-white shadow-sm hover:border-gray-400 transition-colors text-xs">
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {ORDER_STATUSES.map(statusOption => (
-                                                            <SelectItem key={statusOption} value={statusOption} className="text-xs">
-                                                                {capitalize(statusOption)}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </TableCell>
-                                            
-                                            <TableCell className="py-4 px-4">
-                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
-                                                    (order as any).orderType === 'delivery' 
-                                                        ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                }`}>
-                                                    {(order as any).orderType === 'delivery' ? (
-                                                        <Truck className="w-3 h-3 mr-1" />
-                                                    ) : (
-                                                        <Package className="w-3 h-3 mr-1" />
-                                                    )}
-                                                    {capitalize((order as any).orderType || "N/A")}
-                                                </span>
-                                            </TableCell>
-                                            
-                                            <TableCell className="py-4 px-4 text-right">
-                                                <div className="space-y-1">
-                                                    <div className="font-bold text-sm text-gray-900 whitespace-nowrap">
-                                                        {formatCurrency(order.total)}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded text-center whitespace-nowrap">
-                                                        {capitalize((order as any).paymentMethod || "N/A")}
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            
-                                            <TableCell className="py-4 px-4">
-                                                <div className="space-y-1">
-                                                    <div className="text-xs font-medium text-gray-900 whitespace-nowrap">
-                                                        {formatDate(order.createdAt)}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
-                                                        <Clock className="w-3 h-3" />
-                                                        {moment(order.createdAt).format('HH:mm')}
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            
-                                            <TableCell className="py-4 px-4">
-                                                {order.deliveryDate ? (
-                                                    <div className="space-y-1">
-                                                        <div className="text-xs font-medium text-gray-900 bg-green-50 px-2 py-1 rounded border border-green-200 whitespace-nowrap">
-                                                            {formatDateOnly(order.deliveryDate)}
-                                                        </div>
-                                                        <div className="text-xs text-gray-600 flex items-center gap-1 truncate max-w-24">
-                                                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                                                            <span className="truncate">{order.address?.city || "N/A"}</span>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-xs text-gray-400 italic bg-gray-50 px-2 py-1 rounded whitespace-nowrap">
-                                                        Not scheduled
-                                                    </div>
-                                                )}
-                                            </TableCell>
-                                            
-                                            <TableCell
-                                                className="py-4 px-4 text-center"
-                                                onClick={e => e.stopPropagation()}
+                                            <TableRow
+                                                key={order.id}
+                                                className={`cursor-pointer hover:bg-blue-50/50 transition-all duration-200 border-b border-gray-100 group ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                                                    }`}
+                                                onClick={(e) => {
+                                                    const target = e.target as HTMLElement;
+                                                    if (target.closest('[role="combobox"]') || target.closest('[role="option"]') || target.closest('.select-trigger') || target.closest('[data-radix-menu-trigger]')) {
+                                                        return;
+                                                    }
+                                                    router.push(`/admin/orders/${order.id}`);
+                                                }}
                                             >
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button 
-                                                            size="sm" 
-                                                            variant="ghost" 
-                                                            className="h-8 w-8 p-0 hover:bg-gray-100 border border-gray-200 shadow-sm group-hover:border-gray-300 transition-all"
-                                                        >
-                                                            <MoreVertical className="h-3 w-3 text-gray-600" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-40 shadow-lg">
-                                                        <DropdownMenuItem onClick={() => router.push(`/admin/orders/${order.id}`)} className="cursor-pointer">
-                                                            <Package className="w-4 h-4 mr-2" />
-                                                            View Details
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => {/* TODO: implement edit */}} className="cursor-pointer">
-                                                            <Edit className="w-4 h-4 mr-2" />
-                                                            Edit Order
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => {/* TODO: implement delete */}} className="text-red-600 cursor-pointer">
-                                                            <Trash2 className="w-4 h-4 mr-2" />
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
+                                                <TableCell className="py-4 px-4">
+                                                    <div className="font-mono text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-200 whitespace-nowrap">
+                                                        #{order.orderNumber || "N/A"}
+                                                    </div>
+                                                </TableCell>
+
+                                                <TableCell className="py-4 px-4">
+                                                    <div className="space-y-1">
+                                                        <div className="font-semibold text-gray-900 text-sm">
+                                                            {order.user.fullName}
+                                                        </div>
+                                                        <div className="text-xs text-gray-600 flex items-center gap-1">
+                                                            <Phone className="w-3 h-3" />
+                                                            {formatPhoneNumber(order.user.phone)}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+
+                                                <TableCell className="py-4 px-4">
+                                                    <Select
+                                                        value={order.status}
+                                                        onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}
+                                                        disabled={updatingStatus === order.id}
+                                                    >
+                                                        <SelectTrigger className="w-28 h-8 select-trigger border-gray-300 bg-white shadow-sm hover:border-gray-400 transition-colors text-xs">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {ORDER_STATUSES.map(statusOption => (
+                                                                <SelectItem key={statusOption} value={statusOption} className="text-xs">
+                                                                    {capitalize(statusOption)}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </TableCell>
+
+                                                <TableCell className="py-4 px-4">
+                                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${(order as any).orderType === 'delivery'
+                                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        }`}>
+                                                        {(order as any).orderType === 'delivery' ? (
+                                                            <Truck className="w-3 h-3 mr-1" />
+                                                        ) : (
+                                                            <Package className="w-3 h-3 mr-1" />
+                                                        )}
+                                                        {capitalize((order as any).orderType || "N/A")}
+                                                    </span>
+                                                </TableCell>
+
+                                                <TableCell className="py-4 px-4 text-right">
+                                                    <div className="space-y-1">
+                                                        <div className="font-bold text-sm text-gray-900 whitespace-nowrap">
+                                                            {formatCurrency(order.total)}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded text-center whitespace-nowrap">
+                                                            {capitalize((order as any).paymentMethod || "N/A")}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+
+                                                <TableCell className="py-4 px-4">
+                                                    <div className="space-y-1">
+                                                        <div className="text-xs font-medium text-gray-900 whitespace-nowrap">
+                                                            {formatDate(order.createdAt)}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
+                                                            <Clock className="w-3 h-3" />
+                                                            {moment(order.createdAt).format('HH:mm')}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+
+                                                <TableCell className="py-4 px-4">
+                                                    {order.deliveryDate ? (
+                                                        <div className="space-y-1">
+                                                            <div className="text-xs font-medium text-gray-900 bg-green-50 px-2 py-1 rounded border border-green-200 whitespace-nowrap">
+                                                                {formatDateOnly(order.deliveryDate)}
+                                                            </div>
+                                                            <div className="text-xs text-gray-600 flex items-center gap-1 truncate max-w-24">
+                                                                <MapPin className="w-3 h-3 flex-shrink-0" />
+                                                                <span className="truncate">{order.address?.city || "N/A"}</span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs text-gray-400 italic bg-gray-50 px-2 py-1 rounded whitespace-nowrap">
+                                                            Not scheduled
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+
+                                                <TableCell
+                                                    className="py-4 px-4 text-center"
+                                                    onClick={e => e.stopPropagation()}
+                                                >
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-8 w-8 p-0 hover:bg-gray-100 border border-gray-200 shadow-sm group-hover:border-gray-300 transition-all"
+                                                            >
+                                                                <MoreVertical className="h-3 w-3 text-gray-600" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-40 shadow-lg">
+                                                            <DropdownMenuItem onClick={() => router.push(`/admin/orders/${order.id}`)} className="cursor-pointer">
+                                                                <Package className="w-4 h-4 mr-2" />
+                                                                View Details
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => {/* TODO: implement edit */ }} className="cursor-pointer">
+                                                                <Edit className="w-4 h-4 mr-2" />
+                                                                Edit Order
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => {/* TODO: implement delete */ }} className="text-red-600 cursor-pointer">
+                                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                                Delete
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
                                         ))
                                     )}
                                 </TableBody>
                             </Table>
                         </div>
                     </div>
-                    
+
                     {/* Enhanced Pagination */}
                     <EnhancedPagination
                         currentPage={pagination.currentPage}

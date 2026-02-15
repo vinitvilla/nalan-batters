@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
-import { AdminOrderResponse, ORDER_STATUSES } from "@/types/order";
+import { AdminOrderResponse } from "@/types/order";
+import { ORDER_STATUSES } from "@/constants/order";
 import type { OrderStatus } from "@/generated/prisma";
 import { Separator } from "@radix-ui/react-separator";
 import { Copy, Calendar, User, Phone, MapPin, Package, CreditCard, Clock, ArrowLeft, Edit3, CheckCircle2, AlertCircle, Truck } from "lucide-react";
@@ -64,7 +65,7 @@ export default function OrderDetailPage() {
                 const errorData = await res?.json?.();
                 throw new Error(errorData?.message || "Failed to update order status");
             }
-            
+
             // Update local order state with new status
             setOrder(prev => prev ? { ...prev, status: uppercaseStatus as OrderStatus } : null);
             setStatus(uppercaseStatus); // Update the local status state as well
@@ -123,9 +124,9 @@ export default function OrderDetailPage() {
                         The order you&apos;re looking for doesn&apos;t exist or has been removed from the system.
                     </p>
                 </div>
-                <Button 
-                    variant="outline" 
-                    onClick={() => router.back()} 
+                <Button
+                    variant="outline"
+                    onClick={() => router.back()}
                     className="cursor-pointer border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -143,24 +144,24 @@ export default function OrderDetailPage() {
                     {/* Top Section - Navigation and Actions */}
                     <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 bg-gray-50">
                         <div className="flex items-center gap-4">
-                            <Button 
-                                variant="ghost" 
+                            <Button
+                                variant="ghost"
                                 size="sm"
-                                onClick={() => router.back()} 
+                                onClick={() => router.back()}
                                 className="cursor-pointer hover:bg-white hover:text-black border border-transparent hover:border-gray-300 rounded-lg"
                             >
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Back to Orders
                             </Button>
-                            
+
                             <div className="h-6 border-l border-gray-300"></div>
-                            
+
                             <Badge className={`${getStatusColor(order.status)} border px-3 py-1.5 font-semibold text-sm flex items-center gap-2`}>
                                 {getStatusIcon(order.status)}
                                 {capitalize(order.status)}
                             </Badge>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
                             <Select value={status} onValueChange={handleStatusChange}>
                                 <SelectTrigger className="w-40 cursor-pointer border-gray-300 focus:border-black focus:ring-gray-100 bg-white text-sm">
@@ -177,10 +178,10 @@ export default function OrderDetailPage() {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            
-                            <Button 
-                                onClick={handleSave} 
-                                disabled={saving || status === order.status} 
+
+                            <Button
+                                onClick={handleSave}
+                                disabled={saving || status === order.status}
                                 className="cursor-pointer bg-black hover:bg-gray-800 text-white px-4 shadow-md hover:shadow-lg transition-all duration-200"
                                 size="sm"
                             >
@@ -198,7 +199,7 @@ export default function OrderDetailPage() {
                             </Button>
                         </div>
                     </div>
-                    
+
                     {/* Main Header Content */}
                     <div className="p-4 lg:p-6">
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -222,13 +223,13 @@ export default function OrderDetailPage() {
                                         Copy {order.orderNumber ? 'Number' : 'ID'}
                                     </Button>
                                 </div>
-                                
+
                                 {order.orderNumber && (
                                     <div className="text-sm text-gray-600">
                                         <span className="font-medium">Order ID:</span> {order.id}
                                     </div>
                                 )}
-                                
+
                                 <div className="flex flex-wrap items-center gap-4 lg:gap-6 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">
                                         <Clock className="w-4 h-4 text-gray-400" />
@@ -236,15 +237,15 @@ export default function OrderDetailPage() {
                                             {moment(order.createdAt).format('MMM D, YYYY [at] h:mm A')}
                                         </span>
                                     </div>
-                                    
+
                                     {order.deliveryDate && (
                                         <div className="flex items-center gap-2">
                                             <Calendar className="w-4 h-4 text-gray-500" />                            <span className="font-medium">
-                                Delivery: {moment(order.deliveryDate).format('MMM D, YYYY')}
-                            </span>
+                                                Delivery: {moment(order.deliveryDate).format('MMM D, YYYY')}
+                                            </span>
                                         </div>
                                     )}
-                                    
+
                                     <div className="flex items-center gap-2">
                                         <Package className="w-4 h-4 text-gray-500" />
                                         <span className="font-medium">
@@ -253,14 +254,14 @@ export default function OrderDetailPage() {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {/* Quick Stats */}
                             <div className="flex flex-col lg:items-end gap-2">
                                 <div className="text-right">
                                     <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Order Total</p>
                                     <p className="text-2xl font-bold text-black">{formatCurrency(order.total)}</p>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-2 text-xs text-gray-500">
                                     <CreditCard className="w-3 h-3" />
                                     <span>Payment: Cash on Delivery</span>
@@ -275,22 +276,22 @@ export default function OrderDetailPage() {
                     <Tabs defaultValue="overview" className="w-full">
                         <div className="border-b border-gray-200 px-6 lg:px-8 py-6">
                             <TabsList className="grid w-full grid-cols-3 bg-gray-100 rounded-xl p-1">
-                                <TabsTrigger 
-                                    value="overview" 
+                                <TabsTrigger
+                                    value="overview"
                                     className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium"
                                 >
                                     <Package className="w-4 h-4 mr-2" />
                                     Overview
                                 </TabsTrigger>
-                                <TabsTrigger 
-                                    value="customer" 
+                                <TabsTrigger
+                                    value="customer"
                                     className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium"
                                 >
                                     <User className="w-4 h-4 mr-2" />
                                     Customer
                                 </TabsTrigger>
-                                <TabsTrigger 
-                                    value="billing" 
+                                <TabsTrigger
+                                    value="billing"
                                     className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium"
                                 >
                                     <CreditCard className="w-4 h-4 mr-2" />
@@ -321,11 +322,10 @@ export default function OrderDetailPage() {
                                                 <CardContent className="p-0">
                                                     <div className="overflow-hidden">
                                                         {order.items.map((item, index) => (
-                                                            <div 
+                                                            <div
                                                                 key={`${item.productId}-${index}`}
-                                                                className={`flex items-center justify-between p-6 hover:bg-gray-50 transition-colors group ${
-                                                                    index !== order.items.length - 1 ? 'border-b border-gray-100' : ''
-                                                                }`}
+                                                                className={`flex items-center justify-between p-6 hover:bg-gray-50 transition-colors group ${index !== order.items.length - 1 ? 'border-b border-gray-100' : ''
+                                                                    }`}
                                                             >
                                                                 <div className="flex items-center gap-4 flex-1">
                                                                     <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:shadow-md transition-shadow">
@@ -340,7 +340,7 @@ export default function OrderDetailPage() {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                
+
                                                                 <div className="flex items-center gap-6">
                                                                     <div className="text-center">
                                                                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Quantity</p>
@@ -348,7 +348,7 @@ export default function OrderDetailPage() {
                                                                             {item.quantity}
                                                                         </Badge>
                                                                     </div>
-                                                                    
+
                                                                     <div className="text-right">
                                                                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Subtotal</p>
                                                                         <p className="font-bold text-xl text-gray-900 mt-1 group-hover:text-black transition-colors">
@@ -380,22 +380,22 @@ export default function OrderDetailPage() {
                                                             <span className="text-gray-600 font-medium">Items Subtotal</span>
                                                             <span className="font-semibold">{formatCurrency(order.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0))}</span>
                                                         </div>
-                                                        
+
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-gray-600 font-medium">Tax</span>
                                                             <span className="font-semibold">{formatCurrency(order.tax || 0)}</span>
                                                         </div>
-                                                        
+
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-gray-600 font-medium">Convenience Charges</span>
                                                             <span className="font-semibold">{formatCurrency(order.convenienceCharges || 0)}</span>
                                                         </div>
-                                                        
+
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-gray-600 font-medium">Delivery Charges</span>
                                                             <span className="font-semibold">{formatCurrency(order.deliveryCharges || 0)}</span>
                                                         </div>
-                                                        
+
                                                         {((order.discount || 0) > 0 || order.promoCode) && (
                                                             <div className="space-y-2">
                                                                 {(order.discount || 0) > 0 && !order.promoCode && (
@@ -404,7 +404,7 @@ export default function OrderDetailPage() {
                                                                         <span className="font-semibold text-gray-600">-{formatCurrency(order.discount || 0)}</span>
                                                                     </div>
                                                                 )}
-                                                                
+
                                                                 {order.promoCode && (
                                                                     <div className="flex justify-between items-center">
                                                                         <div className="flex flex-col">
@@ -416,7 +416,7 @@ export default function OrderDetailPage() {
                                                                         <span className="font-semibold text-gray-600">-{formatCurrency(order.promoCode.discount || order.discount || 0)}</span>
                                                                     </div>
                                                                 )}
-                                                                
+
                                                                 {(order.discount || 0) > 0 && order.promoCode && (order.discount !== order.promoCode.discount) && (
                                                                     <div className="flex justify-between items-center">
                                                                         <span className="text-gray-600 font-medium">Additional Discount</span>
@@ -426,16 +426,16 @@ export default function OrderDetailPage() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    
+
                                                     <Separator className="my-4 bg-gray-200" />
-                                                    
+
                                                     {/* Total with Clean Pricing Badge */}
                                                     <div className="space-y-3">
                                                         <div className="flex justify-between items-center pt-2">
                                                             <span className="text-lg font-bold text-gray-900">Total</span>
                                                             <span className="text-2xl font-bold text-black">{formatCurrency(order.total)}</span>
                                                         </div>
-                                                        
+
                                                         {/* Clean Pricing Indicator */}
                                                         {(order.tax || 0) === 0 && (order.convenienceCharges || 0) === 0 && (order.deliveryCharges || 0) === 0 && (order.discount || 0) === 0 && !order.promoCode && (
                                                             <div className="flex items-center justify-center">
@@ -474,7 +474,7 @@ export default function OrderDetailPage() {
                                                             <p className="text-xl font-bold text-gray-900">{order.user?.fullName || "N/A"}</p>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div className="flex items-start gap-4">
                                                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                                                             <Phone className="w-5 h-5 text-gray-700" />
@@ -485,7 +485,7 @@ export default function OrderDetailPage() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="space-y-6">
                                                     <div className="flex items-start gap-4">
                                                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
@@ -496,7 +496,7 @@ export default function OrderDetailPage() {
                                                             <p className="text-lg leading-relaxed text-gray-900">{formatAddress(order.address)}</p>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div className="flex items-start gap-4">
                                                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                                                             <Calendar className="w-5 h-5 text-gray-700" />
@@ -536,22 +536,22 @@ export default function OrderDetailPage() {
                                                         <span className="text-gray-700 font-medium">Items Subtotal</span>
                                                         <span className="font-semibold text-lg">{formatCurrency(order.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0))}</span>
                                                     </div>
-                                                    
+
                                                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                                                         <span className="text-gray-700 font-medium">Tax & Fees</span>
                                                         <span className="font-semibold text-lg">{formatCurrency(order.tax || 0)}</span>
                                                     </div>
-                                                    
+
                                                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                                                         <span className="text-gray-700 font-medium">Convenience Charges</span>
                                                         <span className="font-semibold text-lg">{formatCurrency(order.convenienceCharges || 0)}</span>
                                                     </div>
-                                                    
+
                                                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                                                         <span className="text-gray-700 font-medium">Delivery Charges</span>
                                                         <span className="font-semibold text-lg">{formatCurrency(order.deliveryCharges || 0)}</span>
                                                     </div>
-                                                    
+
                                                     {((order.discount || 0) > 0 || order.promoCode) && (
                                                         <div className="space-y-3">
                                                             {(order.discount || 0) > 0 && !order.promoCode && (
@@ -560,7 +560,7 @@ export default function OrderDetailPage() {
                                                                     <span className="font-semibold text-lg text-gray-600">-{formatCurrency(order.discount || 0)}</span>
                                                                 </div>
                                                             )}
-                                                            
+
                                                             {order.promoCode && (
                                                                 <div className="flex justify-between items-center py-3 border-b border-gray-100">
                                                                     <div className="space-y-1">
@@ -572,7 +572,7 @@ export default function OrderDetailPage() {
                                                                     <span className="font-semibold text-lg text-gray-600">-{formatCurrency(order.promoCode.discount || order.discount || 0)}</span>
                                                                 </div>
                                                             )}
-                                                            
+
                                                             {(order.discount || 0) > 0 && order.promoCode && (order.discount !== order.promoCode.discount) && (
                                                                 <div className="flex justify-between items-center py-3 border-b border-gray-100">
                                                                     <span className="text-gray-700 font-medium">Additional Discount</span>
@@ -582,14 +582,14 @@ export default function OrderDetailPage() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                
+
                                                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-xl font-bold text-gray-900">Total Amount</span>
                                                         <span className="text-3xl font-bold text-black">{formatCurrency(order.total)}</span>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="bg-gray-50 rounded-xl p-4 text-center">
                                                     <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                                                         <Clock className="w-4 h-4" />

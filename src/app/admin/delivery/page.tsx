@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
-import { AdminOrderResponse, ORDER_STATUSES } from "@/types/order";
+import { AdminOrderResponse } from "@/types/order";
+import { ORDER_STATUSES } from "@/constants/order";
 import type { OrderStatus } from "@/generated/prisma";
 import { StatusBadge } from "@/components/shared";
 import {
