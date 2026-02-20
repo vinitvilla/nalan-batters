@@ -1,36 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/generated/prisma';
+import { Prisma } from '@/generated/prisma';
+import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { formatPhoneNumber, getPhoneVariations } from '@/lib/utils/phoneUtils';
 import type { PosSaleRequest, PosSaleResponse } from '@/types';
 
-const prisma = new PrismaClient();
+const MAX_ORDER_NUMBER_ATTEMPTS = 20;
 
-// Generate a unique 5-character alphanumeric order number
-async function generateOrderNumber(): Promise<string> {
+async function generateOrderNumber(tx: Prisma.TransactionClient): Promise<string> {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let orderNumber: string;
-  let attempts = 0;
-  const maxAttempts = 10;
 
-  do {
-    orderNumber = '';
+  for (let attempt = 0; attempt < MAX_ORDER_NUMBER_ATTEMPTS; attempt++) {
+    let orderNumber = '';
     for (let i = 0; i < 5; i++) {
       orderNumber += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    
-    // Check if this order number already exists
-    const existingOrder = await prisma.order.findUnique({
+
+    const existingOrder = await tx.order.findUnique({
       where: { orderNumber }
     });
-    
+
     if (!existingOrder) {
       return orderNumber;
     }
-    
-    attempts++;
-  } while (attempts < maxAttempts);
-  
+  }
+
   throw new Error('Unable to generate unique order number');
 }
 
@@ -139,52 +133,46 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Generate unique order number
-    const orderNumber = await generateOrderNumber();
+    // Atomic transaction: create order + decrement stock
+    const order = await prisma.$transaction(async (tx) => {
+      const orderNumber = await generateOrderNumber(tx);
 
-    // Create the order
-    const order = await prisma.order.create({
-      data: {
-        orderNumber: orderNumber,
-        userId: userId,
-        addressId: storeAddress.id,
-        orderType: 'POS',
-        paymentMethod: saleData.paymentMethod.toUpperCase() as 'CASH' | 'CARD',
-        total: saleData.total,
-        tax: saleData.tax,
-        discount: saleData.discount > 0 ? saleData.discount : null,
-        status: 'DELIVERED', // POS sales are immediately confirmed
-        convenienceCharges: 0, // No convenience charges for in-store pickup
-        deliveryCharges: 0,    // No delivery charges for in-store pickup
-        items: {
-          create: saleData.items.map(item => ({
-            productId: item.id,
-            quantity: item.quantity,
-            price: item.price
-          }))
-        }
-      },
-      include: {
-        items: {
-          include: {
-            product: true
+      const created = await tx.order.create({
+        data: {
+          orderNumber,
+          userId,
+          addressId: storeAddress.id,
+          orderType: 'POS',
+          paymentMethod: saleData.paymentMethod.toUpperCase() as 'CASH' | 'CARD',
+          total: saleData.total,
+          tax: saleData.tax,
+          discount: saleData.discount > 0 ? saleData.discount : null,
+          status: 'DELIVERED',
+          convenienceCharges: 0,
+          deliveryCharges: 0,
+          items: {
+            create: saleData.items.map(item => ({
+              productId: item.id,
+              quantity: item.quantity,
+              price: item.price
+            }))
           }
         },
-        user: true
-      }
-    });
-
-    // Update product stock
-    for (const item of saleData.items) {
-      await prisma.product.update({
-        where: { id: item.id },
-        data: {
-          stock: {
-            decrement: item.quantity
-          }
+        include: {
+          items: { include: { product: true } },
+          user: true
         }
       });
-    }
+
+      for (const item of saleData.items) {
+        await tx.product.update({
+          where: { id: item.id },
+          data: { stock: { decrement: item.quantity } }
+        });
+      }
+
+      return created;
+    });
 
     return NextResponse.json<PosSaleResponse>({
       success: true,

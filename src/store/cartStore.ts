@@ -22,6 +22,17 @@ interface CartState {
   syncCartToDB: () => Promise<void>;
 }
 
+let syncTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function debouncedSync(syncFn: () => Promise<void>) {
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(() => {
+    syncFn().catch((err) => {
+      console.error('Cart sync failed:', err);
+    });
+  }, 500);
+}
+
 export const useCartStore = create(
   devtools<CartState>((set, get) => ({
     items: [],
@@ -29,11 +40,6 @@ export const useCartStore = create(
     addToCart: (item) => {
       const userId = userStore.getState().id;
       if (!item || !item.id || item.quantity <= 0) return;
-      // Check if item already exists in cart
-      if (item.quantity <= 0) {
-        get().removeFromCart(item.id);
-        return;
-      }
       const items = get().items;
       const existing = items.find(i => i.id === item.id);
       if (existing) {
@@ -45,19 +51,17 @@ export const useCartStore = create(
       } else {
         set({ items: [...items, item] });
       }
-      if (userId) {
-        get().syncCartToDB();
-      }
+      if (userId) debouncedSync(() => get().syncCartToDB());
     },
     removeFromCart: (id) => {
       const userId = userStore.getState().id;
       set({ items: get().items.filter(i => i.id !== id) });
-      if (userId) get().syncCartToDB();
+      if (userId) debouncedSync(() => get().syncCartToDB());
     },
     clearCart: () => {
       const userId = userStore.getState().id;
       set({ items: [] });
-      if (userId) get().syncCartToDB();
+      if (userId) debouncedSync(() => get().syncCartToDB());
     },
     updateQuantity: (id, quantity) => {
       const userId = userStore.getState().id;
@@ -70,7 +74,7 @@ export const useCartStore = create(
           i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i
         ),
       });
-      if (userId) get().syncCartToDB();
+      if (userId) debouncedSync(() => get().syncCartToDB());
     },
     isCartOpen: false,
     openCart: () => set({ isCartOpen: true }),
@@ -79,7 +83,7 @@ export const useCartStore = create(
       const userId = userStore.getState().id;
       if (!userId) return;
       const items = get().items;
-      await fetch('/api/public/cart', {
+      const res = await fetch('/api/public/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,6 +91,9 @@ export const useCartStore = create(
           items: items.map(i => ({ productId: i.id, quantity: i.quantity })),
         }),
       });
+      if (!res.ok) {
+        throw new Error(`Cart sync failed: ${res.status}`);
+      }
     },
   }), { name: "CartStore" })
 );

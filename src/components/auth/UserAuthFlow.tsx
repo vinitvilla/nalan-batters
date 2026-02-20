@@ -5,18 +5,14 @@ import { UserRegisterStep } from "./UserRegisterStep";
 import { UserResponse } from "@/types/user";
 import { userStore } from "@/store/userStore";
 import { ConfirmationResult } from "firebase/auth";
-import { useCartStore } from "@/store/cartStore";
 
 export interface UserAuthFlowProps {
   onSuccess: (user: UserResponse) => void;
   initialPhone?: string;
 }
 
-export function UserAuthFlow({ onSuccess, initialPhone = "" }: UserAuthFlowProps) {
+export function UserAuthFlow({ onSuccess }: UserAuthFlowProps) {
   const [step, setStep] = useState<"phone" | "otp" | "register">("phone");
-  const phone = userStore((s) => s.phone);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userExists, setUserExists] = useState<boolean | null>(null);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Step 1: Enter phone, check DB, send OTP if needed
@@ -36,13 +32,9 @@ export function UserAuthFlow({ onSuccess, initialPhone = "" }: UserAuthFlowProps
       <UserOtpStep
         confirmationResult={confirmationResult}
         onUserFound={(user: UserResponse) => {
-          setUserId(user.id);
-          setUserExists(true);
-          // fetchAndMergeCart removed as per new cart logic
           onSuccess(user);
         }}
-        onUserNotFound={ () => {
-          setUserExists(false);
+        onUserNotFound={() => {
           setStep("register");
         }}
         onBack={() => setStep("phone")}

@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/generated/prisma';
-import moment from 'moment';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/requireAdmin';
+import { startOfMonth } from 'date-fns';
 
 export async function GET(request: NextRequest) {
+  const adminCheck = await requireAdmin(request);
+  if (adminCheck instanceof NextResponse) return adminCheck;
+
   try {
-    // In a real implementation, you'd verify the user has billing permissions here
-    
+    const monthStart = startOfMonth(new Date());
+
     // Get billing metrics
     const totalOrders = await prisma.order.count({
       where: { isDelete: false }
     });
 
     const totalRevenue = await prisma.order.aggregate({
-      where: { 
+      where: {
         isDelete: false,
         status: { not: 'CANCELLED' }
       },
@@ -25,9 +27,7 @@ export async function GET(request: NextRequest) {
       where: {
         isDelete: false,
         status: { not: 'CANCELLED' },
-        createdAt: {
-          gte: moment().startOf('month').toDate()
-        }
+        createdAt: { gte: monthStart }
       },
       _sum: { total: true }
     });
@@ -44,9 +44,7 @@ export async function GET(request: NextRequest) {
       where: {
         isDelete: false,
         status: 'CANCELLED',
-        createdAt: {
-          gte: moment().startOf('month').toDate()
-        }
+        createdAt: { gte: monthStart }
       },
       _sum: { total: true }
     });
@@ -75,6 +73,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const adminCheck = await requireAdmin(request);
+  if (adminCheck instanceof NextResponse) return adminCheck;
+
   try {
     const body = await request.json();
     const { action, orderId, amount, reason } = body;

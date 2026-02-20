@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/requireAdmin";
-
-const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   try {
@@ -242,45 +240,28 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    // 14. Product Category Sales
-    const categorySales = await prisma.orderItem.groupBy({
-      by: ['productId'],
+    // 14. Product Category Sales (single query instead of N+1)
+    const categorySalesRaw = await prisma.orderItem.findMany({
       where: {
         order: {
           isDelete: false,
           status: 'DELIVERED',
-          createdAt: {
-            gte: startOfMonth
-          }
+          createdAt: { gte: startOfMonth }
         }
       },
-      _sum: {
-        quantity: true
+      select: {
+        quantity: true,
+        product: {
+          select: {
+            category: { select: { name: true } }
+          }
+        }
       }
     });
 
-    const categoryData = await Promise.all(
-      categorySales.map(async (item) => {
-        const product = await prisma.product.findUnique({
-          where: { id: item.productId },
-          include: {
-            category: true
-          }
-        });
-        return {
-          categoryName: product?.category.name || 'Unknown',
-          quantity: item._sum.quantity || 0
-        };
-      })
-    );
-
-    // Aggregate by category
-    const categoryAggregated = categoryData.reduce((acc, item) => {
-      if (acc[item.categoryName]) {
-        acc[item.categoryName] += item.quantity;
-      } else {
-        acc[item.categoryName] = item.quantity;
-      }
+    const categoryAggregated = categorySalesRaw.reduce((acc, item) => {
+      const categoryName = item.product.category.name || 'Unknown';
+      acc[categoryName] = (acc[categoryName] || 0) + item.quantity;
       return acc;
     }, {} as Record<string, number>);
 
@@ -348,9 +329,7 @@ export async function GET(req: NextRequest) {
     console.error('Dashboard API Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch dashboard data' },
-      { status: 401 }
+      { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

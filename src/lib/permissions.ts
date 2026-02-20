@@ -31,6 +31,10 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'users',
     'promo-codes'
   ],
+  [USER_ROLE.DRIVER]: [
+    'orders',
+    'delivery'
+  ],
   [USER_ROLE.USER]: []
 };
 

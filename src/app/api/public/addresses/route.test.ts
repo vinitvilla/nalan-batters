@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Mock dependencies
+vi.mock('@/lib/auth-guard', () => ({
+  requireAuth: vi.fn().mockResolvedValue({ uid: 'user1', phone_number: '+1234567890' }),
+}))
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     address: {

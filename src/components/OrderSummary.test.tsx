@@ -20,6 +20,30 @@ vi.mock('@/store/orderStore');
 vi.mock('@/store/configStore');
 vi.mock('@/store/userStore');
 
+// Mock hooks
+const mockPlaceOrder = vi.fn().mockResolvedValue(true);
+const mockGetOrderValidationMessage = vi.fn().mockImplementation(
+  (_items: unknown[], address: unknown) => address ? null : 'Please select a delivery address'
+);
+vi.mock('@/hooks/useOrderPlacement', () => ({
+  useOrderPlacement: () => ({
+    placing: false,
+    orderError: '',
+    getOrderValidationMessage: mockGetOrderValidationMessage,
+    placeOrder: mockPlaceOrder,
+  }),
+}));
+
+vi.mock('@/hooks/usePromoCode', () => ({
+  usePromoCode: () => ({
+    promo: { code: '', applied: false },
+    applyingPromo: false,
+    promoError: '',
+    applyPromo: vi.fn(),
+    clearPromo: vi.fn(),
+  }),
+}));
+
 // Mock fetch
 global.fetch = vi.fn();
 
@@ -161,11 +185,7 @@ describe('OrderSummary', () => {
     fireEvent.click(placeOrderBtn);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/public/orders', expect.objectContaining({
-        method: 'POST',
-        body: expect.stringContaining('"orderType":"ONLINE"')
-      }));
-      expect(mockPush).toHaveBeenCalledWith('/order-success?orderNumber=ORD-123');
+      expect(mockPlaceOrder).toHaveBeenCalled();
     });
   });
 });

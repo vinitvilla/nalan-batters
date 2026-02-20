@@ -2,17 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Decode the route data from the base64 encoded ID
     const routeData = JSON.parse(atob(id));
-    
-    return NextResponse.json({ 
-      success: true, 
-      route: routeData 
+
+    // Validate expected structure to prevent arbitrary data reflection
+    if (!routeData || typeof routeData !== 'object' || !routeData.origin || !routeData.destination) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid route data structure' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      route: routeData
     });
   } catch (error) {
     console.error('Error decoding route:', error);

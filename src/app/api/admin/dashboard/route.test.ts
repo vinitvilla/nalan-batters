@@ -14,18 +14,13 @@ const { mockPrisma } = vi.hoisted(() => {
       user: { count: vi.fn() },
       order: { count: vi.fn(), aggregate: vi.fn(), groupBy: vi.fn(), findMany: vi.fn() },
       product: { count: vi.fn(), findMany: vi.fn(), findUnique: vi.fn() },
-      orderItem: { groupBy: vi.fn() },
-      $disconnect: vi.fn(),
+      orderItem: { groupBy: vi.fn(), findMany: vi.fn() },
     }
   }
 })
 
-vi.mock('@/generated/prisma', () => ({
-  PrismaClient: class {
-    constructor() {
-      return mockPrisma
-    }
-  },
+vi.mock('@/lib/prisma', () => ({
+  prisma: mockPrisma,
 }))
 
 describe('/api/admin/dashboard', () => {
@@ -44,7 +39,9 @@ describe('/api/admin/dashboard', () => {
       mockPrisma.product.count.mockResolvedValue(5)
       mockPrisma.order.groupBy.mockResolvedValue([])
       mockPrisma.orderItem.groupBy.mockResolvedValue([])
+      mockPrisma.orderItem.findMany.mockResolvedValue([])
       mockPrisma.order.findMany.mockResolvedValue([])
+      mockPrisma.product.findMany.mockResolvedValue([])
 
       const req = new Request('http://localhost/api/admin/dashboard')
       const res = await GET(req as any)

@@ -4,6 +4,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Mock dependencies
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue(null),
+}))
+
+vi.mock('@/lib/auth-guard', () => ({
+  requireAuth: vi.fn().mockResolvedValue({ uid: 'user1', phone_number: '+1234567890' }),
+}))
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     cart: {
@@ -39,16 +47,18 @@ describe('/api/public/cart', () => {
   })
 
   describe('POST', () => {
+    const testProductId = '550e8400-e29b-41d4-a716-446655440000'
+
     it('should upsert cart', async () => {
-      const mockCart = { id: '1', items: [{ productId: 'p1', quantity: 1 }] }
+      const mockCart = { id: '1', items: [{ productId: testProductId, quantity: 1 }] }
       vi.mocked(prisma.cart.upsert).mockResolvedValue(mockCart as any)
-      vi.mocked(prisma.cart.findUnique).mockResolvedValue(null) // No existing cart for merge
+      vi.mocked(prisma.cart.findUnique).mockResolvedValue(null)
 
       const req = new Request('http://localhost/api/public/cart', {
         method: 'POST',
         body: JSON.stringify({
           userId: 'user1',
-          items: [{ productId: 'p1', quantity: 1 }],
+          items: [{ productId: testProductId, quantity: 1 }],
         }),
       })
       const res = await POST(req as any)
@@ -59,8 +69,8 @@ describe('/api/public/cart', () => {
     })
 
     it('should merge carts if merge flag is true', async () => {
-      const existingCart = { items: [{ productId: 'p1', quantity: 1 }] }
-      const mockMergedCart = { id: '1', items: [{ productId: 'p1', quantity: 2 }] }
+      const existingCart = { items: [{ productId: testProductId, quantity: 1 }] }
+      const mockMergedCart = { id: '1', items: [{ productId: testProductId, quantity: 2 }] }
 
       vi.mocked(prisma.cart.findUnique).mockResolvedValue(existingCart as any)
       vi.mocked(prisma.cart.upsert).mockResolvedValue(mockMergedCart as any)
@@ -69,7 +79,7 @@ describe('/api/public/cart', () => {
         method: 'POST',
         body: JSON.stringify({
           userId: 'user1',
-          items: [{ productId: 'p1', quantity: 1 }],
+          items: [{ productId: testProductId, quantity: 1 }],
           merge: true
         }),
       })
