@@ -517,7 +517,7 @@ export default function DashboardPage() {
                         {dashboardData.charts.hourlyOrders.length > 0 && (
                             <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-semibold text-gray-800">Today's Hourly Orders</h2>
+                                    <h2 className="text-lg font-semibold text-gray-800">Today&apos;s Hourly Orders</h2>
                                     <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
                                 </div>
                                 <div className="h-64 sm:h-80">

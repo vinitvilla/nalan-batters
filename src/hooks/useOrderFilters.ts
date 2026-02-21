@@ -61,7 +61,7 @@ export function useOrderFilters() {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [debouncedSearch, status, orderType, paymentMethod, dateFilter, sortBy, sortOrder]);
+  }, [currentPage, debouncedSearch, status, orderType, paymentMethod, dateFilter, sortBy, sortOrder]);
 
   const handleSort = (column: string) => {
     if (sortBy === column) {

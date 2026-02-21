@@ -14,7 +14,7 @@ export function OrderTypeSelector() {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Order Type</h2>
-          <p className="text-gray-600">Choose how you'd like to receive your order</p>
+          <p className="text-gray-600">Choose how you&apos;d like to receive your order</p>
         </div>
       </div>
 

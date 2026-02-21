@@ -38,7 +38,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   // Prepare update data
-  const updateData: any = {};
+  const updateData: { fullName?: string; phone?: string } = {};
   if (fullName) updateData.fullName = fullName;
   if (phone && phone !== currentUser.phone) {
     // Check if new phone number is already in use

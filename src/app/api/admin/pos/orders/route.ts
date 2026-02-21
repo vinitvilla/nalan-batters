@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/generated/prisma';
+import { PrismaClient, Prisma, OrderStatus, PaymentMethod } from '@/generated/prisma';
 import { requireAdmin } from '@/lib/requireAdmin';
 
 const prisma = new PrismaClient();
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause for POS orders specifically
-    const whereClause: any = {
+    const whereClause: Prisma.OrderWhereInput = {
       orderType: 'POS', // Filter by order type POS (Point of Sale)
       isDelete: false
     };
@@ -35,12 +35,12 @@ export async function GET(request: NextRequest) {
 
     // Add status filter
     if (status && status !== 'all') {
-      whereClause.status = status;
+      whereClause.status = status as OrderStatus;
     }
 
     // Add payment method filter
     if (paymentMethod && paymentMethod !== 'all') {
-      whereClause.paymentMethod = paymentMethod;
+      whereClause.paymentMethod = paymentMethod as PaymentMethod;
     }
 
     // Get total count for pagination

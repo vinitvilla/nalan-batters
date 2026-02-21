@@ -350,6 +350,7 @@ function PriceSummary({
   deliveryCharge: number;
   discount: number;
   total: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: Record<string, any>;
   originalTax: number;
   originalConvenienceCharge: number;

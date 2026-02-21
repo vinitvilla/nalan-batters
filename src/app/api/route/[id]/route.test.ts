@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { GET } from './route'
-import { NextResponse } from 'next/server'
 
 describe('/api/route/[id]', () => {
   beforeEach(() => {

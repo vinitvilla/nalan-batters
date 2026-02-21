@@ -24,7 +24,7 @@ export default function SettingsPageClient() {
   const user = userStore((s) => s.user);
   const fullName = userStore((s) => s.fullName);
   const phone = userStore((s) => s.phone);
-  const { userRole, isAdmin, isManager } = useUserRole();
+  const { isAdmin, isManager } = useUserRole();
   const defaultAddress = userStore((s) => s.defaultAddress);
   const setUser = userStore((s) => s.setUser);
   const setDefaultAddress = userStore((s) => s.setDefaultAddress);
@@ -81,8 +81,8 @@ export default function SettingsPageClient() {
       setEditingProfile(false);
       
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error: any) {
-      setSaveError(error.message);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -114,8 +114,8 @@ export default function SettingsPageClient() {
       setDefaultAddress(address || null);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error: any) {
-      setSaveError(error.message);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setLoading(false);
     }

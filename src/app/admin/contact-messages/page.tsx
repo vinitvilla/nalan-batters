@@ -1,38 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { 
-  Mail, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Search, 
-  Filter, 
-  MessageSquare, 
-  Clock, 
-  User, 
-  Calendar,
+import {
+  Mail,
+  Eye,
+  Edit,
+  Trash2,
+  Search,
+  MessageSquare,
+  Clock,
+  User,
   MoreVertical,
   CheckCircle,
   AlertCircle,
-  MessageCircle,
-  Archive,
-  Reply,
-  Star,
   Inbox,
-  Send,
-  ChevronDown,
-  Users,
-  TrendingUp
 } from "lucide-react";
 import moment from "moment";
 import { userStore } from "@/store/userStore";
@@ -71,11 +58,6 @@ const statusIcons = {
   RESOLVED: CheckCircle,
 };
 
-const priorityColors = {
-  high: "bg-red-50 text-red-700 border-red-200",
-  medium: "bg-yellow-50 text-yellow-700 border-yellow-200", 
-  low: "bg-green-50 text-green-700 border-green-200",
-};
 
 export default function ContactMessagesPage() {
   const [pagination, setPagination] = useState<Pagination>({
@@ -152,7 +134,7 @@ export default function ContactMessagesPage() {
       toast.success("Message status updated successfully");
       
       // Update the message in the store
-      updateMessage(id, { status: status.toLowerCase() as any });
+      updateMessage(id, { status: status.toLowerCase() as ContactMessage['status'] });
       
       setIsUpdateDialogOpen(false);
       fetchMessages(pagination.page);
@@ -198,6 +180,7 @@ export default function ContactMessagesPage() {
   useEffect(() => {
     if (!token) return;
     fetchMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const handleStatusFilterChange = (value: string) => {
@@ -210,16 +193,6 @@ export default function ContactMessagesPage() {
     message.mobile.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.message.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleViewMessage = (message: ContactMessage) => {
-    setSelectedMessage(message);
-  };
-
-  const handleUpdateMessage = (message: ContactMessage) => {
-    setSelectedMessage(message);
-    setUpdateStatus(message.status);
-    setIsUpdateDialogOpen(true);
-  };
 
   return (
     <div className="h-screen bg-gray-100 flex">

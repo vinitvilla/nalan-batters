@@ -2,25 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import moment from 'moment';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RequirePermission } from "@/components/PermissionWrapper";
 import { useAdminApi } from "@/app/admin/use-admin-api";
-import { 
-  Receipt, 
-  User, 
-  Calendar, 
+import {
+  Receipt,
   DollarSign,
   Package,
   RefreshCw,
-  Store,
-  Truck,
   CreditCard,
   Banknote,
   Search,
@@ -30,8 +25,6 @@ import {
   ShoppingCart,
   Eye,
   Download,
-  MoreVertical,
-  SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
   LayoutGrid,
@@ -183,10 +176,12 @@ export default function PosOrdersPage() {
 
   useEffect(() => {
     handleSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, paymentFilter]);
 
   useEffect(() => {
     fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {
@@ -312,7 +307,7 @@ export default function PosOrdersPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-600 text-sm font-medium">Today's Sales</p>
+                      <p className="text-gray-600 text-sm font-medium">Today&apos;s Sales</p>
                       <p className="text-3xl font-bold mt-2 text-gray-900">{stats.todayOrders}</p>
                       <p className="text-gray-500 text-xs mt-1">In-store today</p>
                     </div>

@@ -1,7 +1,10 @@
 import { create } from "zustand";
 
 interface ConfigState {
+  // TODO: Replace any with a proper type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   configs: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setConfig: (title: string, value: any) => void;
   loadConfig: (title: string) => Promise<void>;
   loadAllConfigs: () => Promise<void>;

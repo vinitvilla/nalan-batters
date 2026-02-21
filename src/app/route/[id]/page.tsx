@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Navigation, 
-  MapPin, 
-  Clock, 
+  Navigation,
+  MapPin,
+  Clock,
   Route as RouteIcon,
   ExternalLink,
-  ArrowRight,
   Truck,
   Share
 } from 'lucide-react';

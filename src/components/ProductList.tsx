@@ -8,11 +8,21 @@ import {
   CardContent,
 } from "@/components/ui/card";
 
-export default function ProductList({ products }: { products: any[] }) {
+type ProductItem = {
+  id: string;
+  name: string;
+  category?: string;
+  imageUrl?: string;
+  description?: string;
+  price: number;
+  stock?: number;
+};
+
+export default function ProductList({ products }: { products: ProductItem[] }) {
   if (!products?.length) return <div>No products found.</div>;
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-8">
-      {products.map((product: any) => (
+      {products.map((product) => (
         <Card key={product.id}>
           <CardHeader>
             <CardTitle>{product.name}</CardTitle>

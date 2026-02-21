@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { UserResponse } from "@/types/user";
+import type { AddressFields } from "@/store/addressStore";
 import { formatPhoneNumber } from "@/services/user/phoneFormatter.service";
 
 interface UserState {
@@ -8,7 +9,7 @@ interface UserState {
   user: UserResponse | null;
   token: string | null;
   loading: boolean;
-  defaultAddress: any | null;
+  defaultAddress: AddressFields | null;
   // Computed properties for convenience (derived from user)
   phone: string;
   fullName: string;
@@ -17,7 +18,7 @@ interface UserState {
   setToken: (token: string | null) => void;
   setPhone: (phone: string) => void;
   setLoading: (loading: boolean) => void;
-  setDefaultAddress: (address: any | null) => void;
+  setDefaultAddress: (address: AddressFields | null) => void;
   reset: () => void;
 }
 
@@ -32,7 +33,7 @@ export const userStore = create(
       phone: "",
       fullName: "",
       setUser: (user) => {
-        set((state) => ({
+        set(() => ({
           user,
           id: user?.id,
           phone: user?.phone ? formatPhoneNumber(user.phone) : "",

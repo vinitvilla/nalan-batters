@@ -19,14 +19,6 @@ const eslintConfig = [
       "**/node_modules/**", // Ignore node_modules
     ],
   },
-  {
-    rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "react/no-unescaped-entities": "warn",
-      "prefer-const": "warn",
-      "@typescript-eslint/no-unused-expressions": "warn",
-    },
-  },
 ];
 
 export default eslintConfig;

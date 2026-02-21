@@ -27,13 +27,15 @@ export const rateLimit = async (req: NextRequest) => {
   }
 };
 
+type NextRouteContext = { params?: Promise<Record<string, string>> };
+
 /**
  * Higher-order function to wrap API routes with rate limiting
  * @param handler The API route handler
  * @returns A wrapped handler with rate limiting
  */
-export function withRateLimit(handler: (req: NextRequest, ...args: any[]) => Promise<NextResponse>) {
-  return async (req: NextRequest, ...args: any[]) => {
+export function withRateLimit(handler: (req: NextRequest, context?: NextRouteContext) => Promise<NextResponse>) {
+  return async (req: NextRequest, context?: NextRouteContext) => {
     // Check rate limit
     const rateLimitResponse = await rateLimit(req);
     if (rateLimitResponse) {
@@ -41,6 +43,6 @@ export function withRateLimit(handler: (req: NextRequest, ...args: any[]) => Pro
     }
 
     // Proceed to actual handler
-    return handler(req, ...args);
+    return handler(req, context);
   };
 }

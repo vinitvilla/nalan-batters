@@ -6,6 +6,8 @@ export * from './order';
 export * from './pos';
 
 // API Response wrapper types
+// TODO: Replace any with a proper type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -39,6 +41,6 @@ export interface DateRange {
 
 export interface SearchParams {
   query?: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   dateRange?: DateRange;
 }

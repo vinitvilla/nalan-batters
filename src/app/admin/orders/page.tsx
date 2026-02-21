@@ -20,7 +20,6 @@ import { capitalize, formatCurrency, formatPhoneNumber, formatDate, formatDateOn
 import { DateFilter } from "@/components/ui/date-filter";
 import { EnhancedPagination } from "@/components/ui/enhanced-pagination";
 import { useOrderFilters } from "@/hooks/useOrderFilters";
-import { StatusBadge } from "@/components/shared";
 import moment from "moment";
 
 export default function OrdersPage() {
@@ -92,6 +91,7 @@ export default function OrdersPage() {
     };
 
     // Fetch orders when dependencies change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchOrders();
     }, [token, pagination.currentPage, pagination.itemsPerPage, filters.debouncedSearch, filters.status, filters.orderType, filters.paymentMethod, filters.dateFilter, filters.sortBy, filters.sortOrder]);
@@ -261,7 +261,7 @@ export default function OrdersPage() {
                                 <p className="text-sm text-gray-400">Try adjusting your filters or search criteria</p>
                             </div>
                         ) : (
-                            orders.map((order, index) => (
+                            orders.map((order) => (
                                 <div
                                     key={order.id}
                                     className="bg-white border border-gray-200 rounded-xl p-6 space-y-4 hover:shadow-md hover:border-gray-300 cursor-pointer transition-all duration-200"
@@ -315,16 +315,16 @@ export default function OrdersPage() {
                                             <div>
                                                 <span className="text-xs text-gray-500 uppercase font-medium tracking-wide">Type</span>
                                                 <div className="mt-1">
-                                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${(order as any).orderType === 'delivery'
+                                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${order.deliveryType === 'DELIVERY'
                                                         ? 'bg-blue-50 text-blue-700 border-blue-200'
                                                         : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                         }`}>
-                                                        {(order as any).orderType === 'delivery' ? (
+                                                        {order.deliveryType === 'DELIVERY' ? (
                                                             <Truck className="w-3 h-3 mr-1" />
                                                         ) : (
                                                             <Package className="w-3 h-3 mr-1" />
                                                         )}
-                                                        {capitalize((order as any).orderType || "N/A")}
+                                                        {capitalize(order.deliveryType || "N/A")}
                                                     </span>
                                                 </div>
                                             </div>
@@ -332,7 +332,7 @@ export default function OrdersPage() {
                                                 <span className="text-xs text-gray-500 uppercase font-medium tracking-wide">Payment</span>
                                                 <div className="mt-1">
                                                     <span className="text-sm font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-md">
-                                                        {capitalize((order as any).paymentMethod || "N/A")}
+                                                        {capitalize(order.paymentMethod || "N/A")}
                                                     </span>
                                                 </div>
                                             </div>
@@ -526,16 +526,16 @@ export default function OrdersPage() {
                                                 </TableCell>
 
                                                 <TableCell className="py-4 px-4">
-                                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${(order as any).orderType === 'delivery'
+                                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${order.deliveryType === 'DELIVERY'
                                                         ? 'bg-blue-50 text-blue-700 border-blue-200'
                                                         : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                         }`}>
-                                                        {(order as any).orderType === 'delivery' ? (
+                                                        {order.deliveryType === 'DELIVERY' ? (
                                                             <Truck className="w-3 h-3 mr-1" />
                                                         ) : (
                                                             <Package className="w-3 h-3 mr-1" />
                                                         )}
-                                                        {capitalize((order as any).orderType || "N/A")}
+                                                        {capitalize(order.deliveryType || "N/A")}
                                                     </span>
                                                 </TableCell>
 
@@ -545,7 +545,7 @@ export default function OrdersPage() {
                                                             {formatCurrency(order.total)}
                                                         </div>
                                                         <div className="text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded text-center whitespace-nowrap">
-                                                            {capitalize((order as any).paymentMethod || "N/A")}
+                                                            {capitalize(order.paymentMethod || "N/A")}
                                                         </div>
                                                     </div>
                                                 </TableCell>

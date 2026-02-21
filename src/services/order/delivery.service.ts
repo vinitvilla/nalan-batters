@@ -53,7 +53,7 @@ export function getNextAvailableDeliveryDates(
 ): Date[] {
   const dates: Date[] = [];
   const currentDate = new Date();
-  let checkDate = new Date(currentDate);
+  const checkDate = new Date(currentDate);
 
   while (dates.length < count) {
     if (isDeliveryAvailable(checkDate, city, freeDeliveryConfig)) {

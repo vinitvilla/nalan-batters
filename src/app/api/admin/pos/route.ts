@@ -50,21 +50,21 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform config data into a more usable format
-    const configMap = configs.reduce((acc: Record<string, any>, config: any) => {
+    const configMap = configs.reduce<Record<string, unknown>>((acc, config) => {
       acc[config.title] = config.value;
       return acc;
-    }, {} as Record<string, any>);
+    }, {});
 
     // Handle tax configuration with waive flag from additionalCharges
     let taxRate = 0.13; // Default 13% HST
     let taxWaived = false;
     
-    const additionalCharges = configMap.additionalCharges;
+    const additionalCharges = configMap.additionalCharges as AdditionalChargesConfig | undefined;
     if (additionalCharges && additionalCharges.taxPercent) {
       const taxConfig = additionalCharges.taxPercent;
       if (taxConfig && typeof taxConfig === 'object') {
         taxWaived = taxConfig.waive === true;
-        const taxPercent = parseFloat(taxConfig.percent);
+        const taxPercent = parseFloat(String(taxConfig.percent));
         if (!isNaN(taxPercent) && taxPercent >= 0) {
           // Allow 0% tax rate - only use default if config is invalid
           taxRate = taxWaived ? 0 : taxPercent / 100;
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       taxWaived: taxWaived,
       convenienceCharge: additionalCharges?.convenienceCharge?.amount || 2.50,
       deliveryCharge: additionalCharges?.deliveryCharge?.amount || 5.00,
-      freeDeliveryThreshold: parseFloat(configMap.freeDeliveryThreshold) || 50.00
+      freeDeliveryThreshold: parseFloat(String(configMap.freeDeliveryThreshold)) || 50.00
     };
 
     return NextResponse.json({

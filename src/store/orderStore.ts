@@ -1,11 +1,10 @@
 import { create } from "zustand";
-import moment from 'moment';
 import { DiscountType } from '@/generated/prisma';
 import type { CartItem } from '@/types/cart';
 import type { Config } from '@/types/config';
 import type { OrderCalculations } from '@/types/order';
 import type { PromoState } from '@/types/promo';
-import { parseChargeConfig, parseFreeDeliveryConfig } from '@/services/config/config.service';
+import type { AddressFields } from '@/store/addressStore';
 import { isFreeDeliveryEligible } from '@/services/order/delivery.service';
 import { calculateOrderCharges, calculateDiscountAmount, calculateOrderTotal } from '@/services/order/orderCalculation.service';
 
@@ -20,7 +19,7 @@ interface OrderStore {
   clearPromo: () => void;
   
   // Calculation getters
-  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: any, deliveryDate?: string, deliveryType?: 'PICKUP' | 'DELIVERY' | null) => OrderCalculations;
+  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: AddressFields | null, deliveryDate?: string, deliveryType?: 'PICKUP' | 'DELIVERY' | null) => OrderCalculations;
 }
 
 export const useOrderStore = create<OrderStore>((set, get) => ({
@@ -78,7 +77,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
   },
   
   // Calculation getters
-  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: any, deliveryDate?: string, deliveryType?: 'PICKUP' | 'DELIVERY' | null): OrderCalculations => {
+  getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: AddressFields | null, deliveryDate?: string, deliveryType?: 'PICKUP' | 'DELIVERY' | null): OrderCalculations => {
     const state = get();
     const currentDeliveryType = deliveryType || state.deliveryType || 'DELIVERY';
 

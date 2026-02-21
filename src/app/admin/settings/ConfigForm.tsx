@@ -351,7 +351,7 @@ export default function ConfigForm() {
                 <CardContent className="p-6">
                   {config.key === 'additionalCharges' || config.title === 'additionalCharges' ? (
                     <AdditionalChargesForm
-                      value={config.value as any}
+                      value={config.value as AdditionalChargesConfig}
                       onChange={(newValue) => {
                         handleChange(idx, newValue);
                         setError(null);
@@ -360,7 +360,7 @@ export default function ConfigForm() {
                     />
                   ) : config.key === 'operatingHours' || config.title === 'operatingHours' ? (
                     <OperatingHoursForm
-                      value={config.value as any}
+                      value={config.value as OperatingHoursConfig}
                       onChange={(newValue) => {
                         handleChange(idx, newValue);
                         setError(null);
@@ -369,7 +369,7 @@ export default function ConfigForm() {
                     />
                   ) : config.key === 'freeDelivery' || config.title === 'freeDelivery' ? (
                     <FreeDeliveryForm
-                      value={config.value as any}
+                      value={config.value as FreeDeliveryFormConfig}
                       onChange={(newValue) => {
                         handleChange(idx, newValue);
                         setError(null);

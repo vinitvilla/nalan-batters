@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -14,17 +14,13 @@ import { useAdminApi } from "@/app/admin/use-admin-api";
 import { usePosData } from '@/hooks/usePosData';
 import { formatPhoneNumber, displayPhoneNumber } from '@/lib/utils/phoneUtils';
 import type { PosCartItem, PosCustomerData, PosSaleRequest, UserSearchResponse, UserResponse } from '@/types';
-import moment from 'moment';
 import { toast } from "sonner";
 import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  Calculator,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
   CreditCard,
-  DollarSign,
-  Receipt,
   User,
   Search,
   Scan,
@@ -380,44 +376,6 @@ export default function BillingPage() {
         description: 'Error processing payment. Please try again.',
         duration: 5000,
       });
-    }
-  };
-
-  // Print receipt function
-  const printReceipt = (orderNumber?: string) => {
-    const receiptContent = `
-      =============================
-           RECEIPT
-      =============================
-      ${orderNumber ? `Order #${orderNumber}` : ''}
-      Date: ${moment().format('MMMM Do YYYY, h:mm:ss a')}
-      ${customer.name ? `Customer: ${customer.name}` : ''}
-      ${customer.phone ? `Phone: ${displayPhoneNumber(customer.phone)}` : ''}
-      
-      -----------------------------
-      ${cart.map(item => `${item.name}\n  ${item.quantity} x $${item.price.toFixed(2)} = $${item.total.toFixed(2)}`).join('\n')}
-      
-      -----------------------------
-      Subtotal: $${subtotal.toFixed(2)}
-      ${discount > 0 ? `Discount (${discount}%): -$${discountAmount.toFixed(2)}` : ''}
-      ${isTaxWaived ? `Tax (${Math.round(originalTaxRate * 100)}%): WAIVED ($${originalTax.toFixed(2)} → $0.00)` : `Tax (${Math.round(originalTaxRate * 100)}%): $${tax.toFixed(2)}`}
-      
-      TOTAL: $${finalTotal.toFixed(2)}
-      
-      Payment: ${paymentMethod.toUpperCase()}
-      ${paymentMethod === 'cash' ? `Received: $${receivedAmount}\nChange: $${changeAmount.toFixed(2)}` : 'Card Payment Processed'}
-      
-      =============================
-      Thank you for your business!
-      =============================
-    `;
-    
-    // Open print dialog
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`<pre style="font-family: monospace; font-size: 12px; white-space: pre-wrap;">${receiptContent}</pre>`);
-      printWindow.document.close();
-      printWindow.print();
     }
   };
 
