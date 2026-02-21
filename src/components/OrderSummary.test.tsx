@@ -156,7 +156,7 @@ describe('OrderSummary', () => {
       />
     );
 
-    expect(screen.getByText('⚠️ Please select a delivery address')).toBeInTheDocument();
+    expect(screen.getByText('Please select a delivery address')).toBeInTheDocument();
     expect(screen.getByText('Place Order')).toBeDisabled();
   });
 
