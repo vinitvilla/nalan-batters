@@ -4,6 +4,11 @@ import { AddressForm } from './AddressForm';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useAddressStore } from '@/store/addressStore';
 
+// Mock Google Maps API before it can throw
+vi.mock('@react-google-maps/api', () => ({
+  useLoadScript: () => ({ isLoaded: true, loadError: null }),
+}));
+
 // Mock store
 vi.mock('@/store/addressStore');
 
@@ -30,10 +35,12 @@ describe('AddressForm', () => {
     global.window.google = {
       maps: {
         places: {
-          Autocomplete: vi.fn().mockImplementation(() => ({
-            addListener: vi.fn(),
-            getPlace: vi.fn(),
-          })),
+          Autocomplete: vi.fn().mockImplementation(function () {
+            return {
+              addListener: vi.fn(),
+              getPlace: vi.fn(),
+            };
+          }),
         },
       },
     } as any;

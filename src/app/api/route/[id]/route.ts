@@ -6,7 +6,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    
+
     // Decode the route data from the base64 encoded ID
     const routeData = JSON.parse(atob(id));
 
@@ -23,7 +23,9 @@ export async function GET(
       route: routeData
     });
   } catch (error) {
-    console.error('Error decoding route:', error);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Error decoding route:', error);
+    }
     return NextResponse.json(
       { success: false, error: 'Invalid route ID' },
       { status: 400 }
