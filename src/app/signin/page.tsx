@@ -12,8 +12,6 @@ export default function SignInPage() {
 
   return (
     <>
-      <div id="recaptcha-container" style={{ position: "absolute", zIndex: -1, opacity: 0 }} />
-      
       {/* Hero Background with Enhanced Design */}
       <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-25 to-amber-50 relative overflow-hidden">
         {/* Background decorative elements */}
@@ -38,7 +36,7 @@ export default function SignInPage() {
         <div className="relative flex items-center justify-center min-h-screen px-4 py-12">
           <div className="w-full max-w-4xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              
+
               {/* Left Column - Sign In Form */}
               <div className="w-full max-w-md mx-auto lg:order-1">
                 <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10">
@@ -105,7 +103,7 @@ export default function SignInPage() {
                       <span className="text-3xl">🥥</span>
                     </div>
                   </div>
-                  
+
                   <div>
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
                       Welcome to
@@ -114,7 +112,7 @@ export default function SignInPage() {
                       </span>
                     </h1>
                     <p className="text-xl text-gray-600 leading-relaxed max-w-lg mx-auto lg:mx-0 lg:ml-auto">
-                      Experience the authentic taste of traditional South Indian batters, 
+                      Experience the authentic taste of traditional South Indian batters,
                       crafted with love and delivered fresh to your doorstep.
                     </p>
                   </div>
@@ -129,7 +127,7 @@ export default function SignInPage() {
                     <h3 className="font-semibold text-gray-900 mb-1">Secure</h3>
                     <p className="text-sm text-gray-600">Safe & protected authentication</p>
                   </div>
-                  
+
                   <div className="text-center p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/50">
                     <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                       <Zap className="w-6 h-6 text-blue-600" />
@@ -137,7 +135,7 @@ export default function SignInPage() {
                     <h3 className="font-semibold text-gray-900 mb-1">Fast</h3>
                     <p className="text-sm text-gray-600">Quick delivery to your door</p>
                   </div>
-                  
+
                   <div className="text-center p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/50">
                     <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                       <Heart className="w-6 h-6 text-red-600" />

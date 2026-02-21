@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { userStore } from "@/store/userStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth } from "@/lib/firebase/firebase";
 
@@ -16,16 +16,37 @@ export function UserPhoneStep({ onOtpSent }: UserPhoneStepProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ensure reCAPTCHA is only initialized once
+  useEffect(() => {
+    return () => {
+      // Cleanup recaptcha on unmount to prevent errors during Fast Refresh
+      if (typeof window !== "undefined" && (window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+        } catch (e) {
+          // Ignore
+        }
+        delete (window as any).recaptchaVerifier;
+      }
+    };
+  }, []);
+
+  // Ensure reCAPTCHA is only initialized once or re-initialized properly after hot-reload
   const setupRecaptcha = () => {
-    if (!(window as unknown as Record<string, unknown>).recaptchaVerifier) {
-      (window as unknown as Record<string, unknown>).recaptchaVerifier = new RecaptchaVerifier(
+    const container = document.getElementById("recaptcha-container");
+    if (container && !container.hasChildNodes() && (window as any).recaptchaVerifier) {
+      // Stale instance from Fast Refresh
+      delete (window as any).recaptchaVerifier;
+    }
+
+    if (!(window as any).recaptchaVerifier) {
+      if (container) container.innerHTML = "";
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(
         auth,
-        "recaptcha-container", // Correct: container ID first
+        "recaptcha-container",
         { size: "invisible" },
       );
     }
-    return (window as unknown as Record<string, unknown>).recaptchaVerifier as RecaptchaVerifier;
+    return (window as any).recaptchaVerifier as RecaptchaVerifier;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,8 +102,8 @@ export function UserPhoneStep({ onOtpSent }: UserPhoneStepProps) {
           </p>
         </div>
 
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none cursor-pointer"
           disabled={loading}
         >

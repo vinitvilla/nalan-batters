@@ -38,7 +38,7 @@ export default function CheckoutPage() {
   const hasOrderType = !!orderType;
   const hasAddress = orderType === 'PICKUP' || !!selectedAddress; // Address not required for pickup
   const hasDeliveryDate = orderType === 'PICKUP' || !!selectedDeliveryDate; // Delivery date not required for pickup
-  
+
   const steps = [
     { id: 'login', label: 'Sign In', icon: User, completed: isLoggedIn, description: 'Secure authentication' },
     { id: 'orderType', label: 'Order Type', icon: Store, completed: hasOrderType, description: 'Pickup or delivery' },
@@ -59,8 +59,6 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <div id="recaptcha-container" style={{ position: "absolute", zIndex: -1, opacity: 0 }} />
-      
       {/* Hero Section with enhanced visuals */}
       <div className="relative overflow-hidden bg-gradient-to-br from-yellow-50 via-orange-25 to-amber-50">
         {/* Background decorative elements */}
@@ -68,7 +66,7 @@ export default function CheckoutPage() {
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-20"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-orange-200 rounded-full mix-blend-multiply filter blur-xl opacity-20"></div>
         </div>
-        
+
         <div className="relative max-w-6xl mx-auto px-4 py-12">
           <div className="text-center mb-12">
             <div className="flex justify-center mb-6">
@@ -76,14 +74,14 @@ export default function CheckoutPage() {
                 <ShoppingBag className="w-10 h-10 text-white" />
               </div>
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
               Complete Your Order
             </h1>
             <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto leading-relaxed">
               You&apos;re just a few steps away from enjoying fresh, authentic batters delivered to your doorstep
             </p>
-            
+
             {/* Trust indicators */}
             <div className="flex justify-center items-center gap-8 text-sm text-gray-600">
               <div className="flex items-center gap-2">
@@ -108,17 +106,17 @@ export default function CheckoutPage() {
                 const IconComponent = step.icon;
                 const isActive = index === currentStepIndex;
                 const isCompleted = step.completed;
-                
+
                 return (
                   <div key={step.id} className="flex items-center">
                     {/* Step Circle with enhanced styling */}
                     <div className="relative">
-                      <div 
+                      <div
                         className={`
                           flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-2xl border-2 transition-all duration-500 relative
-                          ${isCompleted 
-                            ? 'bg-gradient-to-br from-green-400 to-green-500 border-green-400 text-white shadow-lg shadow-green-200 cursor-pointer hover:shadow-xl hover:scale-105' 
-                            : isActive 
+                          ${isCompleted
+                            ? 'bg-gradient-to-br from-green-400 to-green-500 border-green-400 text-white shadow-lg shadow-green-200 cursor-pointer hover:shadow-xl hover:scale-105'
+                            : isActive
                               ? 'bg-gradient-to-br from-yellow-400 to-orange-400 border-yellow-400 text-white shadow-lg shadow-yellow-200 animate-pulse'
                               : 'bg-gray-100 border-gray-300 text-gray-400'
                           }
@@ -141,13 +139,13 @@ export default function CheckoutPage() {
                           <IconComponent className="w-6 h-6 md:w-7 md:h-7" />
                         )}
                       </div>
-                      
+
                       {/* Step number badge */}
                       <div className={`
                         absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-300
-                        ${isCompleted 
-                          ? 'bg-green-500 text-white' 
-                          : isActive 
+                        ${isCompleted
+                          ? 'bg-green-500 text-white'
+                          : isActive
                             ? 'bg-yellow-500 text-white'
                             : 'bg-gray-300 text-gray-600'
                         }
@@ -155,14 +153,14 @@ export default function CheckoutPage() {
                         {index + 1}
                       </div>
                     </div>
-                    
+
                     {/* Step Label and Description */}
                     <div className="ml-3 hidden md:block">
                       <p className={`
                         text-sm font-bold transition-colors duration-300 leading-tight
-                        ${isCompleted 
-                          ? 'text-green-700' 
-                          : isActive 
+                        ${isCompleted
+                          ? 'text-green-700'
+                          : isActive
                             ? 'text-gray-900'
                             : 'text-gray-400'
                         }
@@ -171,9 +169,9 @@ export default function CheckoutPage() {
                       </p>
                       <p className={`
                         text-xs transition-colors duration-300
-                        ${isCompleted 
-                          ? 'text-green-600' 
-                          : isActive 
+                        ${isCompleted
+                          ? 'text-green-600'
+                          : isActive
                             ? 'text-gray-600'
                             : 'text-gray-400'
                         }
@@ -189,11 +187,11 @@ export default function CheckoutPage() {
                         <div className={`
                           absolute top-0 left-0 h-0.5 transition-all duration-700 ease-out
                           ${index < currentStepIndex || steps[index + 1].completed
-                            ? 'w-full bg-gradient-to-r from-yellow-400 to-orange-400' 
+                            ? 'w-full bg-gradient-to-r from-yellow-400 to-orange-400'
                             : 'w-0 bg-gray-300'
                           }
                         `}></div>
-                        
+
                         {/* Animated arrow for active step */}
                         {isActive && (
                           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
@@ -214,14 +212,14 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             {/* Left Column - Checkout Steps */}
             <div className="lg:col-span-2">
               {!user ? (
                 <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-8 md:p-10 relative overflow-hidden">
                   {/* Background pattern */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
-                  
+
                   <div className="relative">
                     <div className="flex items-center mb-8">
                       <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
@@ -232,7 +230,7 @@ export default function CheckoutPage() {
                         <p className="text-gray-600">Secure authentication to protect your order</p>
                       </div>
                     </div>
-                    
+
                     <UserAuthFlow
                       onSuccess={(user) => {
                         userStore.getState().setPhone(user.phone);
