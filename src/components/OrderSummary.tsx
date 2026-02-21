@@ -71,7 +71,7 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
               <li key={item.id} className="flex items-center gap-3 py-3 px-1">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">${item.price.toFixed(2)} each</p>
+                  <p className="text-xs text-gray-500 mt-0.5">${Number(item.price).toFixed(2)} each</p>
                   {/* Qty controls */}
                   <div className="flex items-center gap-1.5 mt-2">
                     <button
@@ -94,7 +94,7 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
                 </div>
                 <div className="flex items-start gap-2 flex-shrink-0">
                   <span className="text-sm font-semibold text-gray-900 tabular-nums">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ${(Number(item.price) * item.quantity).toFixed(2)}
                   </span>
                   <button
                     className="text-gray-300 hover:text-red-500 transition-colors mt-0.5"
@@ -123,9 +123,8 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
                     placeholder="Promo code"
                     value={promo.code}
                     onChange={e => setPromo({ code: e.target.value.toUpperCase() })}
-                    className={`pl-8 text-sm border-gray-200 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 ${
-                      promo.applied ? 'bg-gray-50 text-gray-400' : 'bg-white text-gray-900'
-                    }`}
+                    className={`pl-8 text-sm border-gray-200 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 ${promo.applied ? 'bg-gray-50 text-gray-400' : 'bg-white text-gray-900'
+                      }`}
                     disabled={promo.applied}
                     autoComplete="off"
                   />
@@ -134,11 +133,10 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
                   type="button"
                   size="sm"
                   disabled={promo.applied || !promo.code || applyingPromo}
-                  className={`rounded-lg text-sm font-medium px-4 h-9 ${
-                    promo.applied
+                  className={`rounded-lg text-sm font-medium px-4 h-9 ${promo.applied
                       ? 'bg-green-600 hover:bg-green-600 text-white'
                       : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                  }`}
+                    }`}
                   onClick={() => applyPromo(promo.code)}
                 >
                   {promo.applied ? '✓ Applied' : applyingPromo ? '...' : 'Apply'}

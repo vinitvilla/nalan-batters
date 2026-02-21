@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function getProductsWithCategoryName() {
   const products = await prisma.product.findMany({
-    where: { 
+    where: {
       isDelete: false,
       category: { isDelete: false }
     },
@@ -10,6 +10,7 @@ export async function getProductsWithCategoryName() {
   });
   return products.map((product) => ({
     ...product,
+    price: Number(product.price),
     category: product.category?.name || null,
   }));
 }
