@@ -6,15 +6,13 @@ import { useCartStore } from "@/store/cartStore";
 import { signOut as firebaseSignOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/firebase";
 import { toast } from "sonner";
-import { debug } from "console";
-
 export function useSignOut() {
   const router = useRouter();
 
   return useCallback(async () => {
     try {
       await firebaseSignOut(auth);
-    } catch (error) {
+    } catch {
       toast.error("Error signing out. Please try again.");
     }
     userStore.getState().reset();

@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
-import { UserType } from "@/types/UserType";
+import { UserResponse } from "@/types/user";
 import { USER_ROLE } from "@/constants/userRole";
 import { useCartStore } from "@/store/cartStore";
 
 export interface UserOtpStepProps {
-  onUserFound: (user: UserType) => void;
+  onUserFound: (user: UserResponse) => void;
   onUserNotFound: () => void;
   onBack: () => void;
   confirmationResult: ConfirmationResult | null;
@@ -51,8 +51,7 @@ export function UserOtpStep({ onUserFound, onUserNotFound, onBack, confirmationR
           }))
         );
       }
-      if (user.role) userStore.getState().setIsAdmin(user.role === USER_ROLE.ADMIN);
-      onUserFound({ id: user.id, phone: user.phone, fullName: user.fullName || "", role: user.role });
+      onUserFound(user); // Pass the complete user object from API
     } else {
       userStore.getState().setId(firebaseUser.user.uid);
       useAddressStore.getState().setAddresses([]);
@@ -106,6 +105,7 @@ export function UserOtpStep({ onUserFound, onUserNotFound, onBack, confirmationR
           </Label>
           <div className="flex justify-center">
             <InputOTP
+              autoFocus
               value={otp}
               onChange={setOtp}
               maxLength={6}

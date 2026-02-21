@@ -1,25 +1,24 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import type { UserType } from "@/types/UserType";
-import { USER_ROLE } from "@/constants/userRole";
+import type { UserResponse } from "@/types/user";
+import type { AddressFields } from "@/store/addressStore";
+import { formatPhoneNumber } from "@/services/user/phoneFormatter.service";
 
 interface UserState {
   id: string | null;
-  user: UserType | null;
+  user: UserResponse | null;
   token: string | null;
-  fullName: string;
-  phone: string;
-  isAdmin: boolean;
   loading: boolean;
-  defaultAddress: any | null;
+  defaultAddress: AddressFields | null;
+  // Computed properties for convenience (derived from user)
+  phone: string;
+  fullName: string;
   setId: (id: string) => void;
-  setUser: (user: UserType | null) => void;
+  setUser: (user: UserResponse | null) => void;
   setToken: (token: string | null) => void;
-  setFullName: (name: string) => void;
   setPhone: (phone: string) => void;
-  setIsAdmin: (isAdmin: boolean) => void;
   setLoading: (loading: boolean) => void;
-  setDefaultAddress: (address: any | null) => void;
+  setDefaultAddress: (address: AddressFields | null) => void;
   reset: () => void;
 }
 
@@ -29,19 +28,17 @@ export const userStore = create(
       id: null,
       user: null,
       token: null,
-      fullName: "",
-      phone: "",
-      isAdmin: false,
       loading: true,
       defaultAddress: null,
+      phone: "",
+      fullName: "",
       setUser: (user) => {
-        set((state) => ({
+        set(() => ({
           user,
           id: user?.id,
+          phone: user?.phone ? formatPhoneNumber(user.phone) : "",
           fullName: user?.fullName || "",
-          phone: user?.phone ? (user.phone.startsWith("+1") ? user.phone : "+1" + user.phone.replace(/^\+?1?/, "")) : "",
-          isAdmin: user?.role === USER_ROLE.ADMIN || false,
-          defaultAddress: user?.defaultAddress || null,
+          // Keep existing defaultAddress, it's managed separately
         }));
       },
       setToken: (token) => {
@@ -58,12 +55,17 @@ export const userStore = create(
         }
       },
       setId: (id: string) => set({ id }),
-      setFullName: (fullName: string) => set({ fullName }),
-      setPhone: (phone: string) => set({ phone: phone.startsWith("+1") ? phone : "+1" + phone.replace(/^\+?1?/, "") }),
-      setIsAdmin: (isAdmin: boolean) => set({ isAdmin }),
+      setPhone: (phone: string) => set({ phone: formatPhoneNumber(phone) }),
       setLoading: (loading: boolean) => set({ loading }),
       setDefaultAddress: (address) => set({ defaultAddress: address }),
-      reset: () => set({ id: null, user: null, token: null, fullName: "", phone: "", isAdmin: false, loading: false }),
+      reset: () => set({
+        id: null,
+        user: null,
+        token: null,
+        phone: "",
+        fullName: "",
+        loading: false
+      }),
     }),
     { name: "UserStore" }
   )

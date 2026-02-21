@@ -1,40 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { 
-  Mail, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Search, 
-  Filter, 
-  MessageSquare, 
-  Clock, 
-  User, 
-  Calendar,
+import {
+  Mail,
+  Eye,
+  Edit,
+  Trash2,
+  Search,
+  MessageSquare,
+  Clock,
+  User,
   MoreVertical,
   CheckCircle,
   AlertCircle,
-  MessageCircle,
-  Archive,
-  Reply,
-  Star,
   Inbox,
-  Send,
-  ChevronDown,
-  Users,
-  TrendingUp
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import moment from "moment";
 import { userStore } from "@/store/userStore";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { useNewMessagesCount } from "@/hooks/useNewMessagesCount";
@@ -71,11 +58,6 @@ const statusIcons = {
   RESOLVED: CheckCircle,
 };
 
-const priorityColors = {
-  high: "bg-red-50 text-red-700 border-red-200",
-  medium: "bg-yellow-50 text-yellow-700 border-yellow-200", 
-  low: "bg-green-50 text-green-700 border-green-200",
-};
 
 export default function ContactMessagesPage() {
   const [pagination, setPagination] = useState<Pagination>({
@@ -152,7 +134,7 @@ export default function ContactMessagesPage() {
       toast.success("Message status updated successfully");
       
       // Update the message in the store
-      updateMessage(id, { status: status.toLowerCase() as any });
+      updateMessage(id, { status: status.toLowerCase() as ContactMessage['status'] });
       
       setIsUpdateDialogOpen(false);
       fetchMessages(pagination.page);
@@ -198,6 +180,7 @@ export default function ContactMessagesPage() {
   useEffect(() => {
     if (!token) return;
     fetchMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const handleStatusFilterChange = (value: string) => {
@@ -210,16 +193,6 @@ export default function ContactMessagesPage() {
     message.mobile.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.message.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleViewMessage = (message: ContactMessage) => {
-    setSelectedMessage(message);
-  };
-
-  const handleUpdateMessage = (message: ContactMessage) => {
-    setSelectedMessage(message);
-    setUpdateStatus(message.status);
-    setIsUpdateDialogOpen(true);
-  };
 
   return (
     <div className="h-screen bg-gray-100 flex">
@@ -317,7 +290,7 @@ export default function ContactMessagesPage() {
             filteredMessages.map((message) => {
               const StatusIcon = statusIcons[message.status as keyof typeof statusIcons];
               const isSelected = selectedMessage?.id === message.id;
-              const messageAge = Date.now() - new Date(message.createdAt).getTime();
+              const messageAge = Date.now() - moment(message.createdAt).valueOf();
               const hoursOld = messageAge / (1000 * 60 * 60);
               const isUrgent = message.status === "NEW" && hoursOld > 24;
               const isHighPriority = message.status === "NEW" && hoursOld > 4;
@@ -351,7 +324,7 @@ export default function ContactMessagesPage() {
                             "text-gray-400"
                           }`} />
                           <span className="text-xs text-gray-500">
-                            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                            {moment(message.createdAt).fromNow()}
                           </span>
                           {isUrgent && (
                             <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">
@@ -523,7 +496,7 @@ export default function ContactMessagesPage() {
                     {/* Message Header */}
                     <div className="mb-2">
                       <span className="text-xs text-gray-500">
-                        {format(new Date(selectedMessage.createdAt), "EEEE, MMMM do, yyyy 'at' h:mm a")}
+                        {moment(selectedMessage.createdAt).format("dddd, MMMM Do, YYYY [at] h:mm A")}
                       </span>
                     </div>
                     
@@ -539,7 +512,7 @@ export default function ContactMessagesPage() {
                       <Mail className="w-3 h-3" />
                       <span>{selectedMessage.mobile}</span>
                       <span>•</span>
-                      <span>{formatDistanceToNow(new Date(selectedMessage.createdAt), { addSuffix: true })}</span>
+                      <span>{moment(selectedMessage.createdAt).fromNow()}</span>
                     </div>
                   </div>
                 </div>
@@ -556,7 +529,7 @@ export default function ContactMessagesPage() {
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <span className="text-gray-600">Message received</span>
                       <span className="text-gray-500">
-                        {format(new Date(selectedMessage.createdAt), "MMM dd, h:mm a")}
+                        {moment(selectedMessage.createdAt).format("MMM DD, h:mm A")}
                       </span>
                     </div>
                     
@@ -565,7 +538,7 @@ export default function ContactMessagesPage() {
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         <span className="text-gray-600">Status updated</span>
                         <span className="text-gray-500">
-                          {format(new Date(selectedMessage.updatedAt), "MMM dd, h:mm a")}
+                          {moment(selectedMessage.updatedAt).format("MMM DD, h:mm A")}
                         </span>
                       </div>
                     )}
@@ -629,7 +602,7 @@ export default function ContactMessagesPage() {
                 </div>
                 
                 <div className="text-xs text-gray-500">
-                  Last updated {formatDistanceToNow(new Date(selectedMessage.updatedAt), { addSuffix: true })}
+                  Last updated {moment(selectedMessage.updatedAt).fromNow()}
                 </div>
               </div>
             </div>

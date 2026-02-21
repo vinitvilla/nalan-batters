@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ContactStatus } from "@/generated/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         mobile: mobile.trim(),
         message: message.trim(),
-        status: "NEW" as any,
+        status: ContactStatus.NEW,
       },
     });
 

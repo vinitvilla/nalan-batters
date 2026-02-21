@@ -7,46 +7,54 @@ import { useRef, useEffect, useState, useCallback } from "react";
 // Clean, modern styling classes for form inputs
 const inputClassName = "border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-gray-900 placeholder:text-gray-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-all duration-200 hover:border-gray-300 shadow-sm";
 
-export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () => void }) {
+export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; onAdd?: () => void; onCancel?: () => void }) {
   const autocompleteRef = useRef<HTMLInputElement | null>(null);
   const newAddress = useAddressStore((s) => s.newAddress);
   const setNewAddress = useAddressStore((s) => s.setNewAddress);
   const clearNewAddress = useAddressStore((s) => s.clearNewAddress);
   const [error, setError] = useState<string>("");
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
   const updateField = useCallback((field: keyof AddressFields, value: string) => {
     setNewAddress({ ...newAddress, [field]: value });
   }, [newAddress, setNewAddress]);
 
   const initAutocomplete = useCallback(() => {
-    if (!autocompleteRef.current || !window.google) return;
+    if (!autocompleteRef.current || !window.google) {
+      return;
+    }
     
-    const autocomplete = new window.google.maps.places.Autocomplete(
-      autocompleteRef.current,
-      {
-        types: ["address"],
-        componentRestrictions: { country: "ca" },
-      }
-    );
-
-    autocomplete.addListener("place_changed", () => {
-      const place = autocomplete.getPlace();
-      if (!place.address_components) return;
-
-      const isCanada = place.address_components.some(c => 
-        c.types.includes("country") && c.short_name === "CA"
+    try {
+      // Use the standard Autocomplete API (still supported)
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        autocompleteRef.current,
+        {
+          types: ["address"],
+          componentRestrictions: { country: "ca" },
+        }
       );
-      const isOntario = place.address_components.some(c => 
-        c.types.includes("administrative_area_level_1") && c.short_name === "ON"
-      );
-      
-      if (!isCanada || !isOntario) {
-        setError("Please select an address in Ontario, Canada.");
-        clearNewAddress();
-        autocompleteRef.current!.value = "";
-        autocompleteRef.current!.focus();
-        return;
-      }
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        
+        if (!place.address_components) {
+          return;
+        }
+
+        const isCanada = place.address_components.some(c => 
+          c.types.includes("country") && c.short_name === "CA"
+        );
+        const isOntario = place.address_components.some(c => 
+          c.types.includes("administrative_area_level_1") && c.short_name === "ON"
+        );
+        
+        if (!isCanada || !isOntario) {
+          setError("Please select an address in Ontario, Canada.");
+          clearNewAddress();
+          autocompleteRef.current!.value = "";
+          autocompleteRef.current!.focus();
+          return;
+        }
 
       const fields: AddressFields = { 
         street: "", unit: "", city: "", province: "", country: "", postal: "" 
@@ -63,8 +71,22 @@ export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () 
         if (types.includes("subpremise")) {
           fields.unit = component.long_name;
         }
-        if (types.includes("locality")) {
-          fields.city = component.long_name;
+        // Prioritize sublocality (like Scarborough) over locality (Toronto)
+        // But avoid using "Old Toronto" - prefer just "Toronto" for that
+        if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
+          // Skip "Old Toronto" and similar - prefer the main city name
+          if (!component.long_name.toLowerCase().includes("old toronto")) {
+            fields.city = component.long_name;
+          }
+        } else if (types.includes("neighborhood")) {
+          if (!fields.city && !component.long_name.toLowerCase().includes("old toronto")) {
+            fields.city = component.long_name;
+          }
+        } else if (types.includes("locality")) {
+          // Always prefer locality over "Old Toronto" type designations
+          if (!fields.city || fields.city.toLowerCase().includes("old")) {
+            fields.city = component.long_name;
+          }
         }
         if (types.includes("administrative_area_level_1")) {
           fields.province = component.short_name;
@@ -76,11 +98,15 @@ export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () 
           fields.postal = component.long_name;
         }
       });
-      
-      setNewAddress(fields);
-      setError("");
-    });
-  }, []);
+        
+        setNewAddress(fields);
+        setError("");
+      });
+    } catch (error) {
+      console.error('Failed to initialize Google Places Autocomplete:', error);
+      setError("Failed to load address autocomplete. Please try refreshing the page.");
+    }
+  }, [clearNewAddress, setNewAddress]);
 
   useEffect(() => {
     // Initialize component state
@@ -96,16 +122,24 @@ export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () 
     `;
     document.head.appendChild(style);
 
-    // Load Google Places API
-    if (!window.google) {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.onload = () => initAutocomplete();
-      document.body.appendChild(script);
-    } else {
-      initAutocomplete();
-    }
+    // Check if Google Maps is loaded with timeout
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds total (50 * 100ms)
+    
+    const checkGoogleMapsLoaded = () => {
+      attempts++;
+      
+      if (window.google && window.google.maps && window.google.maps.places) {
+        setIsGoogleMapsLoaded(true);
+      } else if (attempts < maxAttempts) {
+        // Retry after a short delay
+        setTimeout(checkGoogleMapsLoaded, 100);
+      } else {
+        setError("Failed to load address autocomplete. Please refresh the page.");
+      }
+    };
+    
+    checkGoogleMapsLoaded();
 
     // Cleanup function to remove the style when component unmounts
     return () => {
@@ -113,7 +147,13 @@ export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () 
         document.head.removeChild(style);
       }
     };
-  }, []);
+  }, [clearNewAddress]);
+
+  useEffect(() => {
+    if (isGoogleMapsLoaded && autocompleteRef.current) {
+      initAutocomplete();
+    }
+  }, [isGoogleMapsLoaded, initAutocomplete]);
 
   const validateAddress = useCallback((fields: AddressFields) => {
     const required: (keyof AddressFields)[] = ['street', 'city', 'province', 'country', 'postal'];
@@ -163,8 +203,8 @@ export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () 
   const handleCancel = useCallback(() => {
     clearNewAddress();
     setError("");
-    onAdd?.(); // This will close the dialog
-  }, [clearNewAddress, onAdd]);
+    onCancel?.(); // This will close the dialog without adding address
+  }, [clearNewAddress, onCancel]);
 
   const FormField = ({ 
     label, 
@@ -218,13 +258,19 @@ export function AddressForm({ loading, onAdd }: { loading?: boolean; onAdd?: () 
       
       <div>
         <Label className="text-gray-900 font-medium mb-2 block">🏠 Start with your address</Label>
-        <Input
-          type="text"
-          placeholder="Start typing your address..."
-          ref={autocompleteRef}
-          onChange={() => {}}
-          className="w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 placeholder:text-gray-500 px-4 py-3 font-medium transition-all duration-200 hover:border-gray-300 shadow-sm"
-        />
+        {!isGoogleMapsLoaded ? (
+          <div className="w-full border border-gray-200 rounded-lg text-gray-900 bg-gray-50 px-4 py-3 font-medium text-center">
+            Loading address autocomplete...
+          </div>
+        ) : (
+          <Input
+            type="text"
+            placeholder="Start typing your address..."
+            ref={autocompleteRef}
+            onChange={() => {}}
+            className="w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 placeholder:text-gray-500 px-4 py-3 font-medium transition-all duration-200 hover:border-gray-300 shadow-sm"
+          />
+        )}
         <p className="text-xs text-gray-500 mt-2">We&apos;ll auto-fill the details below when you select an address</p>
       </div>
       {error && (

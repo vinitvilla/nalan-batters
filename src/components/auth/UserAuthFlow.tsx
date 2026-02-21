@@ -2,21 +2,17 @@ import { useState } from "react";
 import { UserPhoneStep } from "./UserPhoneStep";
 import { UserOtpStep } from "./UserOtpStep";
 import { UserRegisterStep } from "./UserRegisterStep";
-import { UserType } from "@/types/UserType";
+import { UserResponse } from "@/types/user";
 import { userStore } from "@/store/userStore";
 import { ConfirmationResult } from "firebase/auth";
-import { useCartStore } from "@/store/cartStore";
 
 export interface UserAuthFlowProps {
-  onSuccess: (user: UserType) => void;
+  onSuccess: (user: UserResponse) => void;
   initialPhone?: string;
 }
 
-export function UserAuthFlow({ onSuccess, initialPhone = "" }: UserAuthFlowProps) {
+export function UserAuthFlow({ onSuccess }: UserAuthFlowProps) {
   const [step, setStep] = useState<"phone" | "otp" | "register">("phone");
-  const phone = userStore((s) => s.phone);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userExists, setUserExists] = useState<boolean | null>(null);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Step 1: Enter phone, check DB, send OTP if needed
@@ -35,14 +31,10 @@ export function UserAuthFlow({ onSuccess, initialPhone = "" }: UserAuthFlowProps
     return (
       <UserOtpStep
         confirmationResult={confirmationResult}
-        onUserFound={(user: UserType) => {
-          setUserId(user.id);
-          setUserExists(true);
-          // fetchAndMergeCart removed as per new cart logic
-          onSuccess({ id: user.id, phone: user.phone, fullName: user.fullName || "", role: user.role });
+        onUserFound={(user: UserResponse) => {
+          onSuccess(user);
         }}
-        onUserNotFound={ () => {
-          setUserExists(false);
+        onUserNotFound={() => {
           setStep("register");
         }}
         onBack={() => setStep("phone")}
@@ -54,8 +46,8 @@ export function UserAuthFlow({ onSuccess, initialPhone = "" }: UserAuthFlowProps
     return (
       <UserRegisterStep
         onRegistered={(user) => {
-          userStore.getState().setUser({ id: user.id, phone: user.phone, fullName: user.fullName, role: user.role });
-          onSuccess({ id: user.id, phone: user.phone, fullName: user.fullName || "", role: user.role });
+          userStore.getState().setUser(user);
+          onSuccess(user);
         }}
         onBack={() => setStep("otp")}
       />

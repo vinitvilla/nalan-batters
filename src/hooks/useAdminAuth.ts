@@ -3,9 +3,11 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase/firebase";
 import { userStore } from "@/store/userStore";
 import { hydrateUserFromApi } from "@/lib/hydrateUserFromApi";
+import { useUserRole } from "./useUserRole";
 
 export function useAdminAuth() {
-  const { setUser, setIsAdmin, setLoading, user, isAdmin, loading } = userStore();
+  const { setUser, setLoading, user, loading } = userStore();
+  const { isAdmin, isManager, hasAdminAccess, userRole } = useUserRole();
 
   useEffect(() => {
     const auth = getAuth(app);
@@ -14,12 +16,11 @@ export function useAdminAuth() {
         await hydrateUserFromApi();
       } else {
         setUser(null);
-        setIsAdmin(false);
       }
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [setUser, setIsAdmin, setLoading]);
+  }, [setUser, setLoading]);
 
-  return { user, isAdmin, loading };
+  return { user, isAdmin, isManager, hasAdminAccess, userRole, loading };
 }

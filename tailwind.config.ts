@@ -30,7 +30,7 @@ const config: Config = {
       },
       fontFamily: {
         cursive: ['Dancing Script', 'cursive'],
-        sans: ['Geist', 'Inter', 'sans-serif'],
+        sans: ['var(--font-poppins)', 'Poppins', 'system-ui', 'sans-serif'],
       },
       borderColor: {
         gold: '#FFD700',

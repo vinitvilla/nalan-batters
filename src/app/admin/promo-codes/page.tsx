@@ -2,6 +2,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+import moment from 'moment';
 
 // UI components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,9 +26,16 @@ interface PromoCode {
   code: string;
   discount: number;
   discountType: DiscountType;
+  description?: string;
+  minOrderAmount?: number;
+  maxDiscount?: number;
+  usageLimit?: number;
+  currentUsage: number;
   isActive: boolean;
   isDeleted: boolean;
   expiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function PromoCodesPage() {
@@ -41,6 +49,10 @@ export default function PromoCodesPage() {
     code: string;
     discount: number;
     discountType: DiscountType;
+    description?: string;
+    minOrderAmount?: number;
+    maxDiscount?: number;
+    usageLimit?: number;
     isActive: boolean;
     isDeleted: boolean;
     expiresAt: string | null;
@@ -48,6 +60,10 @@ export default function PromoCodesPage() {
     code: "",
     discount: 0,
     discountType: DiscountType.PERCENTAGE,
+    description: "",
+    minOrderAmount: undefined,
+    maxDiscount: undefined,
+    usageLimit: undefined,
     isActive: true,
     isDeleted: false,
     expiresAt: null,
@@ -92,6 +108,10 @@ export default function PromoCodesPage() {
         code: "",
         discount: 0,
         discountType: DiscountType.PERCENTAGE,
+        description: "",
+        minOrderAmount: undefined,
+        maxDiscount: undefined,
+        usageLimit: undefined,
         isActive: true,
         isDeleted: false,
         expiresAt: null,
@@ -207,6 +227,20 @@ export default function PromoCodesPage() {
                         disabled={saving}
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="descriptionInput" className="text-xs text-gray-600 mb-1">Description</Label>
+                      <Input
+                        id="descriptionInput"
+                        className="w-full"
+                        placeholder="Description (optional)"
+                        value={editIdx !== null ? editPromo?.description ?? "" : newPromo.description ?? ""}
+                        onChange={e => {
+                          if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, description: e.target.value || undefined } : editPromo);
+                          else setNewPromo({ ...newPromo, description: e.target.value || undefined });
+                        }}
+                        disabled={saving}
+                      />
+                    </div>
                     <div className="flex gap-2 items-end">
                       <div className="flex flex-col">
                         <Label htmlFor="discountInput" className="text-xs text-gray-600 mb-1">Discount</Label>
@@ -243,6 +277,60 @@ export default function PromoCodesPage() {
                         </Select>
                       </div>
                     </div>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex flex-col">
+                        <Label htmlFor="minOrderAmountInput" className="text-xs text-gray-600 mb-1">Min Order Amount ($)</Label>
+                        <Input
+                          id="minOrderAmountInput"
+                          className="w-32"
+                          type="number"
+                          step="0.01"
+                          placeholder="Min Amount"
+                          value={editIdx !== null ? editPromo?.minOrderAmount ?? "" : newPromo.minOrderAmount ?? ""}
+                          onChange={e => {
+                            const value = e.target.value ? Number(e.target.value) : undefined;
+                            if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, minOrderAmount: value } : editPromo);
+                            else setNewPromo({ ...newPromo, minOrderAmount: value });
+                          }}
+                          disabled={saving}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor="maxDiscountInput" className="text-xs text-gray-600 mb-1">Max Discount ($)</Label>
+                        <Input
+                          id="maxDiscountInput"
+                          className="w-32"
+                          type="number"
+                          step="0.01"
+                          placeholder="Max Discount"
+                          value={editIdx !== null ? editPromo?.maxDiscount ?? "" : newPromo.maxDiscount ?? ""}
+                          onChange={e => {
+                            const value = e.target.value ? Number(e.target.value) : undefined;
+                            if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, maxDiscount: value } : editPromo);
+                            else setNewPromo({ ...newPromo, maxDiscount: value });
+                          }}
+                          disabled={saving}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex flex-col">
+                        <Label htmlFor="usageLimitInput" className="text-xs text-gray-600 mb-1">Usage Limit</Label>
+                        <Input
+                          id="usageLimitInput"
+                          className="w-32"
+                          type="number"
+                          placeholder="Usage Limit"
+                          value={editIdx !== null ? editPromo?.usageLimit ?? "" : newPromo.usageLimit ?? ""}
+                          onChange={e => {
+                            const value = e.target.value ? Number(e.target.value) : undefined;
+                            if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, usageLimit: value } : editPromo);
+                            else setNewPromo({ ...newPromo, usageLimit: value });
+                          }}
+                          disabled={saving}
+                        />
+                      </div>
+                    </div>
                     <div>
                       <Label htmlFor="expiresAtInput" className="text-xs text-gray-600 mb-1">Expires At</Label>
                       <Input
@@ -252,8 +340,8 @@ export default function PromoCodesPage() {
                         placeholder="Expires At"
                         value={editIdx !== null ? (typeof editPromo?.expiresAt === "string" ? editPromo.expiresAt.split("T")[0] : "") : (typeof newPromo.expiresAt === "string" ? newPromo.expiresAt.split("T")[0] : "")}
                         onChange={e => {
-                          if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, expiresAt: e.target.value ? new Date(e.target.value).toISOString() : null } : editPromo);
-                          else setNewPromo({ ...newPromo, expiresAt: e.target.value ? new Date(e.target.value).toISOString() : null });
+                          if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, expiresAt: e.target.value ? moment(e.target.value).toISOString() : null } : editPromo);
+                          else setNewPromo({ ...newPromo, expiresAt: e.target.value ? moment(e.target.value).toISOString() : null });
                         }}
                         disabled={saving}
                       />
@@ -280,8 +368,12 @@ export default function PromoCodesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Code</TableHead>
+                    <TableHead>Description</TableHead>
                     <TableHead>Discount</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>Min Order</TableHead>
+                    <TableHead>Max Discount</TableHead>
+                    <TableHead>Usage</TableHead>
                     <TableHead>Expires At</TableHead>
                     <TableHead>Active</TableHead>
                     <TableHead>Actions</TableHead>
@@ -290,15 +382,19 @@ export default function PromoCodesPage() {
                 <TableBody>
                   {filteredPromoCodes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-gray-500">No promo codes found.</TableCell>
+                      <TableCell colSpan={10} className="text-center text-gray-500">No promo codes found.</TableCell>
                     </TableRow>
                   ) : (
                     filteredPromoCodes.map((promo, idx) => (
                       <TableRow key={promo.id || idx} className="border-t">
                         <TableCell>{promo.code}</TableCell>
+                        <TableCell className="max-w-xs truncate">{promo.description || "-"}</TableCell>
                         <TableCell>{promo.discount}</TableCell>
                         <TableCell>{promo.discountType}</TableCell>
-                        <TableCell>{promo.expiresAt ? new Date(promo.expiresAt).toISOString().split("T")[0] : ""}</TableCell>
+                        <TableCell>{promo.minOrderAmount ? `$${promo.minOrderAmount}` : "-"}</TableCell>
+                        <TableCell>{promo.maxDiscount ? `$${promo.maxDiscount}` : "-"}</TableCell>
+                        <TableCell>{promo.usageLimit ? `${promo.currentUsage}/${promo.usageLimit}` : `${promo.currentUsage}/∞`}</TableCell>
+                        <TableCell>{promo.expiresAt ? moment(promo.expiresAt).format('YYYY-MM-DD') : ""}</TableCell>
                         <TableCell>
                           <Switch
                             checked={promo.isActive}

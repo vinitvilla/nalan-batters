@@ -1,0 +1,61 @@
+{
+  "name": "Nalan Batters - Fresh South Indian Dosa Batter",
+  "short_name": "Nalan Batters",
+  "description": "Fresh, authentic South Indian dosa batter and traditional food products delivered to your door",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "categories": ["food", "shopping", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/ss0.png",
+      "sizes": "3018x1508",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Nalan Batters homepage on desktop"
+    },
+    {
+      "src": "/ss00.png",
+      "sizes": "724x1388",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Nalan Batters homepage on mobile"
+    }
+  ]
+}

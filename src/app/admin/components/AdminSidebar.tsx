@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNewMessagesCount } from "@/hooks/useNewMessagesCount";
+import { useUserRole } from "@/hooks/useUserRole";
+import { hasPermission, Permission } from "@/lib/permissions";
 import { 
     X, 
     LayoutDashboard,
@@ -16,13 +18,16 @@ import {
     Flag,
     Settings,
     Crown,
-    MessageSquare
+    MessageSquare,
+    CreditCard,
+    Receipt
 } from "lucide-react";
 
 type NavItem = {
     label: string;
     href: string;
     icon: React.ComponentType<{ className?: string }>;
+    permission: Permission;
 };
 
 type AdminSidebarProps = {
@@ -31,23 +36,34 @@ type AdminSidebarProps = {
 };
 
 const navItems: NavItem[] = [
-    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
-    { label: "Contact Messages", href: "/admin/contact-messages", icon: MessageSquare },
-    { label: "Delivery", href: "/admin/delivery", icon: Truck },
-    { label: "Products", href: "/admin/products", icon: Package },
-    { label: "Users", href: "/admin/users", icon: Users },
-    { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
-    { label: "Feature Flags", href: "/admin/feature-flags", icon: Flag },
-    { label: "Settings", href: "/admin/settings", icon: Settings },
+    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, permission: "dashboard" },
+    { label: "Live Billing (POS)", href: "/admin/billing-pos", icon: CreditCard, permission: "billing" },
+    { label: "POS Orders", href: "/admin/pos-orders", icon: Receipt, permission: "billing" },
+    { label: "Orders", href: "/admin/orders", icon: ShoppingCart, permission: "orders" },
+    { label: "Contact Messages", href: "/admin/contact-messages", icon: MessageSquare, permission: "contact-messages" },
+    { label: "Delivery", href: "/admin/delivery", icon: Truck, permission: "delivery" },
+    { label: "Products", href: "/admin/products", icon: Package, permission: "products" },
+    { label: "Users", href: "/admin/users", icon: Users, permission: "users" },
+    { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag, permission: "promo-codes" },
+    { label: "Feature Flags", href: "/admin/feature-flags", icon: Flag, permission: "feature-flags" },
+    { label: "Settings", href: "/admin/settings", icon: Settings, permission: "settings" },
 ];
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
     const { newMessagesCount } = useNewMessagesCount();
+    const { userRole, isManager } = useUserRole();
+
+    // Filter nav items based on user permissions
+    const allowedNavItems = navItems.filter(item => hasPermission(userRole, item.permission));
 
     const handleNavClick = () => {
         onClose(); // Close sidebar on mobile after navigation
+    };
+
+    // Prevent scroll from propagating to the main page
+    const handleWheel = (e: React.WheelEvent) => {
+        e.stopPropagation();
     };
 
     return (
@@ -61,14 +77,18 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             )}
             
             {/* Redesigned Sidebar */}
-            <aside className={`
-                fixed lg:static top-0 left-0 h-100vh w-64 bg-primary
-                flex flex-col z-50 transition-all duration-300 ease-in-out
-                ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                shadow-xl border-r border-primary-foreground/10
-            `}>
+            <aside 
+                onWheel={handleWheel}
+                className={`
+                    fixed top-0 left-0 h-screen w-64 bg-primary
+                    flex flex-col z-50 transition-all duration-300 ease-in-out
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                    shadow-xl border-r border-primary-foreground/10
+                    overflow-hidden
+                `}
+            >
                 {/* Header Section */}
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                     {/* Background Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-foreground/5 to-transparent"></div>
                     
@@ -79,8 +99,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                 <Crown className="h-6 w-6 text-primary-foreground" />
                             </div>
                             <div>
-                                <div className="font-bold text-lg text-primary-foreground">Admin Panel</div>
-                                <div className="text-xs text-primary-foreground/70">Management Console</div>
+                                <div className="font-bold text-lg text-primary-foreground">
+                                    {isManager ? 'Manager Panel' : 'Admin Panel'}
+                                </div>
+                                <div className="text-xs text-primary-foreground/70">
+                                    {isManager ? 'Billing Console' : 'Management Console'}
+                                </div>
                             </div>
                         </div>
                         <Button
@@ -100,21 +124,26 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                 <Crown className="h-8 w-8 text-primary-foreground" />
                             </div>
                             <div>
-                                <div className="font-bold text-xl text-primary-foreground">Admin Panel</div>
-                                <div className="text-sm text-primary-foreground/70">Management Console</div>
+                                <div className="font-bold text-xl text-primary-foreground">
+                                    {isManager ? 'Manager Panel' : 'Admin Panel'}
+                                </div>
+                                <div className="text-sm text-primary-foreground/70">
+                                    {isManager ? 'Billing Console' : 'Management Console'}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 {/* Navigation Section */}
-                <ScrollArea className="flex-1 px-3">
-                    <nav className="space-y-1">
-                        {navItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = pathname === item.href;
-                            const isContactMessages = item.href === "/admin/contact-messages";
-                            const showBadge = isContactMessages && newMessagesCount > 0;
+                <div className="flex-1 overflow-hidden px-3 pb-4">
+                    <ScrollArea className="h-full [&>[data-slot=scroll-area-scrollbar]]:bg-primary-foreground/10 [&>[data-slot=scroll-area-thumb]]:bg-primary-foreground/40 [&>[data-slot=scroll-area-thumb]]:hover:bg-primary-foreground/60">
+                        <nav className="space-y-1 pr-2">
+                            {allowedNavItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = pathname === item.href;
+                                const isContactMessages = item.href === "/admin/contact-messages";
+                                const showBadge = isContactMessages && newMessagesCount > 0;
                             
                             return (
                                 <div key={item.href} className="relative">
@@ -180,6 +209,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                         })}
                     </nav>
                 </ScrollArea>
+                </div>
             </aside>
         </>
     );

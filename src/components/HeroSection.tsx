@@ -36,7 +36,7 @@ export default function HeroSection() {
               <CarouselItem key={idx} className="h-[85vh] w-screen relative">
                 <Image
                   src={src}
-                  alt={`Hero ${idx + 1}`}
+                  alt={`Fresh South Indian dosa batter and authentic food products - Hero image ${idx + 1}`}
                   fill
                   className="object-cover"
                   style={{ filter: "blur(1px) brightness(0.7)" }}
@@ -88,11 +88,11 @@ export default function HeroSection() {
         </h1>
 
         {/* Subtitle */}
-        <p className="text-lg sm:text-xl lg:text-2xl mb-8 drop-shadow-lg text-gray-100 font-light tracking-wide max-w-3xl mx-auto leading-relaxed">
-          Discover the finest culinary traditions,{" "}
-          <span className="text-amber-200 font-medium">handcrafted with love</span>{" "}
-          and delivered fresh to your doorstep every day.
-        </p>
+        <h2 className="text-lg sm:text-xl lg:text-2xl mb-8 drop-shadow-lg text-gray-100 font-light tracking-wide max-w-3xl mx-auto leading-relaxed">
+          Fresh, authentic South Indian{" "}
+          <span className="text-amber-200 font-medium">dosa batter & traditional food products</span>{" "}
+          delivered to your door. Premium quality, traditional recipes.
+        </h2>
 
         {/* CTA Section */}
         <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">

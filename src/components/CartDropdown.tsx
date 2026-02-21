@@ -43,10 +43,8 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
 
   // Order store  
   const promo = useOrderStore(s => s.promo);
-  const promoApplied = useOrderStore(s => s.promoApplied);
   const setPromo = useOrderStore(s => s.setPromo);
-  const setPromoApplied = useOrderStore(s => s.setPromoApplied);
-  const setDiscount = useOrderStore(s => s.setDiscount);
+  const clearPromo = useOrderStore(s => s.clearPromo);
   const applyPromo = useOrderStore(s => s.applyPromo);
   const getOrderCalculations = useOrderStore(s => s.getOrderCalculations);
 
@@ -58,9 +56,22 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
   // Refs
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Calculations using orderStore with config
+  // Calculations using orderStore with config  
   const calculations = getOrderCalculations(cartItems, config);
-  const { subtotal, tax, convenienceCharge, deliveryCharge, appliedDiscount, finalTotal } = calculations;
+  const { 
+    subtotal, 
+    tax, 
+    convenienceCharge, 
+    deliveryCharge, 
+    appliedDiscount, 
+    finalTotal,
+    originalTax,
+    originalConvenienceCharge,
+    originalDeliveryCharge,
+    isTaxWaived,
+    isConvenienceWaived,
+    isDeliveryWaived
+  } = calculations;
   const taxRate = config?.taxPercent?.percent ? config.taxPercent.percent / 100 : 0.13;
 
   // Dropdown animation effect
@@ -79,16 +90,14 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
     if (isApplyingPromo) return;
     
     setIsApplyingPromo(true);
-    const result = await applyPromo(promo);
+    const result = await applyPromo(promo.code);
     setPromoError(!result.success);
     setIsApplyingPromo(false);
   };
 
   // Reset promo handler
   const handlePromoReset = () => {
-    setPromo("");
-    setPromoApplied(false);
-    setDiscount(0);
+    clearPromo();
     setPromoError(false);
   };
 
@@ -121,11 +130,17 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
             discount={appliedDiscount}
             total={finalTotal}
             config={config}
-            promo={promo}
-            promoApplied={promoApplied}
+            originalTax={originalTax}
+            originalConvenienceCharge={originalConvenienceCharge}
+            originalDeliveryCharge={originalDeliveryCharge}
+            isTaxWaived={isTaxWaived}
+            isConvenienceWaived={isConvenienceWaived}
+            isDeliveryWaived={isDeliveryWaived}
+            promo={promo.code}
+            promoApplied={promo.applied}
             promoError={promoError}
             isApplyingPromo={isApplyingPromo}
-            setPromo={setPromo}
+            setPromo={(code: string) => setPromo({ code })}
             setPromoError={setPromoError}
             handlePromoSubmit={handlePromoSubmit}
             handlePromoReset={handlePromoReset}
@@ -169,6 +184,12 @@ function CartContent({
   discount,
   total,
   config,
+  originalTax,
+  originalConvenienceCharge,
+  originalDeliveryCharge,
+  isTaxWaived,
+  isConvenienceWaived,
+  isDeliveryWaived,
   promo,
   promoApplied,
   promoError,
@@ -190,6 +211,12 @@ function CartContent({
   discount: number;
   total: number;
   config: Config;
+  originalTax: number;
+  originalConvenienceCharge: number;
+  originalDeliveryCharge: number;
+  isTaxWaived: boolean;
+  isConvenienceWaived: boolean;
+  isDeliveryWaived: boolean;
   promo: string;
   promoApplied: boolean;
   promoError: boolean;
@@ -223,6 +250,12 @@ function CartContent({
         discount={discount}
         total={total}
         config={config}
+        originalTax={originalTax}
+        originalConvenienceCharge={originalConvenienceCharge}
+        originalDeliveryCharge={originalDeliveryCharge}
+        isTaxWaived={isTaxWaived}
+        isConvenienceWaived={isConvenienceWaived}
+        isDeliveryWaived={isDeliveryWaived}
         handlePromoReset={handlePromoReset}
       />
       
@@ -302,6 +335,12 @@ function PriceSummary({
   discount, 
   total, 
   config,
+  originalTax,
+  originalConvenienceCharge,
+  originalDeliveryCharge,
+  isTaxWaived,
+  isConvenienceWaived,
+  isDeliveryWaived,
   handlePromoReset 
 }: {
   subtotal: number;
@@ -311,7 +350,14 @@ function PriceSummary({
   deliveryCharge: number;
   discount: number;
   total: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: Record<string, any>;
+  originalTax: number;
+  originalConvenienceCharge: number;
+  originalDeliveryCharge: number;
+  isTaxWaived: boolean;
+  isConvenienceWaived: boolean;
+  isDeliveryWaived: boolean;
   handlePromoReset: () => void;
 }) {
   return (
@@ -322,24 +368,33 @@ function PriceSummary({
       </div>
       <div className="flex justify-between text-sm text-yellow-600">
         <span>Tax ({Math.round(taxRate * 100)}%)</span>
-        {config?.taxPercent?.waive ? (
-          <span className="line-through text-red-500">${tax.toFixed(2)}</span>
+        {isTaxWaived ? (
+          <div className="flex items-center gap-2">
+            <span className="line-through text-red-500">${originalTax.toFixed(2)}</span>
+            <span className="text-green-600 font-semibold">$0.00</span>
+          </div>
         ) : (
           <span>${tax.toFixed(2)}</span>
         )}
       </div>
       <div className="flex justify-between text-sm text-yellow-600">
         <span>Convenience Charge</span>
-        {config?.convenienceCharge?.waive ? (
-          <span className="line-through text-red-500">${convenienceCharge.toFixed(2)}</span>
+        {isConvenienceWaived ? (
+          <div className="flex items-center gap-2">
+            <span className="line-through text-red-500">${originalConvenienceCharge.toFixed(2)}</span>
+            <span className="text-green-600 font-semibold">$0.00</span>
+          </div>
         ) : (
           <span>${convenienceCharge.toFixed(2)}</span>
         )}
       </div>
       <div className="flex justify-between text-sm text-yellow-600">
         <span>Delivery Charge</span>
-        {config?.deliveryCharge?.waive ? (
-          <span className="line-through text-red-500">${deliveryCharge.toFixed(2)}</span>
+        {isDeliveryWaived ? (
+          <div className="flex items-center gap-2">
+            <span className="line-through text-red-500">${originalDeliveryCharge.toFixed(2)}</span>
+            <span className="text-green-600 font-semibold">$0.00</span>
+          </div>
         ) : (
           <span>${deliveryCharge.toFixed(2)}</span>
         )}

@@ -6,7 +6,9 @@ import { requireAdmin } from "@/lib/requireAdmin";
 // GET: List all promo codes
 export async function GET(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const adminCheck = await requireAdmin(req);
+    if (adminCheck instanceof NextResponse) return adminCheck;
+
     const promos = await prisma.promoCode.findMany({
       where: { isDeleted: false }
     });
@@ -19,7 +21,9 @@ export async function GET(req: NextRequest) {
 // POST: Create a new promo code
 export async function POST(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const adminCheck = await requireAdmin(req);
+    if (adminCheck instanceof NextResponse) return adminCheck;
+
     const body = await req.json();
     const { discountType, code, ...rest } = body;
     const promo = await prisma.promoCode.create({
@@ -38,7 +42,9 @@ export async function POST(req: NextRequest) {
 // PUT: Update a promo code
 export async function PUT(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const adminCheck = await requireAdmin(req);
+    if (adminCheck instanceof NextResponse) return adminCheck;
+
     const body = await req.json();
     if (!body.id) return NextResponse.json({ error: "Missing promo code id" }, { status: 400 });
     const { discountType, code, ...rest } = body;
@@ -59,7 +65,9 @@ export async function PUT(req: NextRequest) {
 // DELETE: Delete a promo code
 export async function DELETE(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const adminCheck = await requireAdmin(req);
+    if (adminCheck instanceof NextResponse) return adminCheck;
+
     const body = await req.json();
     if (!body.id) return NextResponse.json({ error: "Missing promo code id" }, { status: 400 });
     await prisma.promoCode.update({ where: { id: body.id }, data: { isDeleted: true } });

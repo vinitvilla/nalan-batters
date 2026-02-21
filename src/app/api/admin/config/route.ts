@@ -4,7 +4,9 @@ import { requireAdmin } from "@/lib/requireAdmin";
 
 // GET: Fetch all config entries
 export async function GET(req: NextRequest) {
-  await requireAdmin(req);
+  const adminCheck = await requireAdmin(req);
+  if (adminCheck instanceof NextResponse) return adminCheck;
+
   const configs = await prisma.config.findMany({
     where: { isDelete: false }
   });
@@ -13,7 +15,9 @@ export async function GET(req: NextRequest) {
 
 // PUT: Update a config entry by id (preferred) or title (fallback)
 export async function PUT(req: NextRequest) {
-  await requireAdmin(req);
+  const adminCheck = await requireAdmin(req);
+  if (adminCheck instanceof NextResponse) return adminCheck;
+
   const { id, title, value, isActive } = await req.json();
   if (!id && !title) {
     return NextResponse.json({ error: "id or title is required" }, { status: 400 });
@@ -28,7 +32,9 @@ export async function PUT(req: NextRequest) {
 
 // DELETE: Soft delete a config entry
 export async function DELETE(req: NextRequest) {
-  await requireAdmin(req);
+  const adminCheck = await requireAdmin(req);
+  if (adminCheck instanceof NextResponse) return adminCheck;
+
   const { id, title } = await req.json();
   if (!id && !title) {
     return NextResponse.json({ error: "id or title is required" }, { status: 400 });

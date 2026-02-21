@@ -46,8 +46,13 @@ staging-backup-*.sql
 *.tsbuildinfo
 next-env.d.ts
 
+# prisma generated client
+src/generated/
 /generated/prisma
 
-/src/generated/prisma
-nalan-batters-firebase-adminsdk-fbsvc-0b103d9719.json
-webdesign.webp
+# Temporary and test files
+temp_*.sql
+test_*.sql
+test-*.js
+webdesign.*
+TODO

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-guard";
 
 // Create a new address and set as default for user
 export async function POST(req: NextRequest) {
+  const authUser = await requireAuth(req);
+  if (authUser instanceof NextResponse) return authUser;
+
   const { userId, street, unit, city, province, country, postal } = await req.json();
 
   if (!userId || !street || !city || !province || !country || !postal) {

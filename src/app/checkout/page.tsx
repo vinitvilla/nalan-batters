@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useCartStore } from "@/store/cartStore";
 import { CheckoutContactDelivery } from "@/components/CheckoutContactDelivery";
 import { OrderSummary } from "@/components/OrderSummary";
+import { OrderTypeSelector } from "@/components/OrderTypeSelector";
 import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
 import { useOrderStore } from "@/store/orderStore";
 import { UserAuthFlow } from "@/components/auth/UserAuthFlow";
-import { CheckCircle, User, MapPin, Calendar, ShoppingBag, ArrowRight, Star, Clock, Shield } from "lucide-react";
+import { CheckCircle, User, MapPin, Calendar, ShoppingBag, ArrowRight, Star, Clock, Shield, Store } from "lucide-react";
 
 export default function CheckoutPage() {
   const cartItems = useCartStore((state) => state.items);
@@ -28,24 +29,30 @@ export default function CheckoutPage() {
   // Get selectedAddress from store
   const selectedAddress = useAddressStore((s) => s.selectedAddress);
   const selectedDeliveryDate = useOrderStore((s) => s.selectedDeliveryDate);
+  const setSelectedDeliveryDate = useOrderStore((s) => s.setSelectedDeliveryDate);
+  const orderType = useOrderStore((s) => s.deliveryType);
+  const setOrderType = useOrderStore((s) => s.setDeliveryType);
 
   // Progress tracking
   const isLoggedIn = !!user;
-  const hasAddress = !!selectedAddress;
-  const hasDeliveryDate = !!selectedDeliveryDate;
+  const hasOrderType = !!orderType;
+  const hasAddress = orderType === 'PICKUP' || !!selectedAddress; // Address not required for pickup
+  const hasDeliveryDate = orderType === 'PICKUP' || !!selectedDeliveryDate; // Delivery date not required for pickup
   
   const steps = [
     { id: 'login', label: 'Sign In', icon: User, completed: isLoggedIn, description: 'Secure authentication' },
-    { id: 'address', label: 'Address', icon: MapPin, completed: hasAddress, description: 'Delivery location' },
-    { id: 'delivery', label: 'Delivery', icon: Calendar, completed: hasDeliveryDate, description: 'Pick your date' },
+    { id: 'orderType', label: 'Order Type', icon: Store, completed: hasOrderType, description: 'Pickup or delivery' },
+    { id: 'address', label: orderType === 'PICKUP' ? 'Contact' : 'Address', icon: MapPin, completed: hasAddress, description: orderType === 'PICKUP' ? 'Contact details' : 'Delivery location' },
+    { id: 'delivery', label: orderType === 'PICKUP' ? 'Pickup' : 'Delivery', icon: Calendar, completed: hasDeliveryDate, description: orderType === 'PICKUP' ? 'Pickup time' : 'Pick your date' },
     { id: 'payment', label: 'Payment', icon: ShoppingBag, completed: false, description: 'Complete order' }
   ];
 
   const getCurrentStepIndex = () => {
     if (!isLoggedIn) return 0;
-    if (!hasAddress) return 1;
-    if (!hasDeliveryDate) return 2;
-    return 3;
+    if (!hasOrderType) return 1;
+    if (!hasAddress) return 2;
+    if (!hasDeliveryDate) return 3;
+    return 4;
   };
 
   const currentStepIndex = getCurrentStepIndex();
@@ -106,15 +113,28 @@ export default function CheckoutPage() {
                   <div key={step.id} className="flex items-center">
                     {/* Step Circle with enhanced styling */}
                     <div className="relative">
-                      <div className={`
-                        flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-2xl border-2 transition-all duration-500 relative
-                        ${isCompleted 
-                          ? 'bg-gradient-to-br from-green-400 to-green-500 border-green-400 text-white shadow-lg shadow-green-200' 
-                          : isActive 
-                            ? 'bg-gradient-to-br from-yellow-400 to-orange-400 border-yellow-400 text-white shadow-lg shadow-yellow-200 animate-pulse'
-                            : 'bg-gray-100 border-gray-300 text-gray-400'
-                        }
-                      `}>
+                      <div 
+                        className={`
+                          flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-2xl border-2 transition-all duration-500 relative
+                          ${isCompleted 
+                            ? 'bg-gradient-to-br from-green-400 to-green-500 border-green-400 text-white shadow-lg shadow-green-200 cursor-pointer hover:shadow-xl hover:scale-105' 
+                            : isActive 
+                              ? 'bg-gradient-to-br from-yellow-400 to-orange-400 border-yellow-400 text-white shadow-lg shadow-yellow-200 animate-pulse'
+                              : 'bg-gray-100 border-gray-300 text-gray-400'
+                          }
+                        `}
+                        onClick={() => {
+                          // Allow going back to completed steps
+                          if (isCompleted) {
+                            if (step.id === 'orderType') {
+                              setOrderType(null);
+                              setSelectedDeliveryDate("");
+                            }
+                            // Add more step navigation logic as needed
+                          }
+                        }}
+                        title={isCompleted ? `Go back to ${step.label}` : step.description}
+                      >
                         {isCompleted ? (
                           <CheckCircle className="w-6 h-6 md:w-7 md:h-7" />
                         ) : (
@@ -216,16 +236,13 @@ export default function CheckoutPage() {
                     <UserAuthFlow
                       onSuccess={(user) => {
                         userStore.getState().setPhone(user.phone);
-                        userStore.getState().setUser({
-                          id: user.id,
-                          phone: user.phone,
-                          fullName: user.fullName || "",
-                          role: user.role
-                        });
+                        userStore.getState().setUser(user);
                       }}
                     />
                   </div>
                 </div>
+              ) : !hasOrderType ? (
+                <OrderTypeSelector />
               ) : (
                 <CheckoutContactDelivery
                   loading={loading}

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, description, price, categoryId, image, stock } = body;
+    const { name, description, price, categoryId, imageUrl, stock } = body;
     if (!name || !price || !categoryId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
         name,
         description,
         price,
-        imageUrl: image,
-        stock,
+        imageUrl: imageUrl || null,
+        stock: stock || 0,
         isActive: true,
         categoryId,
       },
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const productWithCategory = { ...product, category: product.category?.name || null };
     return NextResponse.json(productWithCategory, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to add product", details: error }, { status: 500 });
+    return NextResponse.json({ error: "Failed to add product", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }
 
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     const productsWithCategoryName = await getProductsWithCategoryName();
     return NextResponse.json(productsWithCategoryName, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch products", details: error }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch products", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }
 
@@ -76,7 +76,7 @@ export async function PUT(req: NextRequest) {
     const productWithCategory = { ...product, category: product.category?.name || null };
     return NextResponse.json(productWithCategory, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update product", details: error }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update product", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }
 
@@ -97,6 +97,6 @@ export async function DELETE(req: NextRequest) {
     });
     return NextResponse.json({ message: "Product deleted" }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete product", details: error }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete product", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }

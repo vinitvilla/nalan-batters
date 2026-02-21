@@ -113,7 +113,7 @@ export default function TestimonialsSection() {
                         {/* Quote text */}
                         <div className="flex-1 mb-6 text-center">
                           <p className="text-gray-700 text-lg leading-relaxed font-medium">
-                            "{displayText}"
+                            &quot;{displayText}&quot;
                           </p>
                           {shouldTruncate && (
                             <Button

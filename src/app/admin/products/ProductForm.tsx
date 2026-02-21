@@ -16,7 +16,7 @@ const productSchema = z.object({
     categoryId: z.string().min(1, "Category is required"),
     price: z.coerce.number().min(0, "Price is required"),
     stock: z.coerce.number().min(0, "Stock is required"),
-    imageUrl: z.string().min(1, "Image URL is required"),
+    imageUrl: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema> & { id?: string; category?: string };
@@ -61,13 +61,11 @@ export default function ProductForm({ initial, onSave, onCancel, categories }: P
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (!form.getValues("id")) {
-            toast.error("Please save the product first before uploading an image.");
-            return;
-        }
+        
         setUploading(true);
         try {
-            const productId = form.getValues("id");
+            // Use a temporary ID for new products or the actual ID for existing ones
+            const productId = form.getValues("id") || `temp-${Date.now()}`;
             const ext = file.name.split('.').pop() || 'jpg';
             const storageRef = ref(storage, `nalan-batters/products/${productId}.${ext}`);
             await uploadBytes(storageRef, file);
@@ -86,15 +84,23 @@ export default function ProductForm({ initial, onSave, onCancel, categories }: P
             <form
                 className="space-y-4"
                 onSubmit={form.handleSubmit((values) => {
+                    // Validate required fields
+                    if (!values.name || !values.description || !values.categoryId || values.price === undefined) {
+                        toast.error("Please fill in all required fields");
+                        return;
+                    }
+                    
                     onSave({
                         id: values.id,
                         name: values.name,
                         description: values.description,
                         categoryId: values.categoryId,
                         price: values.price,
-                        stock: values.stock,
-                        imageUrl: values.imageUrl,
+                        stock: values.stock || 0,
+                        imageUrl: values.imageUrl || "",
                     });
+                }, (errors) => {
+                    toast.error("Please check the form for errors");
                 })}
             >
                 {/* Name */}
@@ -169,15 +175,15 @@ export default function ProductForm({ initial, onSave, onCancel, categories }: P
                 />
                 {/* Image */}
                 <div>
-                    <FormLabel>Product Image <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Product Image</FormLabel>
                     <div className="flex flex-col gap-2">
                         <div
                             className="w-32 h-32 border rounded flex items-center justify-center cursor-pointer bg-gray-50 hover:opacity-80"
                             onClick={handleImageClick}
                         >
-                            {!!form.watch("imageUrl") && form.watch("imageUrl").trim() !== "" ? (
+                            {form.watch("imageUrl") && form.watch("imageUrl")?.trim() !== "" ? (
                                 <Image
-                                    src={form.watch("imageUrl")}
+                                    src={form.watch("imageUrl") || ""}
                                     alt="Product Preview"
                                     width={128}
                                     height={128}

@@ -1,5 +1,33 @@
 import { prisma } from "@/lib/prisma";
-import { DiscountType, OrderStatus } from "@/generated/prisma";
+import { OrderStatus, Prisma } from "@/generated/prisma";
+import { parse, isValid, startOfDay, endOfDay, isBefore } from 'date-fns';
+import { getAllConfigs, parseChargeConfig, parseFreeDeliveryConfig } from '@/services/config/config.service';
+import { isFreeDeliveryEligible, isDeliveryAvailable } from '@/services/order/delivery.service';
+import { calculateOrderCharges, calculateDiscountAmount, calculateOrderTotal } from '@/services/order/orderCalculation.service';
+import { validateAndApplyPromoCode, incrementPromoUsage } from '@/services/order/promoCode.service';
+
+const MAX_ORDER_NUMBER_ATTEMPTS = 20;
+
+async function generateUniqueOrderNumber(tx: Prisma.TransactionClient): Promise<string> {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+    for (let attempt = 0; attempt < MAX_ORDER_NUMBER_ATTEMPTS; attempt++) {
+        let orderNumber = '';
+        for (let i = 0; i < 5; i++) {
+            orderNumber += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+
+        const existingOrder = await tx.order.findUnique({
+            where: { orderNumber }
+        });
+
+        if (!existingOrder) {
+            return orderNumber;
+        }
+    }
+
+    throw new Error('Unable to generate unique order number after maximum attempts');
+}
 
 // --- Order Queries ---
 export async function getAllOrders() {
@@ -12,6 +40,180 @@ export async function getAllOrders() {
         },
         orderBy: { createdAt: "desc" }
     });
+}
+
+interface GetOrdersParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    orderType?: string;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
+    deliveryDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}
+
+export async function getOrdersPaginated({
+    page = 1,
+    limit = 25,
+    search,
+    status,
+    orderType,
+    paymentMethod,
+    startDate,
+    endDate,
+    deliveryDate,
+    sortBy = 'createdAt',
+    sortOrder = 'desc'
+}: GetOrdersParams) {
+    const offset = (page - 1) * limit;
+
+    // Build where clause for filtering
+    const whereClause: Prisma.OrderWhereInput = {
+        isDelete: false,
+    };
+
+    // Search filter (name, phone, order number)
+    if (search) {
+        whereClause.OR = [
+            {
+                user: {
+                    fullName: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                }
+            },
+            {
+                user: {
+                    phone: {
+                        contains: search
+                    }
+                }
+            },
+            {
+                orderNumber: {
+                    contains: search,
+                    mode: 'insensitive'
+                }
+            }
+        ];
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+        if (status.startsWith('!')) {
+            const excludedStatus = status.substring(1).toUpperCase();
+            whereClause.status = { not: excludedStatus as OrderStatus };
+        } else {
+            whereClause.status = status.toUpperCase() as OrderStatus;
+        }
+    }
+
+    // Order type filter
+    if (orderType && orderType !== 'all') {
+        whereClause.orderType = orderType.toUpperCase() as Prisma.EnumOrderSourceFilter["equals"];
+    }
+
+    // Payment method filter
+    if (paymentMethod && paymentMethod !== 'all') {
+        whereClause.paymentMethod = paymentMethod.toUpperCase() as Prisma.EnumPaymentMethodFilter["equals"];
+    }
+
+    // Date range filter (for order creation date)
+    if (startDate || endDate) {
+        const createdAtFilter: Prisma.DateTimeFilter = {};
+
+        if (startDate) {
+            const parsedStart = parse(startDate, 'yyyy-MM-dd', new Date());
+            if (!isValid(parsedStart)) {
+                throw new Error(`Invalid start date format: ${startDate}. Expected format: YYYY-MM-DD`);
+            }
+            createdAtFilter.gte = startOfDay(parsedStart);
+        }
+
+        if (endDate) {
+            const parsedEnd = parse(endDate, 'yyyy-MM-dd', new Date());
+            if (!isValid(parsedEnd)) {
+                throw new Error(`Invalid end date format: ${endDate}. Expected format: YYYY-MM-DD`);
+            }
+            createdAtFilter.lte = endOfDay(parsedEnd);
+        }
+
+        whereClause.createdAt = createdAtFilter;
+    }
+
+    // Delivery date filter (for specific delivery date)
+    if (deliveryDate) {
+        const parsedDelivery = parse(deliveryDate, 'yyyy-MM-dd', new Date());
+
+        if (!isValid(parsedDelivery)) {
+            throw new Error(`Invalid delivery date format: ${deliveryDate}. Expected format: YYYY-MM-DD`);
+        }
+
+        whereClause.deliveryDate = {
+            gte: startOfDay(parsedDelivery),
+            lte: endOfDay(parsedDelivery)
+        };
+    }
+
+    // Build orderBy clause for sorting
+    const buildOrderBy = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+        switch (sortBy) {
+            case 'user.fullName':
+                return { user: { fullName: sortOrder } };
+            case 'total':
+                return { total: sortOrder };
+            case 'status':
+                return { status: sortOrder };
+            case 'orderType':
+                return { orderType: sortOrder };
+            case 'deliveryDate':
+                return { deliveryDate: sortOrder };
+            case 'orderNumber':
+                return { orderNumber: sortOrder };
+            case 'createdAt':
+            default:
+                return { createdAt: sortOrder };
+        }
+    };
+
+    const orderByClause = buildOrderBy(sortBy, sortOrder);
+
+    // Get total count for pagination
+    const totalCount = await prisma.order.count({
+        where: whereClause
+    });
+
+    // Get paginated orders
+    const orders = await prisma.order.findMany({
+        where: whereClause,
+        include: {
+            user: true,
+            address: true,
+            items: { include: { product: true } }
+        },
+        orderBy: orderByClause,
+        skip: offset,
+        take: limit
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+        orders,
+        pagination: {
+            page,
+            limit,
+            totalCount,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1
+        }
+    };
 }
 
 export async function getOrderById(orderId: string) {
@@ -36,16 +238,16 @@ export async function updateOrderStatus(orderId: string, status: string) {
 }
 
 // --- Helpers ---
-/**
- * Validates order items and returns product details.
- */
-async function validateOrderItems(items: Array<{ productId: string; quantity: number; price: number }>) {
+async function validateOrderItems(
+    tx: Prisma.TransactionClient,
+    items: Array<{ productId: string; quantity: number; price: number }>
+) {
     const productIds = items.map(i => i.productId);
-    const products = await prisma.product.findMany({
-        where: { 
-            id: { in: productIds }, 
+    const products = await tx.product.findMany({
+        where: {
+            id: { in: productIds },
             isActive: true,
-            isDelete: false 
+            isDelete: false
         },
     });
     if (products.length !== items.length) throw new Error("Invalid or inactive product(s)");
@@ -58,139 +260,123 @@ async function validateOrderItems(items: Array<{ productId: string; quantity: nu
     return products;
 }
 
-/**
- * Returns config object mapped by title.
- */
-async function getConfigObject() {
-    const configArr = await prisma.config.findMany({
-        where: { isDelete: false }
-    });
-    return configArr.reduce((acc, curr) => {
-        acc[curr.title] = curr;
-        return acc;
-    }, {} as Record<string, typeof configArr[number]>);
-}
-
-/**
- * Safely extracts a field from config value, with fallback and waive logic.
- */
-function getConfigField(configObj: any, key: string, field: string, fallback: number) {
-    const entry = configObj[key]?.value;
-    if (entry && typeof entry === 'object') {
-        if (entry.waive === true) return 0;
-        if (field in entry) return Number(entry[field]);
-    }
-    return fallback;
-}
-
-/**
- * Calculates charges (tax, convenience, delivery) from config and subtotal.
- */
-function calculateCharges(config: any, subtotal: number) {
-    const taxPercentValue = getConfigField(config, 'taxPercent', 'percent', 13);
-    const TAX_RATE = taxPercentValue ? taxPercentValue / 100 : 0;
-    const convenienceCharges = getConfigField(config, 'convenienceCharge', 'amount', 0);
-    const deliveryCharges = getConfigField(config, 'deliveryCharge', 'amount', 0);
-    const tax = +(subtotal * TAX_RATE).toFixed(2);
-    return { TAX_RATE, convenienceCharges, deliveryCharges, tax };
-}
-
-/**
- * Calculates discount and type from promo code.
- */
-async function calculateDiscount(subtotal: number, promoCodeId?: string) {
-    let discount = 0;
-    let discountType: DiscountType | undefined;
-    if (promoCodeId) {
-        const promo = await prisma.promoCode.findFirst({ 
-            where: { 
-                id: promoCodeId,
-                isDeleted: false 
-            } 
-        });
-        if (promo && promo.isActive && (!promo.expiresAt || new Date(promo.expiresAt) >= new Date())) {
-            discountType = promo.discountType;
-            if (promo.discountType === DiscountType.PERCENTAGE) {
-                discount = +(subtotal * (Number(promo.discount) / 100)).toFixed(2);
-            } else {
-                discount = Number(promo.discount);
-            }
-        }
-    }
-    return { discount, discountType };
-}
-
-/**
- * Reduces product stock after order placement.
- */
-async function reduceProductStock(items: Array<{ productId: string; quantity: number }>) {
+async function reduceProductStock(
+    tx: Prisma.TransactionClient,
+    items: Array<{ productId: string; quantity: number }>
+) {
     for (const item of items) {
-        await prisma.product.update({
+        await tx.product.update({
             where: { id: item.productId },
             data: { stock: { decrement: item.quantity } }
         });
     }
 }
 
-// --- Main Order Creation ---
-/**
- * Creates an order, calculates charges, applies promo, and updates stock.
- */
-export async function createOrder({ userId, addressId, items, promoCodeId, deliveryDate }: {
+// --- Main Order Creation (Atomic) ---
+export async function createOrder({ userId, addressId, items, promoCodeId, deliveryDate, orderType, paymentMethod }: {
     userId: string;
     addressId: string;
     items: Array<{ productId: string; quantity: number; price: number }>;
     promoCodeId?: string;
     deliveryDate?: Date | string;
+    orderType?: 'PICKUP' | 'DELIVERY';
+    paymentMethod?: 'CASH' | 'CARD' | 'ONLINE';
 }) {
-    // Validate delivery date
+    // Validate delivery date before transaction
     let validDeliveryDate: Date | undefined;
     if (deliveryDate) {
-        // Convert string date to proper Date object with time set to start of day
-        const date = typeof deliveryDate === 'string' ? new Date(deliveryDate + 'T00:00:00.000Z') : new Date(deliveryDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (isNaN(date.getTime()) || date < today) {
+        const date = typeof deliveryDate === 'string'
+            ? parse(deliveryDate, 'yyyy-MM-dd', new Date())
+            : deliveryDate;
+        const today = startOfDay(new Date());
+
+        if (!isValid(date) || isBefore(date, today)) {
             throw new Error("Delivery date must be today or in the future");
         }
         validDeliveryDate = date;
     }
 
-    // Validate items
-    const products = await validateOrderItems(items);
-    const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const config = await getConfigObject();
-    const { TAX_RATE, convenienceCharges, deliveryCharges, tax } = calculateCharges(config, subtotal);
-    const { discount } = await calculateDiscount(subtotal, promoCodeId);
+    // Pre-fetch config and promo data outside transaction (read-only)
+    const configs = await getAllConfigs();
+    const chargeConfig = parseChargeConfig(configs);
+    const freeDeliveryConfig = parseFreeDeliveryConfig(configs);
 
-    // Prepare order data
-    const orderData: any = {
-        userId,
-        addressId,
-        promoCodeId,
-        total: +(subtotal + tax + convenienceCharges + deliveryCharges - discount).toFixed(2),
-        tax,
-        convenienceCharges,
-        deliveryCharges,
-        discount,
-        status: OrderStatus.PENDING,
-        items: {
-            create: items.map(item => ({
-                productId: item.productId,
-                quantity: item.quantity,
-                price: item.price,
-            }))
+    const address = await prisma.address.findFirst({ where: { id: addressId } });
+
+    if (orderType === 'DELIVERY') {
+        if (!validDeliveryDate) {
+            throw new Error("Delivery date is required for delivery orders");
         }
-    };
-    if (validDeliveryDate) orderData.deliveryDate = validDeliveryDate;
+        if (!address || !isDeliveryAvailable(validDeliveryDate, address.city, freeDeliveryConfig)) {
+            throw new Error("Delivery is not available for the selected date and location. Please choose a different date or location.");
+        }
+    }
 
-    // Create order and update stock
-    const order = await prisma.order.create({
-        data: orderData,
-        include: { items: true }
+    const isFreeDelivery = address && validDeliveryDate
+        ? isFreeDeliveryEligible(validDeliveryDate, address.city, orderType || 'DELIVERY', freeDeliveryConfig)
+        : false;
+
+    const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const charges = calculateOrderCharges(subtotal, chargeConfig, isFreeDelivery, orderType || 'DELIVERY');
+
+    let discount = 0;
+    if (promoCodeId) {
+        const promoResult = await validateAndApplyPromoCode(promoCodeId, subtotal);
+        if (promoResult.valid && promoResult.promo) {
+            discount = calculateDiscountAmount(
+                subtotal,
+                promoResult.promo.discountType,
+                promoResult.promo.discount,
+                promoResult.promo.maxDiscount
+            );
+        }
+    }
+
+    const totals = calculateOrderTotal(subtotal, charges, discount, chargeConfig.taxPercent.percent);
+
+    // Atomic transaction: validate stock, create order, decrement stock, increment promo
+    return prisma.$transaction(async (tx) => {
+        // Re-validate stock inside transaction to prevent race conditions
+        await validateOrderItems(tx, items);
+
+        const orderNumber = await generateUniqueOrderNumber(tx);
+
+        const orderData: Prisma.OrderCreateInput = {
+            orderNumber,
+            user: { connect: { id: userId } },
+            address: { connect: { id: addressId } },
+            ...(promoCodeId && { promoCode: { connect: { id: promoCodeId } } }),
+            total: totals.finalTotal,
+            tax: charges.tax,
+            convenienceCharges: charges.convenienceCharge,
+            deliveryCharges: charges.deliveryCharge,
+            discount,
+            status: OrderStatus.PENDING,
+            deliveryType: (orderType || 'DELIVERY') as 'PICKUP' | 'DELIVERY',
+            paymentMethod: (paymentMethod || 'ONLINE') as 'CASH' | 'CARD' | 'ONLINE',
+            ...(validDeliveryDate && { deliveryDate: validDeliveryDate }),
+            items: {
+                create: items.map(item => ({
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    price: item.price,
+                }))
+            }
+        };
+
+        const order = await tx.order.create({
+            data: orderData,
+            include: { items: true }
+        });
+
+        await reduceProductStock(tx, items);
+
+        if (promoCodeId && discount > 0) {
+            await incrementPromoUsage(promoCodeId);
+        }
+
+        return order;
     });
-    await reduceProductStock(items);
-    return order;
 }
 
 /**

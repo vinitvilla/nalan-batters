@@ -9,9 +9,30 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { camelToTitle } from "@/lib/utils/commonFunctions";
-import { Trash2, Plus, AlertCircle } from "lucide-react";
+import { 
+  Trash2, 
+  Plus, 
+  AlertCircle, 
+  Settings2, 
+  DollarSign, 
+  Clock, 
+  Truck, 
+  Zap,
+  Shield,
+  Bell,
+  Link,
+  MessageSquare,
+  Save,
+  RotateCcw,
+  CheckCircle2,
+  Palette
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AdditionalChargesForm } from "@/components/AdditionalChargesForm";
+import { OperatingHoursForm } from "@/components/OperatingHoursForm";
+import { FreeDeliveryForm } from "@/components/FreeDeliveryForm";
 
 interface Config {
   id?: string;
@@ -21,6 +42,30 @@ interface Config {
   isActive: boolean;
 }
 
+// Helper function to get icon for config
+const getConfigIcon = (key: string) => {
+  switch (key) {
+    case 'additionalCharges':
+      return <DollarSign className="w-4 h-4" />;
+    case 'operatingHours':
+      return <Clock className="w-4 h-4" />;
+    case 'freeDelivery':
+      return <Truck className="w-4 h-4" />;
+    case 'paymentSettings':
+      return <Shield className="w-4 h-4" />;
+    case 'appSettings':
+      return <Zap className="w-4 h-4" />;
+    case 'socialMediaLinks':
+      return <Link className="w-4 h-4" />;
+    case 'contactInfo':
+      return <MessageSquare className="w-4 h-4" />;
+    case 'orderSettings':
+      return <Bell className="w-4 h-4" />;
+    default:
+      return <Settings2 className="w-4 h-4" />;
+  }
+};
+
 export default function ConfigForm() {
   const adminApiFetch = useAdminApi();
   const [configs, setConfigs] = useState<Config[]>([]);
@@ -28,6 +73,36 @@ export default function ConfigForm() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>('');
+
+  // Helper function to sort object entries by day of week if applicable
+  const getSortedEntries = (configKey: string, value: unknown): [string, unknown][] => {
+    if (typeof value !== "object" || value === null) {
+      return [];
+    }
+    
+    const entries = Object.entries(value);
+    
+    // Check if this is the freeDelivery config (contains day names)
+    if (configKey === 'freeDelivery' || configKey === 'operatingHours') {
+      const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const isDayConfig = entries.some(([key]) => daysOrder.includes(key));
+      
+      if (isDayConfig) {
+        return entries.sort(([keyA], [keyB]) => {
+          const indexA = daysOrder.indexOf(keyA);
+          const indexB = daysOrder.indexOf(keyB);
+          // Put days in order, keep non-day keys at the end
+          if (indexA === -1 && indexB === -1) return 0;
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+          return indexA - indexB;
+        });
+      }
+    }
+    
+    return entries;
+  };
 
   useEffect(() => {
     adminApiFetch("/api/admin/config").then(async (res) => {
@@ -36,6 +111,10 @@ export default function ConfigForm() {
       setConfigs(data);
       setOriginalConfigs(data);
       setLoading(false);
+      // Set first config as active by default
+      if (data.length > 0) {
+        setActiveSection(data[0].id || '');
+      }
     });
   }, [adminApiFetch]);
 
@@ -79,7 +158,12 @@ export default function ConfigForm() {
       });
       if (!res || !res.ok) success = false;
     }
-    if (!success) setError("Failed to save one or more configs");
+    if (!success) {
+      setError("Failed to save one or more configs");
+    } else {
+      // Update original configs on successful save
+      setOriginalConfigs(configs);
+    }
     setSaving(false);
   };
 
@@ -90,221 +174,301 @@ export default function ConfigForm() {
 
   if (loading) return (
     <div className="flex items-center justify-center py-12">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+      <div className="text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-600 border-t-transparent mx-auto"></div>
+        <p className="text-sm text-muted-foreground">Loading configuration...</p>
+      </div>
     </div>
   );
-  
-  if (error) return (
-    <div className="flex items-center justify-center py-12">
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <div className="font-semibold">Error Loading Settings</div>
-          <div className="text-sm">{error}</div>
-        </AlertDescription>
-      </Alert>
-    </div>
-  );
+
+  const hasChanges = JSON.stringify(configs) !== JSON.stringify(originalConfigs);
 
   return (
-    <div className="flex flex-col lg:flex-row">
-      {/* Mobile/Tablet Navigation */}
-      <div className="lg:hidden border-b bg-muted/30">
-        <div className="p-4">
-          <Select onValueChange={(value) => {
-            const element = document.getElementById(value);
-            if (element) element.scrollIntoView({ behavior: 'smooth' });
-          }}>
-            <SelectTrigger className="w-full cursor-pointer">
-              <SelectValue placeholder="Select a setting..." />
-            </SelectTrigger>
-            <SelectContent>
-              {configs.map((config) => (
-                <SelectItem key={config.id} value={`config-${config.id}`}>
-                  {camelToTitle(config.title || config.key)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Desktop Sidebar - Made Sticky */}
-      <aside className="hidden lg:block w-72 bg-muted/30 border-r flex-shrink-0 sticky top-0 h-screen overflow-hidden">
-        <div className="p-6">
-          <div className="mb-6">
-            <h3 className="font-bold text-lg">Configuration</h3>
-            <p className="text-sm text-muted-foreground">Select settings to configure</p>
-          </div>
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <nav className="space-y-1">
-              {configs.map((config) => (
-                <a
-                  key={config.id}
-                  href={`#config-${config.id}`}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-background hover:shadow-sm transition-all border border-transparent hover:border-border group cursor-pointer"
-                >
-                  <span className="group-hover:text-orange-600 transition-colors">
-                    {camelToTitle(config.title || config.key)}
-                  </span>
-                  <Badge variant={config.isActive ? "default" : "secondary"} className="ml-2">
-                    {config.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </a>
-              ))}
-            </nav>
-          </ScrollArea>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col">
-        {/* Sticky Action Bar */}
-        <div className="sticky top-0 z-10 bg-background border-b px-4 lg:px-8 py-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-orange-50/20 to-gray-50">
+      {/* Header with Action Buttons */}
+      <CardHeader className="border-b flex-shrink-0 bg-white">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 flex items-center justify-center">
+              <Palette className="w-4 h-4 text-white" />
+            </div>
             <div>
-              <h2 className="text-lg lg:text-xl font-bold">System Configuration</h2>
-              <p className="text-sm text-muted-foreground">Modify application settings and preferences</p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleDiscard}
-                disabled={saving || !!error}
-                variant="outline"
-                size="sm"
-                className="text-xs lg:text-sm cursor-pointer"
-              >
-                Discard Changes
-              </Button>
-              <Button
-                onClick={handleSaveAll}
-                disabled={saving || !!error || JSON.stringify(configs) === JSON.stringify(originalConfigs)}
-                size="sm"
-                className="text-xs lg:text-sm text-white border-0 cursor-pointer"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
+              <CardTitle className="text-lg font-bold">Configuration Management</CardTitle>
+              <CardDescription>Manage application configuration and system settings</CardDescription>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            {hasChanges && (
+              <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 text-xs">
+                Unsaved changes
+              </Badge>
+            )}
+            <Button
+              onClick={handleDiscard}
+              disabled={saving || !hasChanges}
+              variant="outline"
+              size="sm"
+              className="gap-2 cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Discard
+            </Button>
+            <Button
+              onClick={handleSaveAll}
+              disabled={saving || !hasChanges}
+              size="sm"
+              className="gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg cursor-pointer"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
         </div>
+      </CardHeader>
 
-        {/* Settings Content */}
-        <ScrollArea className="flex-1">
-          <div className="p-4 lg:p-8 space-y-6">
+      {/* Main Content Area with Fixed Layout */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full px-4 lg:px-6 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+            {/* Sidebar Navigation - Fixed with independent scroll */}
+            <div className="lg:col-span-1 hidden lg:block">
+              <div className="h-full flex flex-col">
+                <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm flex flex-col max-h-full">
+                  <CardHeader className="pb-3 flex-shrink-0">
+                    <CardTitle className="text-sm font-semibold text-gray-700">Settings</CardTitle>
+                    <CardDescription className="text-xs">Select a section</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0 flex-1 overflow-hidden">
+                    <ScrollArea className="h-full">
+                      <nav className="space-y-1 p-3">
+                        {configs.map((config) => (
+                          <button
+                            key={config.id}
+                            onClick={() => {
+                              setActiveSection(config.id || '');
+                              const element = document.getElementById(`config-${config.id}`);
+                              if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }
+                            }}
+                            className={`cursor-pointer w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                              activeSection === config.id
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg scale-105'
+                                : 'text-gray-700 hover:bg-gray-100 hover:scale-102'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              {getConfigIcon(config.key || config.title || '')}
+                              <span className="truncate">{camelToTitle(config.title || config.key)}</span>
+                            </div>
+                            <Badge 
+                              variant={config.isActive ? "default" : "secondary"}
+                              className={activeSection === config.id 
+                                ? "bg-white/20 text-white border-white/30" 
+                                : ""
+                              }
+                            >
+                              {config.isActive ? "On" : "Off"}
+                            </Badge>
+                          </button>
+                        ))}
+                      </nav>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Settings Content - Scrollable independently */}
+            <div className="lg:col-span-3 overflow-y-auto h-full">
+              <div className="space-y-6 pb-6">
+            {error && (
+              <Alert variant="destructive" className="shadow-lg">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="font-medium">{error}</AlertDescription>
+              </Alert>
+            )}
             {configs.map((config, idx) => (
-              <Card key={config.id} id={`config-${config.id}`} className="shadow-sm">
-                <CardHeader className="pb-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <CardTitle className="text-lg font-bold flex items-center gap-2">
-                        {camelToTitle(config.title || config.key)}
-                        <Badge variant={config.isActive ? "default" : "secondary"}>
-                          {config.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription className="text-sm mt-1">
-                        Configure {camelToTitle(config.title || config.key).toLowerCase()} settings
-                      </CardDescription>
+              <Card 
+                key={config.id} 
+                id={`config-${config.id}`} 
+                className="shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden transition-all hover:shadow-xl py-0"
+              >
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md text-white">
+                          {getConfigIcon(config.key || config.title || '')}
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-xl font-bold flex items-center gap-2">
+                            {camelToTitle(config.title || config.key)}
+                          </CardTitle>
+                          <CardDescription className="text-sm mt-1">
+                            Configure {camelToTitle(config.title || config.key).toLowerCase()} settings
+                          </CardDescription>
+                        </div>
+                      </div>
                     </div>
-                    <Switch
-                      checked={config.isActive}
-                      onCheckedChange={() => handleToggle(idx)}
-                      disabled={saving}
-                      className="data-[state=checked]:bg-orange-500 cursor-pointer"
-                    />
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge 
+                          variant={config.isActive ? "default" : "secondary"}
+                          className={config.isActive 
+                            ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md" 
+                            : "bg-gray-200 text-gray-600"
+                          }
+                        >
+                          {config.isActive ? (
+                            <span className="flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Active
+                            </span>
+                          ) : (
+                            "Inactive"
+                          )}
+                        </Badge>
+                        <Switch
+                          checked={config.isActive}
+                          onCheckedChange={() => handleToggle(idx)}
+                          disabled={saving}
+                          className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-orange-500 data-[state=checked]:to-orange-600 cursor-pointer"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {typeof config.value === "object" && config.value !== null ? (
-                    Object.entries(config.value).map(([key, val]) => (
-                      <div key={key} className="space-y-2">
-                        <label className="text-sm font-semibold capitalize">
-                          {key.replace(/([A-Z])/g, ' $1').trim()}
-                        </label>
-                        {typeof val === "boolean" ? (
-                          <div className="flex items-center gap-3">
-                            <Switch
-                              checked={val}
-                              onCheckedChange={(checked: boolean) => {
-                                const currentValue = config.value as Record<string, unknown> | undefined;
-                                handleChange(idx, { ...currentValue, [key]: checked });
-                                setError(null);
-                              }}
-                              disabled={saving}
-                              className="data-[state=checked]:bg-orange-500 cursor-pointer"
-                            />
-                            <Badge variant={val ? "default" : "secondary"}>
-                              {val ? 'Enabled' : 'Disabled'}
-                            </Badge>
-                          </div>
-                        ) : Array.isArray(val) ? (
-                          <div className="space-y-2">
-                            {val.map((item: string | number | Record<string, unknown>, arrIdx: number) => (
-                              <div key={arrIdx} className="flex gap-2">
-                                <Input
-                                  className="flex-1 text-sm"
-                                  value={typeof item === "string" || typeof item === "number" ? item : JSON.stringify(item)}
-                                  onChange={e => {
-                                    const newArr = [...val];
-                                    newArr[arrIdx] = e.target.value;
-                                    const valueObj = config.value && typeof config.value === 'object' ? config.value as Record<string, unknown> : {};
-                                    handleChange(idx, { ...valueObj, [key]: newArr });
-                                    setError(null);
-                                  }}
-                                  disabled={saving}
-                                  placeholder={`${key} item ${arrIdx + 1}`}
-                                />
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    const newArr = val.filter((_: string | number | Record<string, unknown>, i: number) => i !== arrIdx);
-                                    const valueObj = config.value && typeof config.value === 'object' ? config.value as Record<string, unknown> : {};
-                                    handleChange(idx, { ...valueObj, [key]: newArr });
-                                    setError(null);
-                                  }}
-                                  disabled={saving}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            ))}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newArr = [...val, ""];
+                <CardContent className="p-6">
+                  {config.key === 'additionalCharges' || config.title === 'additionalCharges' ? (
+                    <AdditionalChargesForm
+                      value={config.value as AdditionalChargesConfig}
+                      onChange={(newValue) => {
+                        handleChange(idx, newValue);
+                        setError(null);
+                      }}
+                      disabled={saving}
+                    />
+                  ) : config.key === 'operatingHours' || config.title === 'operatingHours' ? (
+                    <OperatingHoursForm
+                      value={config.value as OperatingHoursConfig}
+                      onChange={(newValue) => {
+                        handleChange(idx, newValue);
+                        setError(null);
+                      }}
+                      disabled={saving}
+                    />
+                  ) : config.key === 'freeDelivery' || config.title === 'freeDelivery' ? (
+                    <FreeDeliveryForm
+                      value={config.value as FreeDeliveryFormConfig}
+                      onChange={(newValue) => {
+                        handleChange(idx, newValue);
+                        setError(null);
+                      }}
+                      disabled={saving}
+                    />
+                  ) : typeof config.value === "object" && config.value !== null ? (
+                    <div className="space-y-4">
+                      {getSortedEntries(config.key || config.title || '', config.value).map(([key, val]) => (
+                        <div key={key} className="space-y-2 p-4 rounded-lg bg-gradient-to-br from-gray-50 to-white border">
+                          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <div className="w-1 h-4 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"></div>
+                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                          </label>
+                          {typeof val === "boolean" ? (
+                            <div className="flex items-center gap-3 pl-5">
+                              <Switch
+                                checked={val}
+                                onCheckedChange={(checked: boolean) => {
+                                  const currentValue = config.value as Record<string, unknown> | undefined;
+                                  handleChange(idx, { ...currentValue, [key]: checked });
+                                  setError(null);
+                                }}
+                                disabled={saving}
+                                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-orange-500 data-[state=checked]:to-orange-600 cursor-pointer"
+                              />
+                              <Badge variant={val ? "default" : "secondary"} className={val ? "bg-green-500" : ""}>
+                                {val ? 'Enabled' : 'Disabled'}
+                              </Badge>
+                            </div>
+                          ) : Array.isArray(val) ? (
+                            <div className="space-y-2 pl-5">
+                              {val.map((item: string | number | Record<string, unknown>, arrIdx: number) => (
+                                <div key={arrIdx} className="flex gap-2">
+                                  <Input
+                                    className="flex-1 text-sm border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                                    value={typeof item === "string" || typeof item === "number" ? item : JSON.stringify(item)}
+                                    onChange={e => {
+                                      const newArr = [...val];
+                                      newArr[arrIdx] = e.target.value;
+                                      const valueObj = config.value && typeof config.value === 'object' ? config.value as Record<string, unknown> : {};
+                                      handleChange(idx, { ...valueObj, [key]: newArr });
+                                      setError(null);
+                                    }}
+                                    disabled={saving}
+                                    placeholder={`${key} item ${arrIdx + 1}`}
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newArr = val.filter((_: string | number | Record<string, unknown>, i: number) => i !== arrIdx);
+                                      const valueObj = config.value && typeof config.value === 'object' ? config.value as Record<string, unknown> : {};
+                                      handleChange(idx, { ...valueObj, [key]: newArr });
+                                      setError(null);
+                                    }}
+                                    disabled={saving}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 cursor-pointer"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const newArr = [...val, ""];
+                                  const valueObj = config.value && typeof config.value === 'object' ? config.value as Record<string, unknown> : {};
+                                  handleChange(idx, { ...valueObj, [key]: newArr });
+                                  setError(null);
+                                }}
+                                disabled={saving}
+                                className="w-full border-dashed border-2 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 cursor-pointer"
+                              >
+                                <Plus className="w-4 h-4 mr-2" /> Add {key} Item
+                              </Button>
+                            </div>
+                          ) : (
+                            <Input
+                              className="w-full text-sm pl-5 border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                              value={typeof val === "number" ? String(val) : (typeof val === "string" ? val : JSON.stringify(val))}
+                              onChange={e => {
                                 const valueObj = config.value && typeof config.value === 'object' ? config.value as Record<string, unknown> : {};
-                                handleChange(idx, { ...valueObj, [key]: newArr });
+                                handleChange(idx, { ...valueObj, [key]: e.target.value });
                                 setError(null);
                               }}
                               disabled={saving}
-                              className="w-full sm:w-auto hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 cursor-pointer"
-                            >
-                              <Plus className="w-4 h-4 mr-2" /> Add {key} Item
-                            </Button>
-                          </div>
-                        ) : (
-                          <Input
-                            className="w-full text-sm focus:ring-orange-500 focus:border-orange-500"
-                            value={typeof val === "number" ? String(val) : (typeof val === "string" ? val : JSON.stringify(val))}
-                            onChange={e => {
-                              const valueObj = config.value && typeof config.value === 'object' ? config.value as Record<string, unknown> : {};
-                              handleChange(idx, { ...valueObj, [key]: e.target.value });
-                              setError(null);
-                            }}
-                            disabled={saving}
-                            placeholder={`Enter ${key}`}
-                          />
-                        )}
-                      </div>
-                    ))
+                              placeholder={`Enter ${key}`}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   ) : (
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold">Raw Configuration (JSON)</label>
+                      <label className="text-sm font-semibold text-gray-700">Raw Configuration (JSON)</label>
                       <Textarea
-                        className="w-full font-mono text-sm min-h-[120px] bg-muted/30 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full font-mono text-sm min-h-[120px] bg-gradient-to-br from-gray-50 to-white border-gray-300 focus:border-orange-500 focus:ring-orange-500"
                         value={JSON.stringify(config.value, null, 2)}
                         onChange={e => {
                           try {
@@ -322,16 +486,11 @@ export default function ConfigForm() {
                 </CardContent>
               </Card>
             ))}
-            
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+              </div>
+            </div>
           </div>
-        </ScrollArea>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

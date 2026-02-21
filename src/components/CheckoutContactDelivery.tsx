@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useAddressStore } from "@/store/addressStore";
 import { AddressForm } from "@/components/AddressForm";
@@ -12,6 +12,7 @@ import { formatAddress } from "@/lib/utils/commonFunctions";
 import { ChooseDeliveryDate } from "@/components/ChooseDeliveryDate";
 import { useConfigStore } from "@/store/configStore";
 import { useOrderStore } from "@/store/orderStore";
+import moment from 'moment';
 
 // Modern, engaging styling constants
 const INPUT_STYLES = "w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 placeholder:text-gray-500 px-4 py-3 font-medium transition-all duration-200 hover:border-gray-300 text-base shadow-sm";
@@ -46,9 +47,11 @@ export function CheckoutContactDelivery({
   const [deliveryDates, setDeliveryDates] = useState<Array<{ date: string, day: string }>>([]);
   const selectedDeliveryDate = useOrderStore(s => s.selectedDeliveryDate);
   const setSelectedDeliveryDate = useOrderStore(s => s.setSelectedDeliveryDate);
+  const deliveryType = useOrderStore(s => s.deliveryType);
 
   useEffect(() => {
-    if (!selectedAddress?.city || !freeDeliveryConfig) {
+    // Only calculate delivery dates for delivery orders
+    if (deliveryType !== 'DELIVERY' || !selectedAddress?.city || !freeDeliveryConfig) {
       setDeliveryDates([]);
       setSelectedDeliveryDate("");
       return;
@@ -56,7 +59,7 @@ export function CheckoutContactDelivery({
     const dates = getNextDeliveryDates(selectedAddress.city, freeDeliveryConfig);
     setDeliveryDates(dates);
     setSelectedDeliveryDate(dates[0]?.date || "");
-  }, [selectedAddress, freeDeliveryConfig, setSelectedDeliveryDate]);
+  }, [selectedAddress, freeDeliveryConfig, setSelectedDeliveryDate, deliveryType]);
 
   const handleAddressAdded = useCallback(() => {
     onAddAddress();
@@ -89,7 +92,12 @@ export function CheckoutContactDelivery({
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
-                <p className="text-gray-600">We need your name for delivery confirmation</p>
+                <p className="text-gray-600">
+                  {deliveryType === 'PICKUP' 
+                    ? 'We need your name for pickup confirmation'
+                    : 'We need your name for delivery confirmation'
+                  }
+                </p>
               </div>
             </div>
           </div>
@@ -106,19 +114,20 @@ export function CheckoutContactDelivery({
           </div>
         </div>
 
-        {/* Delivery Address */}
-        <div className={STEP_CARD_STYLES}>
-          <div className={STEP_HEADER_STYLES}>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <MapPin className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Delivery Address</h2>
-                <p className="text-gray-600">Choose where you want your order delivered</p>
+        {/* Delivery Address - Only show for delivery orders */}
+        {deliveryType === 'DELIVERY' && (
+          <div className={STEP_CARD_STYLES}>
+            <div className={STEP_HEADER_STYLES}>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <MapPin className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Delivery Address</h2>
+                  <p className="text-gray-600">Choose where you want your order delivered</p>
+                </div>
               </div>
             </div>
-          </div>
           <div className={STEP_CONTENT_STYLES}>
             {hasAddresses ? (
               <div className="space-y-6">
@@ -154,12 +163,16 @@ export function CheckoutContactDelivery({
                         <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
                           Add New Delivery Address
                         </DialogTitle>
-                        <p className="text-gray-600 text-base leading-relaxed">
+                        <DialogDescription className="text-gray-600 text-base leading-relaxed">
                           Enter your address details below. We&apos;ll save it securely for future orders!
-                        </p>
+                        </DialogDescription>
                       </DialogHeader>
                       <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
-                        <AddressForm loading={loading} onAdd={handleAddressAdded} />
+                        <AddressForm 
+                          loading={loading} 
+                          onAdd={handleAddressAdded} 
+                          onCancel={() => setDialogOpen(false)}
+                        />
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -315,12 +328,16 @@ export function CheckoutContactDelivery({
                       <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
                         Add Your First Delivery Address
                       </DialogTitle>
-                      <p className="text-gray-600 text-base leading-relaxed">
+                      <DialogDescription className="text-gray-600 text-base leading-relaxed">
                         Enter your address details below. We&apos;ll save it securely for future orders!
-                      </p>
+                      </DialogDescription>
                     </DialogHeader>
                     <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
-                      <AddressForm loading={loading} onAdd={handleAddressAdded} />
+                      <AddressForm 
+                        loading={loading} 
+                        onAdd={handleAddressAdded} 
+                        onCancel={() => setDialogOpen(false)}
+                      />
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -328,9 +345,10 @@ export function CheckoutContactDelivery({
             )}
           </div>
         </div>
+        )}
 
-        {/* Delivery Date */}
-        {hasAddresses && selectedAddress && (
+        {/* Delivery Date - Only show for delivery orders */}
+        {deliveryType === 'DELIVERY' && hasAddresses && selectedAddress && (
           <div className={STEP_CARD_STYLES}>
             <div className={STEP_HEADER_STYLES}>
               <div className="flex items-center gap-4">
@@ -344,17 +362,37 @@ export function CheckoutContactDelivery({
               </div>
             </div>
             <div className={STEP_CONTENT_STYLES}>
-              <ChooseDeliveryDate
-                deliveryDates={deliveryDates}
-                selectedDeliveryDate={selectedDeliveryDate}
-                setSelectedDeliveryDate={setSelectedDeliveryDate}
-              />
+              {deliveryDates.length > 0 ? (
+                <ChooseDeliveryDate
+                  deliveryDates={deliveryDates}
+                  selectedDeliveryDate={selectedDeliveryDate}
+                  setSelectedDeliveryDate={setSelectedDeliveryDate}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-3xl flex items-center justify-center shadow-lg border border-red-300">
+                      <Calendar className="w-8 h-8 text-red-700" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-red-900 mb-3">
+                    No Delivery Available
+                  </h3>
+                  <p className="text-red-700 text-base mb-4 max-w-md mx-auto leading-relaxed">
+                    Unfortunately, we don&apos;t currently deliver to <strong>{selectedAddress.city}</strong> or there are no delivery slots available for this area.
+                  </p>
+                  <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
+                    Please select a different address or contact us to inquire about delivery to your area.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {/* Completion Indicator */}
-        {hasAddresses && selectedAddress && selectedDeliveryDate && (
+        {((deliveryType === 'DELIVERY' && hasAddresses && selectedAddress && selectedDeliveryDate && deliveryDates.length > 0) || 
+          (deliveryType === 'PICKUP' && name.trim().length > 0)) && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-8 text-center shadow-lg">
             <div className="flex justify-center mb-6">
               <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 text-white rounded-3xl flex items-center justify-center shadow-lg">
@@ -363,7 +401,10 @@ export function CheckoutContactDelivery({
             </div>
             <h3 className="text-2xl font-bold text-green-900 mb-3">Ready to Place Order!</h3>
             <p className="text-green-700 text-lg leading-relaxed max-w-md mx-auto">
-              All information complete. You can now proceed to payment and finalize your delicious batter order.
+              {deliveryType === 'PICKUP' 
+                ? 'All information complete. You can now proceed to payment and finalize your pickup order.'
+                : 'All information complete. You can now proceed to payment and finalize your delicious batter order.'
+              }
             </p>
           </div>
         )}
@@ -375,12 +416,10 @@ export function CheckoutContactDelivery({
 function getNextDeliveryDates(city: string, freeDeliveryConfig: Record<string, unknown>): Array<{ date: string, day: string }> {
   if (!city || !freeDeliveryConfig) return [];
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const today = new Date();
-  const utcToday = new Date(today.toISOString());
-  const estOffset = -5 * 60;
-  const estToday = new Date(utcToday.getTime() + (estOffset * 60 * 1000));
-  estToday.setHours(0, 0, 0, 0);
-  const todayDay = estToday.getDay();
+  
+  // Use moment.js to get today in EST timezone
+  const estToday = moment().utcOffset(-5).startOf('day');
+  const todayDay = estToday.day(); // 0 = Sunday, 1 = Monday, etc.
   const count = 4;
 
   // Find all delivery days for the city
@@ -397,9 +436,11 @@ function getNextDeliveryDates(city: string, freeDeliveryConfig: Record<string, u
     let daysUntilNextDay = (targetDay - todayDay + 7) % 7;
     if (daysUntilNextDay === 0) daysUntilNextDay = 7;
     for (let i = 0; i < count; i++) {
-      const nextDayDate = new Date(estToday);
-      nextDayDate.setDate(estToday.getDate() + daysUntilNextDay);
-      allDates.push({ date: nextDayDate.toISOString().split('T')[0], day: dayName });
+      const nextDayDate = moment(estToday).add(daysUntilNextDay, 'days');
+      allDates.push({ 
+        date: nextDayDate.format('YYYY-MM-DD'), 
+        day: dayName 
+      });
       daysUntilNextDay += 7;
     }
   });

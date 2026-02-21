@@ -1,12 +1,13 @@
 import React from "react";
 import { Instagram, Facebook, Phone } from "lucide-react";
+import moment from 'moment';
 
 export default function Footer() {
   return (
     <footer className="w-full bg-white border-t mt-8 py-6 text-center text-sm text-gray-500">
       <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4">
         <span className="mb-2 md:mb-0 block text-center md:text-left">
-          &copy; {new Date().getFullYear()} Nalan Batters. All rights reserved.
+          &copy; {moment().year()} Nalan Batters. All rights reserved.
         </span>
         <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center md:justify-end items-center w-full md:w-auto">
           <a

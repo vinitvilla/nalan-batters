@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -15,138 +9,134 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(uuid())
-  phone             String    @unique
-  fullName          String
-  addresses         Address[] @relation("UserAddresses")
-  orders            Order[]
-  defaultAddressId  String?   @unique
-  defaultAddress    Address?  @relation("DefaultAddress", fields: [defaultAddressId], references: [id])
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  cart              Cart?
-  role              UserRole  @default(USER)
-  isDelete          Boolean   @default(false)
-}
-
-enum UserRole {
-  USER
-  ADMIN
-  MANAGER
+  id               String    @id @default(uuid())
+  phone            String    @unique
+  defaultAddressId String?   @unique
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  fullName         String
+  role             UserRole  @default(USER)
+  isDelete         Boolean   @default(false)
+  addresses        Address[] @relation("UserAddresses")
+  cart             Cart?
+  orders           Order[]
+  defaultAddress   Address?  @relation("DefaultAddress", fields: [defaultAddressId], references: [id])
+  driverOrders     Order[]   @relation("DriverOrders")
 }
 
 model Address {
-  id        String   @id @default(uuid())
-  user      User     @relation("UserAddresses", fields: [userId], references: [id])
-  userId    String
-  street    String
-  unit      String?
-  city      String
-  province  String
-  country   String
-  postal    String
-  orders    Order[]
-  defaultForUser User? @relation("DefaultAddress")
-  isDeleted Boolean   @default(false)
+  id             String  @id @default(uuid())
+  userId         String
+  street         String
+  unit           String?
+  city           String
+  province       String
+  country        String
+  postal         String
+  isDeleted      Boolean @default(false)
+  user           User    @relation("UserAddresses", fields: [userId], references: [id])
+  orders         Order[]
+  defaultForUser User?   @relation("DefaultAddress")
 }
 
 model Product {
-  id          String    @id @default(uuid())
+  id          String      @id @default(uuid())
   name        String
   description String?
-  price       Decimal   @db.Decimal(10,2)
+  price       Decimal     @db.Decimal(10, 2)
   imageUrl    String?
-  stock       Int       @default(0)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  orderItems  OrderItem[]
-  category    Category  @relation(fields: [categoryId], references: [id])
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  stock       Int         @default(0)
   categoryId  String
+  isDelete    Boolean     @default(false)
   cartItems   CartItem[]
-  isDelete    Boolean   @default(false)
+  orderItems  OrderItem[]
+  category    Category    @relation(fields: [categoryId], references: [id])
+  isPopular   Boolean     @default(false)
 }
 
 model Order {
-  id          String      @id @default(uuid())
-  user        User        @relation(fields: [userId], references: [id])
-  userId      String
-  address     Address     @relation(fields: [addressId], references: [id])
-  addressId   String
-  items       OrderItem[]
-  status      OrderStatus @default(PENDING)
-  total       Decimal     @db.Decimal(10,2)
-  tax         Decimal?    @db.Decimal(10,2)
-  convenienceCharges  Decimal?    @db.Decimal(10,2)
-  deliveryCharges Decimal? @db.Decimal(10,2)
-  discount    Decimal?    @db.Decimal(10,2)
-  promoCode   PromoCode?  @relation(fields: [promoCodeId], references: [id])
-  promoCodeId String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  deliveryDate DateTime?
-  isDelete    Boolean     @default(false)
-}
-
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  SHIPPED
-  DELIVERED
-  CANCELLED
+  id                 String        @id @default(uuid())
+  userId             String
+  addressId          String
+  status             OrderStatus   @default(PENDING)
+  total              Decimal       @db.Decimal(10, 2)
+  promoCodeId        String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  deliveryCharges    Decimal?      @db.Decimal(10, 2)
+  discount           Decimal?      @db.Decimal(10, 2)
+  tax                Decimal?      @db.Decimal(10, 2)
+  deliveryDate       DateTime?
+  convenienceCharges Decimal?       @db.Decimal(10, 2)
+  isDelete           Boolean        @default(false)
+  deliveryType       DeliveryType   @default(DELIVERY)
+  orderType          OrderSource    @default(ONLINE)
+  paymentMethod      PaymentMethod  @default(ONLINE)
+  orderNumber        String         @unique @db.Char(5)
+  address            Address       @relation(fields: [addressId], references: [id])
+  promoCode          PromoCode?    @relation(fields: [promoCodeId], references: [id])
+  user               User          @relation(fields: [userId], references: [id])
+  items              OrderItem[]
+  driverId           String?
+  driver             User?         @relation("DriverOrders", fields: [driverId], references: [id])
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
-  order     Order    @relation(fields: [orderId], references: [id])
+  id        String  @id @default(uuid())
   orderId   String
-  product   Product  @relation(fields: [productId], references: [id])
   productId String
   quantity  Int
-  price     Decimal  @db.Decimal(10,2)
+  price     Decimal @db.Decimal(10, 2)
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model PromoCode {
-  id          String    @id @default(uuid())
-  code        String    @unique
-  discount    Decimal   @db.Decimal(5,2)
-  discountType DiscountType @default(PERCENTAGE)
-  isActive    Boolean   @default(true)
-  isDeleted   Boolean   @default(false)
-  orders      Order[]
-  expiresAt   DateTime?
-}
-
-enum DiscountType {
-  PERCENTAGE
-  VALUE
+  id             String       @id @default(uuid())
+  code           String       @unique
+  discount       Decimal      @db.Decimal(5, 2)
+  isActive       Boolean      @default(true)
+  expiresAt      DateTime?
+  discountType   DiscountType @default(PERCENTAGE)
+  isDeleted      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  currentUsage   Int          @default(0)
+  description    String?
+  maxDiscount    Decimal?     @db.Decimal(10, 2)
+  minOrderAmount Decimal?     @db.Decimal(10, 2)
+  updatedAt      DateTime     @updatedAt
+  usageLimit     Int?
+  orders         Order[]
 }
 
 model Category {
-  id    String   @id @default(uuid())
-  name  String   @unique
+  id       String    @id @default(uuid())
+  name     String    @unique
+  isDelete Boolean   @default(false)
   products Product[]
-  isDelete Boolean @default(false)
 }
 
 model Cart {
   id        String     @id @default(uuid())
-  user      User       @relation(fields: [userId], references: [id])
   userId    String     @unique
-  items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
 }
 
 model CartItem {
   id        String   @id @default(uuid())
-  cart      Cart     @relation(fields: [cartId], references: [id])
   cartId    String
-  product   Product  @relation(fields: [productId], references: [id])
   productId String
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
 
   @@unique([cartId, productId])
 }
@@ -170,14 +160,50 @@ model FeatureFlag {
 }
 
 model ContactMessage {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   name      String
   mobile    String
-  message   String   @db.Text
+  message   String
   status    ContactStatus @default(NEW)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isDelete  Boolean  @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  isDelete  Boolean       @default(false)
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MANAGER
+  DRIVER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+}
+
+enum OrderSource {
+  POS
+  ONLINE
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  VALUE
 }
 
 enum ContactStatus {

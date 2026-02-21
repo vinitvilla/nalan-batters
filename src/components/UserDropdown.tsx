@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { userStore } from "@/store/userStore";
 import { useSignOut } from "@/hooks/useSignOut";
+import { useUserRole } from "@/hooks/useUserRole";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { formatPhoneNumber } from "@/lib/utils/commonFunctions";
 
 export default function UserDropdown({ onClose }: { onClose?: () => void }) {
   const user = userStore((s) => s.user);
-  const isAdmin = userStore((s) => s.isAdmin);
   const phoneNumber = userStore((s) => s.phone);
   const fullName = userStore((s) => s.fullName);
+  const { isAdmin } = useUserRole();
   const signOut = useSignOut();
   return (
     <div className="min-w-[180px] bg-white">
