@@ -9,7 +9,8 @@ import { toast } from "sonner";
 export function useSignOut() {
   const router = useRouter();
 
-  return useCallback(async () => {
+  return useCallback(async (opts?: { showToast?: boolean }) => {
+    const { showToast = true } = opts || {};
     try {
       await firebaseSignOut(auth);
     } catch {
@@ -24,7 +25,9 @@ export function useSignOut() {
       document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       localStorage.removeItem("auth-token");
     }
-    toast.success("You have been signed out successfully.");
+    if (showToast) {
+      toast.success("You have been signed out successfully.");
+    }
     router.push("/");
   }, [router]);
 }

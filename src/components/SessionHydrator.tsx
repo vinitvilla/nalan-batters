@@ -18,7 +18,7 @@ export function SessionHydrator() {
       hydrateUserFromApi({
         token,
         onUnauthorized: () => {
-          signOut();
+          signOut({ showToast: false });
           router.push("/");
         },
       });
