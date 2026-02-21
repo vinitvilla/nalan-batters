@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={poppins.variable} data-scroll-behavior="smooth">
+    <html lang="en" className={poppins.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap"
@@ -33,6 +33,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${poppins.variable} antialiased`}
+        suppressHydrationWarning
       >
         <LayoutClient>{children}</LayoutClient>
       </body>

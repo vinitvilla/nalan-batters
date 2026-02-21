@@ -98,6 +98,7 @@ describe('OrderSummary', () => {
         getOrderCalculations: vi.fn().mockReturnValue({
           subtotal: 20,
           tax: 2.6,
+          taxRate: 0.13,
           convenienceCharge: 0,
           deliveryCharge: 5,
           appliedDiscount: 0,
@@ -156,7 +157,7 @@ describe('OrderSummary', () => {
       />
     );
 
-    expect(screen.getByText('⚠️ Please select a delivery address')).toBeInTheDocument();
+    expect(screen.getByText('Please select a delivery address')).toBeInTheDocument();
     expect(screen.getByText('Place Order')).toBeDisabled();
   });
 

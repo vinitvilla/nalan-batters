@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useNewMessagesCount } from "@/hooks/useNewMessagesCount";
 import { useUserRole } from "@/hooks/useUserRole";
 import { hasPermission, Permission } from "@/lib/permissions";
-import { 
-    X, 
+import {
+    X,
     LayoutDashboard,
     ShoppingCart,
     Truck,
@@ -70,14 +71,14 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         <>
             {/* Mobile Overlay */}
             {isOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 h-full lg:hidden"
                     onClick={onClose}
                 />
             )}
-            
+
             {/* Redesigned Sidebar */}
-            <aside 
+            <aside
                 onWheel={handleWheel}
                 className={`
                     fixed top-0 left-0 h-screen w-64 bg-primary
@@ -91,12 +92,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 <div className="relative flex-shrink-0">
                     {/* Background Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-foreground/5 to-transparent"></div>
-                    
+
                     {/* Mobile Close Button */}
                     <div className="relative flex items-center justify-between p-6 lg:hidden">
                         <div className="flex items-center space-x-3">
-                            <div className="p-2 bg-primary-foreground/10 rounded-xl">
-                                <Crown className="h-6 w-6 text-primary-foreground" />
+                            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-primary-foreground/10 flex items-center justify-center">
+                                <Image src="/logo-nalan2.jpg" alt="Logo" width={40} height={40} className="object-cover" />
                             </div>
                             <div>
                                 <div className="font-bold text-lg text-primary-foreground">
@@ -116,12 +117,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                             <X className="h-5 w-5" />
                         </Button>
                     </div>
-                    
+
                     {/* Desktop Header */}
                     <div className="relative hidden lg:block p-6 pb-8">
                         <div className="flex items-center space-x-3 mb-2">
-                            <div className="p-3 bg-primary-foreground/10 rounded-2xl">
-                                <Crown className="h-8 w-8 text-primary-foreground" />
+                            <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl bg-primary-foreground/10 flex items-center justify-center">
+                                <Image src="/logo-nalan2.jpg" alt="Logo" width={56} height={56} className="object-cover" />
                             </div>
                             <div>
                                 <div className="font-bold text-xl text-primary-foreground">
@@ -134,7 +135,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Navigation Section */}
                 <div className="flex-1 overflow-hidden px-3 pb-4">
                     <ScrollArea className="h-full [&>[data-slot=scroll-area-scrollbar]]:bg-primary-foreground/10 [&>[data-slot=scroll-area-thumb]]:bg-primary-foreground/40 [&>[data-slot=scroll-area-thumb]]:hover:bg-primary-foreground/60">
@@ -144,71 +145,71 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                                 const isActive = pathname === item.href;
                                 const isContactMessages = item.href === "/admin/contact-messages";
                                 const showBadge = isContactMessages && newMessagesCount > 0;
-                            
-                            return (
-                                <div key={item.href} className="relative">
-                                    <Link href={item.href} onClick={handleNavClick}>
-                                        <div className={`
+
+                                return (
+                                    <div key={item.href} className="relative">
+                                        <Link href={item.href} onClick={handleNavClick}>
+                                            <div className={`
                                             group flex items-center space-x-3 px-4 py-3 rounded-xl
                                             transition-all duration-200 cursor-pointer
-                                            ${isActive 
-                                                ? 'bg-primary-foreground/15 border border-primary-foreground/20 shadow-sm' 
-                                                : 'hover:bg-primary-foreground/8 hover:translate-x-1'
-                                            }
-                                        `}>
-                                            <div className={`
-                                                p-2 rounded-lg transition-all duration-200
-                                                ${isActive 
-                                                    ? 'bg-primary-foreground/20 shadow-md' 
-                                                    : 'bg-primary-foreground/5 group-hover:bg-primary-foreground/15'
+                                            ${isActive
+                                                    ? 'bg-primary-foreground/15 border border-primary-foreground/20 shadow-sm'
+                                                    : 'hover:bg-primary-foreground/8 hover:translate-x-1'
                                                 }
-                                            `}>
-                                                <Icon className={`
-                                                    h-5 w-5 transition-colors duration-200
-                                                    ${isActive 
-                                                        ? 'text-primary-foreground' 
-                                                        : 'text-primary-foreground/70 group-hover:text-primary-foreground'
-                                                    }
-                                                `} />
-                                            </div>
-                                            
-                                            <div className="flex-1 flex items-center justify-between">
+                                        `}>
                                                 <div className={`
-                                                    font-medium transition-colors duration-200
-                                                    ${isActive 
-                                                        ? 'text-primary-foreground' 
-                                                        : 'text-primary-foreground/80 group-hover:text-primary-foreground'
+                                                p-2 rounded-lg transition-all duration-200
+                                                ${isActive
+                                                        ? 'bg-primary-foreground/20 shadow-md'
+                                                        : 'bg-primary-foreground/5 group-hover:bg-primary-foreground/15'
                                                     }
-                                                `}>
-                                                    {item.label}
+                                            `}>
+                                                    <Icon className={`
+                                                    h-5 w-5 transition-colors duration-200
+                                                    ${isActive
+                                                            ? 'text-primary-foreground'
+                                                            : 'text-primary-foreground/70 group-hover:text-primary-foreground'
+                                                        }
+                                                `} />
                                                 </div>
-                                                
-                                                {/* New Messages Badge */}
-                                                {showBadge && (
-                                                    <Badge className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center animate-pulse">
-                                                        {newMessagesCount > 99 ? "99+" : newMessagesCount}
-                                                    </Badge>
+
+                                                <div className="flex-1 flex items-center justify-between">
+                                                    <div className={`
+                                                    font-medium transition-colors duration-200
+                                                    ${isActive
+                                                            ? 'text-primary-foreground'
+                                                            : 'text-primary-foreground/80 group-hover:text-primary-foreground'
+                                                        }
+                                                `}>
+                                                        {item.label}
+                                                    </div>
+
+                                                    {/* New Messages Badge */}
+                                                    {showBadge && (
+                                                        <Badge className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center animate-pulse">
+                                                            {newMessagesCount > 99 ? "99+" : newMessagesCount}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+
+                                                {/* Active Indicator */}
+                                                {isActive && (
+                                                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-primary-foreground/60 rounded-l-full"></div>
                                                 )}
-                                            </div>
-                                            
-                                            {/* Active Indicator */}
-                                            {isActive && (
-                                                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-primary-foreground/60 rounded-l-full"></div>
-                                            )}
-                                            
-                                            {/* Hover Indicator */}
-                                            <div className={`
+
+                                                {/* Hover Indicator */}
+                                                <div className={`
                                                 absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-primary-foreground/40 rounded-r-full
                                                 transition-all duration-200 group-hover:h-6
                                                 ${isActive ? 'opacity-0' : ''}
                                             `}></div>
-                                        </div>
-                                    </Link>
-                                </div>
-                            );
-                        })}
-                    </nav>
-                </ScrollArea>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                );
+                            })}
+                        </nav>
+                    </ScrollArea>
                 </div>
             </aside>
         </>

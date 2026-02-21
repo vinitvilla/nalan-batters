@@ -14,6 +14,17 @@ vi.mock('@/store/cartStore');
 // Mock fetch
 global.fetch = vi.fn();
 
+// Mock InputOTP component to avoid 'window is not defined' in timers
+vi.mock('@/components/ui/input-otp', () => ({
+  InputOTP: ({ children, value, onChange }: any) => (
+    <div data-testid="input-otp">
+      <input type="text" role="textbox" aria-label="OTP Input" value={value} onChange={(e) => onChange(e.target.value)} />
+      {children}
+    </div>
+  ),
+  InputOTPSlot: ({ className }: any) => <div className={`otp-slot ${className || ''}`} />
+}));
+
 describe('UserOtpStep', () => {
   const mockOnUserFound = vi.fn();
   const mockOnUserNotFound = vi.fn();
@@ -67,8 +78,8 @@ describe('UserOtpStep', () => {
     );
 
     // Check for 6 OTP slots
-    const slots = document.querySelectorAll('.border-gray-200');
-    // Note: InputOTP renders multiple slots. We can check for the label or container.
+    const slots = document.querySelectorAll('.otp-slot');
+    expect(slots.length).toBe(6);
     expect(screen.getByText('Enter Verification Code')).toBeInTheDocument();
   });
 
@@ -92,20 +103,8 @@ describe('UserOtpStep', () => {
       />
     );
 
-    // Simulate entering OTP
-    const inputs = screen.getAllByRole('textbox');
-    // InputOTP might be tricky to simulate typing directly into slots, 
-    // but usually it has a hidden input or handles paste/type.
-    // Let's try finding the hidden input if it exists, or just firing change on the first input if accessible.
-    // Actually, the component uses `InputOTP` which might expose a single input or handle events differently.
-    // A simpler way for this test might be to mock the `InputOTP` component if it's complex, 
-    // OR assume the `onChange` prop is wired up.
-
-    // However, we can try to fire change event on the hidden input if we can find it.
-    // Alternatively, we can just manually set the state if we could, but we can't access internal state.
-
-    // Let's try to find the input by role 'textbox' which usually InputOTP renders.
-    const hiddenInput = screen.getByRole('textbox');
+    // Let's try to find the input by role 'textbox' which we mocked
+    const hiddenInput = screen.getByRole('textbox', { name: 'OTP Input' });
     fireEvent.change(hiddenInput, { target: { value: '123456' } });
 
     const form = screen.getByRole('button', { name: /Verify & Continue/i }).closest('form');
@@ -137,7 +136,7 @@ describe('UserOtpStep', () => {
       />
     );
 
-    const hiddenInput = screen.getByRole('textbox');
+    const hiddenInput = screen.getByRole('textbox', { name: 'OTP Input' });
     fireEvent.change(hiddenInput, { target: { value: '123456' } });
 
     const form = screen.getByRole('button', { name: /Verify & Continue/i }).closest('form');

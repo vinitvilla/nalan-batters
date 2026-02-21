@@ -6,6 +6,12 @@ import { useState, useEffect } from "react";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth } from "@/lib/firebase/firebase";
 
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+  }
+}
+
 export interface UserPhoneStepProps {
   onOtpSent?: (confirmationResult: ConfirmationResult) => void;
 }
@@ -19,13 +25,13 @@ export function UserPhoneStep({ onOtpSent }: UserPhoneStepProps) {
   useEffect(() => {
     return () => {
       // Cleanup recaptcha on unmount to prevent errors during Fast Refresh
-      if (typeof window !== "undefined" && (window as any).recaptchaVerifier) {
+      if (typeof window !== "undefined" && window.recaptchaVerifier) {
         try {
-          (window as any).recaptchaVerifier.clear();
-        } catch (e) {
+          window.recaptchaVerifier.clear();
+        } catch {
           // Ignore
         }
-        delete (window as any).recaptchaVerifier;
+        delete window.recaptchaVerifier;
       }
     };
   }, []);
@@ -33,20 +39,20 @@ export function UserPhoneStep({ onOtpSent }: UserPhoneStepProps) {
   // Ensure reCAPTCHA is only initialized once or re-initialized properly after hot-reload
   const setupRecaptcha = () => {
     const container = document.getElementById("recaptcha-container");
-    if (container && !container.hasChildNodes() && (window as any).recaptchaVerifier) {
+    if (container && !container.hasChildNodes() && window.recaptchaVerifier) {
       // Stale instance from Fast Refresh
-      delete (window as any).recaptchaVerifier;
+      delete window.recaptchaVerifier;
     }
 
-    if (!(window as any).recaptchaVerifier) {
+    if (!window.recaptchaVerifier) {
       if (container) container.innerHTML = "";
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(
+      window.recaptchaVerifier = new RecaptchaVerifier(
         auth,
         "recaptcha-container",
         { size: "invisible" },
       );
     }
-    return (window as any).recaptchaVerifier as RecaptchaVerifier;
+    return window.recaptchaVerifier!;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
