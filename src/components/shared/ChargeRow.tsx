@@ -19,7 +19,7 @@ export function ChargeRow({
   amount,
   isWaived = false,
   originalAmount,
-  className = "text-xs text-yellow-700",
+  className = "text-sm text-gray-600",
   labelClassName = "",
   amountClassName = "",
 }: ChargeRowProps) {

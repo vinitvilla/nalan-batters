@@ -9,7 +9,7 @@ import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
 import { useOrderStore } from "@/store/orderStore";
 import { UserAuthFlow } from "@/components/auth/UserAuthFlow";
-import { CheckCircle, User, MapPin, Calendar, ShoppingBag, ArrowRight, Star, Clock, Shield, Store } from "lucide-react";
+import { CheckCircle, User, MapPin, Calendar, ShoppingBag, Store, Shield, Clock, Star, ArrowRight } from "lucide-react";
 
 export default function CheckoutPage() {
   const cartItems = useCartStore((state) => state.items);
@@ -29,9 +29,7 @@ export default function CheckoutPage() {
   // Get selectedAddress from store
   const selectedAddress = useAddressStore((s) => s.selectedAddress);
   const selectedDeliveryDate = useOrderStore((s) => s.selectedDeliveryDate);
-  const setSelectedDeliveryDate = useOrderStore((s) => s.setSelectedDeliveryDate);
   const orderType = useOrderStore((s) => s.deliveryType);
-  const setOrderType = useOrderStore((s) => s.setDeliveryType);
 
   // Progress tracking
   const isLoggedIn = !!user;
@@ -99,9 +97,9 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Enhanced Progress Steps */}
+          {/* Minimal Progress Steps */}
           <div className="flex justify-center">
-            <div className="flex items-center space-x-2 md:space-x-6 bg-white/70 backdrop-blur-sm rounded-2xl p-4 md:p-6 shadow-lg border border-white/50">
+            <div className="flex items-center gap-1 md:gap-3">
               {steps.map((step, index) => {
                 const IconComponent = step.icon;
                 const isActive = index === currentStepIndex;
@@ -121,25 +119,13 @@ export default function CheckoutPage() {
                               : 'bg-gray-100 border-gray-300 text-gray-400'
                           }
                         `}
-                        onClick={() => {
-                          // Allow going back to completed steps
-                          if (isCompleted) {
-                            if (step.id === 'orderType') {
-                              setOrderType(null);
-                              setSelectedDeliveryDate("");
-                            }
-                            // Add more step navigation logic as needed
-                          }
-                        }}
-                        title={isCompleted ? `Go back to ${step.label}` : step.description}
                       >
                         {isCompleted ? (
-                          <CheckCircle className="w-6 h-6 md:w-7 md:h-7" />
+                          <CheckCircle className="w-5 h-5" />
                         ) : (
-                          <IconComponent className="w-6 h-6 md:w-7 md:h-7" />
+                          <IconComponent className="w-4 h-4 md:w-5 md:h-5" />
                         )}
                       </div>
-
                       {/* Step number badge */}
                       <div className={`
                         absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all duration-300
@@ -180,7 +166,7 @@ export default function CheckoutPage() {
                       </p>
                     </div>
 
-                    {/* Connector Line with enhanced styling */}
+                    {/* Connector */}
                     {index < steps.length - 1 && (
                       <div className="relative mx-2 md:mx-4">
                         <div className="w-8 md:w-16 h-0.5 bg-gray-300"></div>
@@ -208,9 +194,9 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Main Content with improved layout */}
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
+      {/* Main Content */}
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
             {/* Left Column - Checkout Steps */}

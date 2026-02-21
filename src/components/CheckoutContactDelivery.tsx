@@ -14,19 +14,58 @@ import { useConfigStore } from "@/store/configStore";
 import { useOrderStore } from "@/store/orderStore";
 import moment from 'moment';
 
-// Modern, engaging styling constants
-const INPUT_STYLES = "w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 placeholder:text-gray-500 px-4 py-3 font-medium transition-all duration-200 hover:border-gray-300 text-base shadow-sm";
-
-const STEP_CARD_STYLES = "bg-white border border-gray-200 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden";
-
-const STEP_HEADER_STYLES = "bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-100";
-
-const STEP_CONTENT_STYLES = "p-6 md:p-8";
+const SECTION_STYLES = "bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden";
 
 export interface CheckoutContactDeliveryProps {
   loading: boolean;
   error: string | null;
   onAddAddress: () => void;
+}
+
+function AddressFormDialog({ open, onOpenChange, loading, onAdd, onCancel }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  loading: boolean;
+  onAdd: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-yellow-700 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-300 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium"
+        >
+          <Plus className="w-4 h-4" />
+          Add Address
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        className="sm:max-w-2xl bg-white border border-gray-200 shadow-xl z-[9999]"
+        onInteractOutside={(e) => {
+          const target = e.target as Element;
+          if (target?.closest('.pac-container')) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            Add Delivery Address
+          </DialogTitle>
+          <DialogDescription className="text-sm text-gray-500">
+            Enter your address details below.
+          </DialogDescription>
+        </DialogHeader>
+        <AddressForm
+          loading={loading}
+          onAdd={onAdd}
+          onCancel={onCancel}
+        />
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export function CheckoutContactDelivery({
@@ -38,7 +77,7 @@ export function CheckoutContactDelivery({
   const selectedAddress = useAddressStore(s => s.selectedAddress);
   const setSelectedAddress = useAddressStore(s => s.setSelectedAddress);
   const removeAddress = useAddressStore(s => s.removeAddress);
-  
+
   const fullName = userStore((s) => s.fullName);
   const [name, setName] = useState(fullName || "");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -50,7 +89,6 @@ export function CheckoutContactDelivery({
   const deliveryType = useOrderStore(s => s.deliveryType);
 
   useEffect(() => {
-    // Only calculate delivery dates for delivery orders
     if (deliveryType !== 'DELIVERY' || !selectedAddress?.city || !freeDeliveryConfig) {
       setDeliveryDates([]);
       setSelectedDeliveryDate("");
@@ -74,294 +112,179 @@ export function CheckoutContactDelivery({
 
   return (
     <TooltipProvider>
-      <div className="space-y-8">
+      <div className="space-y-5">
 
         {error && (
-          <div className="text-red-700 text-sm mb-6 font-medium bg-red-50 p-4 rounded-lg border border-red-200 flex items-center gap-3 max-w-2xl mx-auto">
-            <span className="text-red-500 text-lg">⚠️</span>
+          <div className="text-red-700 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-200 flex items-center gap-2">
+            <span className="text-red-500">!</span>
             {error}
           </div>
         )}
 
         {/* Contact Information */}
-        <div className={STEP_CARD_STYLES}>
-          <div className={STEP_HEADER_STYLES}>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <User className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
-                <p className="text-gray-600">
-                  {deliveryType === 'PICKUP' 
-                    ? 'We need your name for pickup confirmation'
-                    : 'We need your name for delivery confirmation'
-                  }
-                </p>
-              </div>
+        <div className={SECTION_STYLES}>
+          <div className="px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-gray-500" />
+              <h2 className="text-base font-semibold text-gray-900">Contact Information</h2>
             </div>
           </div>
-          <div className={STEP_CONTENT_STYLES}>
+          <div className="p-5">
             <Input
               type="text"
               placeholder="Enter your full name"
               value={name}
               onChange={e => setName(e.target.value)}
               required
-              className={INPUT_STYLES}
+              className="w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-100 placeholder:text-gray-400 px-4 py-2.5 text-sm"
               disabled={loading}
             />
           </div>
         </div>
 
-        {/* Delivery Address - Only show for delivery orders */}
+        {/* Delivery Address */}
         {deliveryType === 'DELIVERY' && (
-          <div className={STEP_CARD_STYLES}>
-            <div className={STEP_HEADER_STYLES}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <MapPin className="w-6 h-6 text-white" />
+          <div className={SECTION_STYLES}>
+            <div className="px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-500" />
+                  <h2 className="text-base font-semibold text-gray-900">Delivery Address</h2>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Delivery Address</h2>
-                  <p className="text-gray-600">Choose where you want your order delivered</p>
-                </div>
+                {hasAddresses && (
+                  <AddressFormDialog
+                    open={dialogOpen}
+                    onOpenChange={setDialogOpen}
+                    loading={loading}
+                    onAdd={handleAddressAdded}
+                    onCancel={() => setDialogOpen(false)}
+                  />
+                )}
               </div>
             </div>
-          <div className={STEP_CONTENT_STYLES}>
-            {hasAddresses ? (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-900">Select an address:</span>
-                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-yellow-700 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-300 cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add New Address
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent 
-                      className="sm:max-w-2xl bg-white border border-gray-200 shadow-xl z-[9999]" 
-                      onInteractOutside={(e) => {
-                        // Allow interactions with Google autocomplete dropdown
-                        const target = e.target as Element;
-                        if (target?.closest('.pac-container')) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <DialogHeader className="text-center pb-6">
-                        <div className="flex justify-center mb-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl flex items-center justify-center shadow-sm border border-yellow-300">
-                            <MapPin className="w-8 h-8 text-yellow-700" />
-                          </div>
-                        </div>
-                        <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
-                          Add New Delivery Address
-                        </DialogTitle>
-                        <DialogDescription className="text-gray-600 text-base leading-relaxed">
-                          Enter your address details below. We&apos;ll save it securely for future orders!
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
-                        <AddressForm 
-                          loading={loading} 
-                          onAdd={handleAddressAdded} 
-                          onCancel={() => setDialogOpen(false)}
-                        />
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-
-                <div className="grid gap-4">
+            <div className="p-5">
+              {hasAddresses ? (
+                <div className="space-y-3">
                   {addresses.map((addr, idx) => {
                     const isSelected = !!selectedAddress && formatAddress(selectedAddress) === formatAddress(addr);
                     const isDefault = addr.id === defaultAddressId;
                     return (
-                      <div key={addr.id || idx} className="group">
-                        <div
-                          onClick={() => setSelectedAddress(addr)}
-                          className={`bg-white border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                            isSelected 
-                              ? 'border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50 shadow-lg ring-4 ring-yellow-100' 
-                              : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                          }`}
-                          aria-selected={isSelected}
-                          tabIndex={0}
-                          role="option"
-                        >
-                          <div className="flex items-start gap-4">
-                            {/* Selection indicator */}
-                            <div className={`mt-1 w-5 h-5 rounded-full border-2 transition-all duration-200 flex-shrink-0
-                              ${isSelected 
-                                ? 'bg-yellow-500 border-yellow-500' 
-                                : 'border-gray-300 group-hover:border-yellow-400'}
-                            `}>
-                              {isSelected && (
-                                <div className="w-full h-full rounded-full bg-white scale-50"></div>
-                              )}
-                            </div>
+                      <div
+                        key={addr.id || idx}
+                        onClick={() => setSelectedAddress(addr)}
+                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'border-yellow-400 bg-yellow-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        aria-selected={isSelected}
+                        tabIndex={0}
+                        role="option"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center
+                            ${isSelected
+                              ? 'border-yellow-500 bg-yellow-500'
+                              : 'border-gray-300'}
+                          `}>
+                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
 
-                            {/* Address content */}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-gray-900 text-base leading-tight mb-2">
-                                {formatAddress(addr)}
-                              </p>
-                              {isDefault && (
-                                <div className="flex items-center gap-1">
-                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>
-                                    Default Address
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-900 leading-snug">{formatAddress(addr)}</p>
+                            {isDefault && (
+                              <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                Default
+                              </span>
+                            )}
+                          </div>
 
-                            {/* Action buttons */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              {isDefault ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="p-2 h-auto rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 cursor-pointer"
-                                    >
-                                      <Info className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Default address cannot be deleted</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="p-2 h-auto rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer transition-all duration-200"
-                                      onClick={e => e.stopPropagation()}
-                                      aria-label="Delete address"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent className="border border-gray-200 shadow-xl bg-white">
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle className="text-gray-900 text-lg font-bold">
-                                        🗑️ Delete Address?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription className="text-gray-600 text-base">
-                                        Are you sure you want to delete this address? This action cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter className="gap-3">
-                                      <AlertDialogCancel asChild>
-                                        <Button variant="outline" className="cursor-pointer border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-lg font-medium">
-                                          Cancel
-                                        </Button>
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction asChild>
-                                        <Button 
-                                          onClick={() => handleDeleteAddress(addr.id!)} 
-                                          className="bg-red-600 text-white hover:bg-red-700 cursor-pointer px-6 py-2 rounded-lg font-medium shadow-sm"
-                                        >
-                                          Delete
-                                        </Button>
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              )}
-                            </div>
+                          <div className="flex-shrink-0">
+                            {isDefault ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="p-1.5 h-auto text-gray-400">
+                                    <Info className="w-3.5 h-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Default address cannot be deleted</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="p-1.5 h-auto text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                    onClick={e => e.stopPropagation()}
+                                    aria-label="Delete address"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="border border-gray-200 shadow-xl bg-white">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-gray-900 text-base font-semibold">
+                                      Delete Address?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="text-gray-600 text-sm">
+                                      Are you sure? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter className="gap-2">
+                                    <AlertDialogCancel asChild>
+                                      <Button variant="outline" className="border-gray-300 text-gray-700 text-sm">
+                                        Cancel
+                                      </Button>
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction asChild>
+                                      <Button
+                                        onClick={() => handleDeleteAddress(addr.id!)}
+                                        className="bg-red-600 text-white hover:bg-red-700 text-sm"
+                                      >
+                                        Delete
+                                      </Button>
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            ) : (
-              <div className="text-center py-16">
-                <div className="flex justify-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-3xl flex items-center justify-center shadow-lg border border-yellow-300">
-                    <MapPin className="w-10 h-10 text-yellow-700" />
-                  </div>
+              ) : (
+                <div className="text-center py-10">
+                  <MapPin className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-gray-900 mb-1">No delivery address yet</p>
+                  <p className="text-xs text-gray-500 mb-4">Add an address to continue with your order.</p>
+                  <AddressFormDialog
+                    open={dialogOpen}
+                    onOpenChange={setDialogOpen}
+                    loading={loading}
+                    onAdd={handleAddressAdded}
+                    onCancel={() => setDialogOpen(false)}
+                  />
                 </div>
-                
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  No delivery address yet
-                </h3>
-                <p className="text-gray-600 text-base mb-8 max-w-md mx-auto leading-relaxed">
-                  Add your first delivery address to continue with your order. We&apos;ll keep it secure for future purchases.
-                </p>
-                
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600 px-8 py-4 rounded-xl font-semibold shadow-lg transition-all duration-200 cursor-pointer hover:shadow-xl transform hover:scale-105">
-                      <Plus className="w-5 h-5 mr-3" />
-                      Add Your First Address
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent 
-                    className="sm:max-w-2xl bg-white border border-gray-200 shadow-xl z-[9999]" 
-                    onInteractOutside={(e) => {
-                      // Allow interactions with Google autocomplete dropdown
-                      const target = e.target as Element;
-                      if (target?.closest('.pac-container')) {
-                        e.preventDefault();
-                      }
-                    }}
-                  >
-                    <DialogHeader className="text-center pb-6">
-                      <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl flex items-center justify-center shadow-sm border border-yellow-300">
-                          <MapPin className="w-8 h-8 text-yellow-700" />
-                        </div>
-                      </div>
-                      <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
-                        Add Your First Delivery Address
-                      </DialogTitle>
-                      <DialogDescription className="text-gray-600 text-base leading-relaxed">
-                        Enter your address details below. We&apos;ll save it securely for future orders!
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
-                      <AddressForm 
-                        loading={loading} 
-                        onAdd={handleAddressAdded} 
-                        onCancel={() => setDialogOpen(false)}
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
         )}
 
-        {/* Delivery Date - Only show for delivery orders */}
+        {/* Delivery Date */}
         {deliveryType === 'DELIVERY' && hasAddresses && selectedAddress && (
-          <div className={STEP_CARD_STYLES}>
-            <div className={STEP_HEADER_STYLES}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Calendar className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Choose Delivery Date</h2>
-                  <p className="text-gray-600">Pick your preferred delivery date and time</p>
-                </div>
+          <div className={SECTION_STYLES}>
+            <div className="px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-500" />
+                <h2 className="text-base font-semibold text-gray-900">Delivery Date</h2>
               </div>
             </div>
-            <div className={STEP_CONTENT_STYLES}>
+            <div className="p-5">
               {deliveryDates.length > 0 ? (
                 <ChooseDeliveryDate
                   deliveryDates={deliveryDates}
@@ -369,20 +292,11 @@ export function CheckoutContactDelivery({
                   setSelectedDeliveryDate={setSelectedDeliveryDate}
                 />
               ) : (
-                <div className="text-center py-8">
-                  <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-3xl flex items-center justify-center shadow-lg border border-red-300">
-                      <Calendar className="w-8 h-8 text-red-700" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-red-900 mb-3">
-                    No Delivery Available
-                  </h3>
-                  <p className="text-red-700 text-base mb-4 max-w-md mx-auto leading-relaxed">
-                    Unfortunately, we don&apos;t currently deliver to <strong>{selectedAddress.city}</strong> or there are no delivery slots available for this area.
-                  </p>
-                  <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
-                    Please select a different address or contact us to inquire about delivery to your area.
+                <div className="text-center py-6">
+                  <Calendar className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-red-800 mb-1">No Delivery Available</p>
+                  <p className="text-xs text-gray-600">
+                    We don&apos;t currently deliver to <strong>{selectedAddress.city}</strong>. Please select a different address.
                   </p>
                 </div>
               )}
@@ -391,20 +305,12 @@ export function CheckoutContactDelivery({
         )}
 
         {/* Completion Indicator */}
-        {((deliveryType === 'DELIVERY' && hasAddresses && selectedAddress && selectedDeliveryDate && deliveryDates.length > 0) || 
+        {((deliveryType === 'DELIVERY' && hasAddresses && selectedAddress && selectedDeliveryDate && deliveryDates.length > 0) ||
           (deliveryType === 'PICKUP' && name.trim().length > 0)) && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-8 text-center shadow-lg">
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 text-white rounded-3xl flex items-center justify-center shadow-lg">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-            </div>
-            <h3 className="text-2xl font-bold text-green-900 mb-3">Ready to Place Order!</h3>
-            <p className="text-green-700 text-lg leading-relaxed max-w-md mx-auto">
-              {deliveryType === 'PICKUP' 
-                ? 'All information complete. You can now proceed to payment and finalize your pickup order.'
-                : 'All information complete. You can now proceed to payment and finalize your delicious batter order.'
-              }
+          <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
+            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+            <p className="text-sm text-green-700 font-medium">
+              Ready to place your order. Review the summary and click Place Order.
             </p>
           </div>
         )}
@@ -416,19 +322,16 @@ export function CheckoutContactDelivery({
 function getNextDeliveryDates(city: string, freeDeliveryConfig: Record<string, unknown>): Array<{ date: string, day: string }> {
   if (!city || !freeDeliveryConfig) return [];
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
-  // Use moment.js to get today in EST timezone
+
   const estToday = moment().utcOffset(-5).startOf('day');
-  const todayDay = estToday.day(); // 0 = Sunday, 1 = Monday, etc.
+  const todayDay = estToday.day();
   const count = 4;
 
-  // Find all delivery days for the city
   const matchedDays = Object.entries(freeDeliveryConfig)
     .filter(([, cities]) => Array.isArray(cities) && cities.some((c: string) => c.toLowerCase().includes(city.toLowerCase())))
     .map(([day]) => day);
   if (matchedDays.length === 0) return [];
 
-  // For each matched day, get the next 4 dates
   let allDates: Array<{ date: string, day: string }> = [];
   matchedDays.forEach(dayName => {
     if (!daysOfWeek.includes(dayName)) return;
@@ -437,15 +340,14 @@ function getNextDeliveryDates(city: string, freeDeliveryConfig: Record<string, u
     if (daysUntilNextDay === 0) daysUntilNextDay = 7;
     for (let i = 0; i < count; i++) {
       const nextDayDate = moment(estToday).add(daysUntilNextDay, 'days');
-      allDates.push({ 
-        date: nextDayDate.format('YYYY-MM-DD'), 
-        day: dayName 
+      allDates.push({
+        date: nextDayDate.format('YYYY-MM-DD'),
+        day: dayName
       });
       daysUntilNextDay += 7;
     }
   });
   allDates = allDates.sort((a, b) => a.date.localeCompare(b.date));
-  // Only keep unique dates, up to 4
   const uniqueDates: Array<{ date: string, day: string }> = [];
   const seen = new Set();
   for (const d of allDates) {
