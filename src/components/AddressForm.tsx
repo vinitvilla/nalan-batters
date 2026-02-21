@@ -3,9 +3,38 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAddressStore, AddressFields } from "@/store/addressStore";
 import { useRef, useEffect, useState, useCallback } from "react";
+import { useLoadScript } from "@react-google-maps/api";
+
+const libraries: ("places")[] = ["places"];
 
 // Clean, modern styling classes for form inputs
 const inputClassName = "border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-gray-900 placeholder:text-gray-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-all duration-200 hover:border-gray-300 shadow-sm";
+
+const FormField = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  required = false
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  required?: boolean;
+}) => (
+  <Label className="flex flex-col gap-2 text-gray-900 font-medium">
+    {label} {required && "*"}
+    <Input
+      required={required}
+      type="text"
+      placeholder={placeholder}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className={inputClassName}
+    />
+  </Label>
+);
 
 export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; onAdd?: () => void; onCancel?: () => void }) {
   const autocompleteRef = useRef<HTMLInputElement | null>(null);
@@ -13,7 +42,17 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
   const setNewAddress = useAddressStore((s) => s.setNewAddress);
   const clearNewAddress = useAddressStore((s) => s.clearNewAddress);
   const [error, setError] = useState<string>("");
-  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    libraries,
+  });
+
+  useEffect(() => {
+    if (loadError) {
+      setError("Failed to load Google Maps. Please refresh the page.");
+    }
+  }, [loadError]);
 
   const updateField = useCallback((field: keyof AddressFields, value: string) => {
     setNewAddress({ ...newAddress, [field]: value });
@@ -23,7 +62,7 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
     if (!autocompleteRef.current || !window.google) {
       return;
     }
-    
+
     try {
       // Use the standard Autocomplete API (still supported)
       const autocomplete = new window.google.maps.places.Autocomplete(
@@ -36,18 +75,18 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
 
       autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace();
-        
+
         if (!place.address_components) {
           return;
         }
 
-        const isCanada = place.address_components.some(c => 
+        const isCanada = place.address_components.some(c =>
           c.types.includes("country") && c.short_name === "CA"
         );
-        const isOntario = place.address_components.some(c => 
+        const isOntario = place.address_components.some(c =>
           c.types.includes("administrative_area_level_1") && c.short_name === "ON"
         );
-        
+
         if (!isCanada || !isOntario) {
           setError("Please select an address in Ontario, Canada.");
           clearNewAddress();
@@ -56,49 +95,49 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
           return;
         }
 
-      const fields: AddressFields = { 
-        street: "", unit: "", city: "", province: "", country: "", postal: "" 
-      };
-      
-      place.address_components.forEach(component => {
-        const types = component.types;
-        if (types.includes("street_number")) {
-          fields.street = component.long_name + " ";
-        }
-        if (types.includes("route")) {
-          fields.street += component.long_name;
-        }
-        if (types.includes("subpremise")) {
-          fields.unit = component.long_name;
-        }
-        // Prioritize sublocality (like Scarborough) over locality (Toronto)
-        // But avoid using "Old Toronto" - prefer just "Toronto" for that
-        if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
-          // Skip "Old Toronto" and similar - prefer the main city name
-          if (!component.long_name.toLowerCase().includes("old toronto")) {
-            fields.city = component.long_name;
+        const fields: AddressFields = {
+          street: "", unit: "", city: "", province: "", country: "", postal: ""
+        };
+
+        place.address_components.forEach(component => {
+          const types = component.types;
+          if (types.includes("street_number")) {
+            fields.street = component.long_name + " ";
           }
-        } else if (types.includes("neighborhood")) {
-          if (!fields.city && !component.long_name.toLowerCase().includes("old toronto")) {
-            fields.city = component.long_name;
+          if (types.includes("route")) {
+            fields.street += component.long_name;
           }
-        } else if (types.includes("locality")) {
-          // Always prefer locality over "Old Toronto" type designations
-          if (!fields.city || fields.city.toLowerCase().includes("old")) {
-            fields.city = component.long_name;
+          if (types.includes("subpremise")) {
+            fields.unit = component.long_name;
           }
-        }
-        if (types.includes("administrative_area_level_1")) {
-          fields.province = component.short_name;
-        }
-        if (types.includes("country")) {
-          fields.country = component.long_name;
-        }
-        if (types.includes("postal_code")) {
-          fields.postal = component.long_name;
-        }
-      });
-        
+          // Prioritize sublocality (like Scarborough) over locality (Toronto)
+          // But avoid using "Old Toronto" - prefer just "Toronto" for that
+          if (types.includes("sublocality_level_1") || types.includes("sublocality")) {
+            // Skip "Old Toronto" and similar - prefer the main city name
+            if (!component.long_name.toLowerCase().includes("old toronto")) {
+              fields.city = component.long_name;
+            }
+          } else if (types.includes("neighborhood")) {
+            if (!fields.city && !component.long_name.toLowerCase().includes("old toronto")) {
+              fields.city = component.long_name;
+            }
+          } else if (types.includes("locality")) {
+            // Always prefer locality over "Old Toronto" type designations
+            if (!fields.city || fields.city.toLowerCase().includes("old")) {
+              fields.city = component.long_name;
+            }
+          }
+          if (types.includes("administrative_area_level_1")) {
+            fields.province = component.short_name;
+          }
+          if (types.includes("country")) {
+            fields.country = component.long_name;
+          }
+          if (types.includes("postal_code")) {
+            fields.postal = component.long_name;
+          }
+        });
+
         setNewAddress(fields);
         setError("");
       });
@@ -122,25 +161,6 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
     `;
     document.head.appendChild(style);
 
-    // Check if Google Maps is loaded with timeout
-    let attempts = 0;
-    const maxAttempts = 50; // 5 seconds total (50 * 100ms)
-    
-    const checkGoogleMapsLoaded = () => {
-      attempts++;
-      
-      if (window.google && window.google.maps && window.google.maps.places) {
-        setIsGoogleMapsLoaded(true);
-      } else if (attempts < maxAttempts) {
-        // Retry after a short delay
-        setTimeout(checkGoogleMapsLoaded, 100);
-      } else {
-        setError("Failed to load address autocomplete. Please refresh the page.");
-      }
-    };
-    
-    checkGoogleMapsLoaded();
-
     // Cleanup function to remove the style when component unmounts
     return () => {
       if (document.head.contains(style)) {
@@ -150,10 +170,10 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
   }, [clearNewAddress]);
 
   useEffect(() => {
-    if (isGoogleMapsLoaded && autocompleteRef.current) {
+    if (isLoaded && autocompleteRef.current) {
       initAutocomplete();
     }
-  }, [isGoogleMapsLoaded, initAutocomplete]);
+  }, [isLoaded, initAutocomplete]);
 
   const validateAddress = useCallback((fields: AddressFields) => {
     const required: (keyof AddressFields)[] = ['street', 'city', 'province', 'country', 'postal'];
@@ -162,21 +182,21 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
         return "All required fields must be filled.";
       }
     }
-    
+
     // Canadian postal code validation
     const postalRegex = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$/i;
     if (!postalRegex.test(fields.postal.trim())) {
       return "Invalid Canadian postal code format.";
     }
-    
+
     if (fields.country.toLowerCase() !== "canada") {
       return "Country must be Canada.";
     }
-    
+
     if (fields.province !== "ON") {
       return "Province must be Ontario (ON).";
     }
-    
+
     return "";
   }, []);
 
@@ -189,12 +209,12 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
       country: newAddress.country.trim(),
       postal: newAddress.postal.trim(),
     });
-    
+
     if (validationError) {
       setError(validationError);
       return;
     }
-    
+
     setError("");
     onAdd?.();
     clearNewAddress();
@@ -205,32 +225,6 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
     setError("");
     onCancel?.(); // This will close the dialog without adding address
   }, [clearNewAddress, onCancel]);
-
-  const FormField = ({ 
-    label, 
-    value, 
-    onChange, 
-    placeholder, 
-    required = false 
-  }: {
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    required?: boolean;
-  }) => (
-    <Label className="flex flex-col gap-2 text-gray-900 font-medium">
-      {label} {required && "*"}
-      <Input 
-        required={required}
-        type="text" 
-        placeholder={placeholder}
-        value={value} 
-        onChange={e => onChange(e.target.value)} 
-        className={inputClassName}
-      />
-    </Label>
-  );
 
   return (
     <div className="space-y-6">
@@ -255,19 +249,20 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
           </li>
         </ul>
       </div>
-      
+
       <div>
         <Label className="text-gray-900 font-medium mb-2 block">🏠 Start with your address</Label>
-        {!isGoogleMapsLoaded ? (
+        {!isLoaded ? (
           <div className="w-full border border-gray-200 rounded-lg text-gray-900 bg-gray-50 px-4 py-3 font-medium text-center">
-            Loading address autocomplete...
+            {loadError ? "Error loading maps" : "Loading address autocomplete..."}
           </div>
         ) : (
           <Input
             type="text"
             placeholder="Start typing your address..."
             ref={autocompleteRef}
-            onChange={() => {}}
+            autoFocus
+            onChange={() => { }}
             className="w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 placeholder:text-gray-500 px-4 py-3 font-medium transition-all duration-200 hover:border-gray-300 shadow-sm"
           />
         )}
@@ -279,7 +274,7 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
           {error}
         </div>
       )}
-      
+
       {newAddress && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -297,7 +292,7 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
               placeholder="Apt 101"
             />
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="City"
@@ -314,7 +309,7 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="Country"
@@ -333,7 +328,7 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
           </div>
         </div>
       )}
-      
+
       <div className="flex gap-3 pt-2">
         <Button
           variant="outline"
