@@ -8,7 +8,7 @@ import { useLoadScript } from "@react-google-maps/api";
 const libraries: ("places")[] = ["places"];
 
 // Clean, modern styling classes for form inputs
-const inputClassName = "border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-gray-900 placeholder:text-gray-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-all duration-200 hover:border-gray-300 shadow-sm";
+const inputClassName = "border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-all duration-200 hover:border-gray-300 shadow-sm";
 
 const FormField = ({
   label,
@@ -228,30 +228,8 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
 
   return (
     <div className="space-y-6">
-      {/* Benefits section */}
-      <div className="rounded-lg p-4 bg-yellow-50 border border-yellow-200">
-        <h4 className="text-gray-900 font-semibold mb-2 flex items-center gap-2">
-          <span className="text-yellow-600">✨</span>
-          Why add your address?
-        </h4>
-        <ul className="text-sm text-gray-600 space-y-1">
-          <li className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
-            Faster checkout for future orders
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
-            Accurate delivery time estimates
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
-            Secure and encrypted storage
-          </li>
-        </ul>
-      </div>
-
       <div>
-        <Label className="text-gray-900 font-medium mb-2 block">🏠 Start with your address</Label>
+        <Label className="text-gray-900 font-medium mb-2 block">Search your address</Label>
         {!isLoaded ? (
           <div className="w-full border border-gray-200 rounded-lg text-gray-900 bg-gray-50 px-4 py-3 font-medium text-center">
             {loadError ? "Error loading maps" : "Loading address autocomplete..."}
@@ -263,14 +241,13 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
             ref={autocompleteRef}
             autoFocus
             onChange={() => { }}
-            className="w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 placeholder:text-gray-500 px-4 py-3 font-medium transition-all duration-200 hover:border-gray-300 shadow-sm"
+            className="w-full border border-gray-200 rounded-lg text-gray-900 bg-white focus:border-gray-900 focus:ring-1 focus:ring-gray-900 placeholder:text-gray-400 px-4 py-3 font-medium transition-all duration-200 hover:border-gray-300 shadow-sm"
           />
         )}
         <p className="text-xs text-gray-500 mt-2">We&apos;ll auto-fill the details below when you select an address</p>
       </div>
       {error && (
-        <div className="text-red-700 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-200 flex items-center gap-2">
-          <span className="text-red-500">⚠️</span>
+        <div className="text-red-600 text-sm font-medium flex items-center gap-2">
           {error}
         </div>
       )}
@@ -329,16 +306,16 @@ export function AddressForm({ loading, onAdd, onCancel }: { loading?: boolean; o
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3 pt-4 border-t border-gray-100">
         <Button
           variant="outline"
-          className="flex-1 py-3 rounded-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 cursor-pointer transition-all duration-200"
+          className="flex-1 py-3 rounded-lg font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200"
           onClick={handleCancel}
         >
           Cancel
         </Button>
         <Button
-          className="flex-1 py-3 rounded-lg font-medium bg-yellow-500 text-white hover:bg-yellow-600 shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+          className="flex-1 py-3 rounded-lg font-medium bg-gray-900 text-white hover:bg-black shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
           onClick={handleSave}
           disabled={loading}
         >
