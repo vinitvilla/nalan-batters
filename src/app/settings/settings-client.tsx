@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { User, MapPin, Shield, Settings, Phone, Mail, Trash2, Plus, Edit2, CheckCircle, XCircle, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AddressForm } from "@/components/AddressForm";
-import { formatAddress } from "@/lib/utils/commonFunctions";
+import { formatAddress, formatPhoneNumber } from "@/lib/utils/commonFunctions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function SettingsPageClient() {
@@ -28,10 +28,10 @@ export default function SettingsPageClient() {
   const defaultAddress = userStore((s) => s.defaultAddress);
   const setUser = userStore((s) => s.setUser);
   const setDefaultAddress = userStore((s) => s.setDefaultAddress);
-  
+
   const addresses = useAddressStore((s) => s.addresses);
   const removeAddress = useAddressStore((s) => s.removeAddress);
-  
+
   const [editingProfile, setEditingProfile] = useState(false);
   const [newFullName, setNewFullName] = useState(fullName || "");
   const [newPhone, setNewPhone] = useState(phone || "");
@@ -53,7 +53,7 @@ export default function SettingsPageClient() {
 
   const handleSaveProfile = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     setSaveError(null);
     setSaveSuccess(false);
@@ -79,7 +79,7 @@ export default function SettingsPageClient() {
       setUser(updatedUser);
       setSaveSuccess(true);
       setEditingProfile(false);
-      
+
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "An error occurred");
@@ -90,7 +90,7 @@ export default function SettingsPageClient() {
 
   const handleSetDefaultAddress = async (addressId: string) => {
     if (!user) return;
-    
+
     setLoading(true);
     setSaveError(null);
 
@@ -175,22 +175,22 @@ export default function SettingsPageClient() {
           {/* Tabs */}
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-8 bg-white border border-gray-200 p-1 rounded-xl shadow-sm">
-              <TabsTrigger 
-                value="profile" 
+              <TabsTrigger
+                value="profile"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-800 data-[state=active]:to-black data-[state=active]:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer"
               >
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </TabsTrigger>
-              <TabsTrigger 
-                value="addresses" 
+              <TabsTrigger
+                value="addresses"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-800 data-[state=active]:to-black data-[state=active]:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer"
               >
                 <MapPin className="w-4 h-4 mr-2" />
                 Addresses
               </TabsTrigger>
-              <TabsTrigger 
-                value="account" 
+              <TabsTrigger
+                value="account"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-800 data-[state=active]:to-black data-[state=active]:text-white rounded-lg font-semibold transition-all duration-200 cursor-pointer"
               >
                 <Shield className="w-4 h-4 mr-2" />
@@ -286,7 +286,7 @@ export default function SettingsPageClient() {
                         <Phone className="w-5 h-5 text-gray-600 mt-0.5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-600 mb-1">Phone Number</p>
-                          <p className="text-lg font-semibold text-gray-900">{phone || "Not set"}</p>
+                          <p className="text-lg font-semibold text-gray-900">{phone ? formatPhoneNumber(phone) : "Not set"}</p>
                         </div>
                       </div>
 
@@ -323,7 +323,7 @@ export default function SettingsPageClient() {
                           Add Address
                         </Button>
                       </DialogTrigger>
-                      <DialogContent 
+                      <DialogContent
                         className="sm:max-w-2xl bg-white border border-gray-200 shadow-xl z-[9999]"
                         onInteractOutside={(e) => {
                           const target = e.target as Element;
@@ -346,9 +346,9 @@ export default function SettingsPageClient() {
                           </DialogDescription>
                         </DialogHeader>
                         <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 relative">
-                          <AddressForm 
-                            loading={loading} 
-                            onAdd={handleAddressAdded} 
+                          <AddressForm
+                            loading={loading}
+                            onAdd={handleAddressAdded}
                             onCancel={() => setDialogOpen(false)}
                           />
                         </div>
@@ -435,8 +435,8 @@ export default function SettingsPageClient() {
                                           </Button>
                                         </AlertDialogCancel>
                                         <AlertDialogAction asChild>
-                                          <Button 
-                                            onClick={() => handleDeleteAddress(addr.id!)} 
+                                          <Button
+                                            onClick={() => handleDeleteAddress(addr.id!)}
                                             className="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-lg font-medium shadow-sm cursor-pointer"
                                           >
                                             Delete

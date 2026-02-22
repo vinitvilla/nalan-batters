@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RequirePermission } from "@/components/PermissionWrapper";
 import { useAdminApi } from "@/app/admin/use-admin-api";
+import { formatPhoneNumber } from "@/lib/utils/commonFunctions";
 import {
   Receipt,
   DollarSign,
@@ -104,7 +105,7 @@ export default function PosOrdersPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams({
         page: page.toString(),
         limit: pageSize.toString(),
@@ -112,13 +113,13 @@ export default function PosOrdersPage() {
         status: status === 'all' ? '' : status,
         paymentMethod: payment === 'all' ? '' : payment
       });
-      
+
       const response = await adminApiFetch(`/api/admin/pos/orders?${params}`);
       if (!response) {
         throw new Error('No response from server');
       }
       const result = await response.json();
-      
+
       if (result.success) {
         setOrders(result.data);
         setPagination(result.pagination);
@@ -136,14 +137,14 @@ export default function PosOrdersPage() {
 
   const calculateStats = (orderData: Order[]) => {
     const today = moment().startOf('day');
-    
+
     const todayOrders = orderData.filter(order => {
       const orderDate = moment(order.createdAt).startOf('day');
       return orderDate.isSame(today);
     });
 
     const totalRevenue = orderData.reduce((sum, order) => sum + order.total, 0);
-    
+
     setStats({
       totalOrders: pagination.total || orderData.length,
       totalRevenue,
@@ -213,14 +214,14 @@ export default function PosOrdersPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Orders</h3>
                 <p className="text-gray-700 mb-6">{error}</p>
                 <div className="flex flex-col gap-3">
-                  <Button 
-                    onClick={handleRefresh} 
+                  <Button
+                    onClick={handleRefresh}
                     className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 h-auto shadow-md hover:shadow-lg transition-all cursor-pointer"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Retry Loading
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => window.location.href = '/admin/billing-pos'}
                     variant="outline"
                     className="w-full border-2 border-gray-300 hover:border-gray-400 py-3 h-auto font-semibold cursor-pointer"
@@ -261,22 +262,22 @@ export default function PosOrdersPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button 
+                <Button
                   onClick={() => window.location.href = '/admin/billing-pos'}
                   className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 h-auto font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer"
                 >
                   <ShoppingCart className="h-4 w-4" />
                   New Sale
                 </Button>
-                <Button 
-                  onClick={handleRefresh} 
-                  variant="outline" 
+                <Button
+                  onClick={handleRefresh}
+                  variant="outline"
                   className="flex items-center gap-2 border-2 border-gray-300 hover:border-gray-400 px-4 py-2.5 h-auto cursor-pointer"
                 >
                   <RefreshCw className="h-4 w-4" />
                   Refresh
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   className="flex items-center gap-2 border-2 border-gray-300 hover:border-gray-400 px-4 py-2.5 h-auto cursor-pointer"
                 >
@@ -363,7 +364,7 @@ export default function PosOrdersPage() {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900">Filters & Search</h3>
                 </div>
-                
+
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1">
                     <div className="relative">
@@ -377,9 +378,9 @@ export default function PosOrdersPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-3">
-                    <Button 
+                    <Button
                       onClick={handleSearch}
                       className="h-12 px-8 bg-gray-900 hover:bg-gray-800 text-white font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer"
                     >
@@ -472,21 +473,21 @@ export default function PosOrdersPage() {
                   {pagination.total === 0 ? 'No POS transactions yet' : 'No POS orders match your filters'}
                 </h3>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  {pagination.total === 0 
-                    ? 'Point-of-sale transactions will appear here when customers make in-store purchases.' 
+                  {pagination.total === 0
+                    ? 'Point-of-sale transactions will appear here when customers make in-store purchases.'
                     : 'Try adjusting your search or filter criteria to find the POS transactions you\'re looking for.'
                   }
                 </p>
                 {pagination.total === 0 ? (
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button 
+                    <Button
                       onClick={() => window.location.href = '/admin/billing-pos'}
                       className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 h-auto text-base font-semibold shadow-lg hover:shadow-xl transition-all cursor-pointer"
                     >
                       <ShoppingCart className="h-5 w-5 mr-2" />
                       Start New Sale
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleRefresh}
                       variant="outline"
                       className="px-6 py-3 h-auto text-base font-semibold border-2 border-gray-300 hover:border-gray-400 cursor-pointer"
@@ -497,7 +498,7 @@ export default function PosOrdersPage() {
                   </div>
                 ) : (
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button 
+                    <Button
                       onClick={() => {
                         setSearchTerm('');
                         setStatusFilter('all');
@@ -508,7 +509,7 @@ export default function PosOrdersPage() {
                     >
                       Clear All Filters
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => window.location.href = '/admin/billing-pos'}
                       variant="outline"
                       className="px-6 py-3 h-auto text-base font-semibold border-2 border-gray-300 hover:border-gray-400 cursor-pointer"
@@ -528,8 +529,8 @@ export default function PosOrdersPage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">Show:</span>
-                  <Select 
-                    value={pageSize.toString()} 
+                  <Select
+                    value={pageSize.toString()}
                     onValueChange={(value) => {
                       const newPageSize = Number(value);
                       setPageSize(newPageSize);
@@ -542,7 +543,7 @@ export default function PosOrdersPage() {
                         status: statusFilter === 'all' ? '' : statusFilter,
                         paymentMethod: paymentFilter === 'all' ? '' : paymentFilter
                       });
-                      
+
                       fetch(`/api/admin/pos/orders?${params}`)
                         .then(response => response.json())
                         .then(result => {
@@ -564,9 +565,9 @@ export default function PosOrdersPage() {
                       <SelectItem value="100">100</SelectItem>
                     </SelectContent>
                   </Select>
-                  
+
                   <div className="h-4 w-px bg-gray-300 mx-2"></div>
-                  
+
                   <div className="flex items-center border border-gray-300 rounded-lg p-1 bg-white">
                     <Button
                       variant={viewMode === 'card' ? 'default' : 'ghost'}
@@ -587,7 +588,7 @@ export default function PosOrdersPage() {
                   </div>
                 </div>
               </div>
-              
+
               {viewMode === 'card' ? (
                 // Card View - Enhanced Design
                 <div className="grid gap-3">
@@ -602,21 +603,21 @@ export default function PosOrdersPage() {
                               <Receipt className="h-4 w-4" />
                               <span className="font-bold text-sm">{order.orderNumber}</span>
                             </div>
-                            
+
                             {/* Status Badge */}
-                            <Badge 
+                            <Badge
                               className="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-900 border border-gray-300"
                             >
                               {order.status}
                             </Badge>
-                            
+
                             {/* Timestamp */}
                             <div className="flex items-center gap-1.5 text-gray-600">
                               <Clock className="h-3.5 w-3.5" />
                               <span className="text-sm font-medium">{moment(order.createdAt).format('MMM D, h:mm A')}</span>
                             </div>
                           </div>
-                          
+
                           {/* Total & View Button */}
                           <div className="flex items-center gap-3">
                             <div className="text-right">
@@ -625,9 +626,9 @@ export default function PosOrdersPage() {
                                 <div className="text-xs text-gray-600 font-medium">-${order.discount.toFixed(2)} saved</div>
                               )}
                             </div>
-                            <Button 
-                              variant="default" 
-                              size="sm" 
+                            <Button
+                              variant="default"
+                              size="sm"
                               onClick={() => handleViewOrder(order)}
                               className="h-9 px-5 bg-gray-900 hover:bg-gray-800 text-white font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
                             >
@@ -721,9 +722,8 @@ export default function PosOrdersPage() {
                         </thead>
                         <tbody className={loadingPagination ? 'opacity-50' : ''}>
                           {orders.map((order: Order, index: number) => (
-                            <tr key={order.id} className={`border-b border-gray-100 hover:bg-blue-50/50 transition-colors cursor-pointer ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                            }`} onClick={() => handleViewOrder(order)}>
+                            <tr key={order.id} className={`border-b border-gray-100 hover:bg-blue-50/50 transition-colors cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                              }`} onClick={() => handleViewOrder(order)}>
                               <td className="px-4 py-4">
                                 <div className="flex items-center gap-2">
                                   <div className="w-8 h-8 bg-blue-600 text-white rounded-lg text-xs flex items-center justify-center font-bold shadow-sm">
@@ -742,14 +742,13 @@ export default function PosOrdersPage() {
                                 </div>
                               </td>
                               <td className="px-4 py-4">
-                                <Badge 
-                                  className={`text-xs font-semibold px-2.5 py-1 ${
-                                    order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
-                                      ? 'bg-green-100 text-green-700 border-green-300' 
+                                <Badge
+                                  className={`text-xs font-semibold px-2.5 py-1 ${order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
+                                      ? 'bg-green-100 text-green-700 border-green-300'
                                       : order.status === 'PENDING'
-                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
-                                      : 'bg-red-100 text-red-700 border-red-300'
-                                  }`}
+                                        ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                                        : 'bg-red-100 text-red-700 border-red-300'
+                                    }`}
                                 >
                                   {order.status}
                                 </Badge>
@@ -794,9 +793,9 @@ export default function PosOrdersPage() {
                                 )}
                               </td>
                               <td className="px-4 py-4 text-center">
-                                <Button 
-                                  variant="default" 
-                                  size="sm" 
+                                <Button
+                                  variant="default"
+                                  size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleViewOrder(order);
@@ -815,7 +814,7 @@ export default function PosOrdersPage() {
                   </CardContent>
                 </Card>
               )}
-              
+
               {/* Pagination Controls */}
               {pagination.totalPages > 1 && (
                 <Card className="mt-6">
@@ -824,10 +823,10 @@ export default function PosOrdersPage() {
                       <div className="text-sm text-gray-600">
                         Page {pagination.page} of {pagination.totalPages}
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           disabled={!pagination.hasPrev || loadingPagination}
                           onClick={() => handlePageChange(1)}
@@ -835,9 +834,9 @@ export default function PosOrdersPage() {
                         >
                           First
                         </Button>
-                        
-                        <Button 
-                          variant="outline" 
+
+                        <Button
+                          variant="outline"
                           size="sm"
                           disabled={!pagination.hasPrev || loadingPagination}
                           onClick={() => handlePageChange(pagination.page - 1)}
@@ -846,7 +845,7 @@ export default function PosOrdersPage() {
                           <ChevronLeft className="h-4 w-4" />
                           Previous
                         </Button>
-                        
+
                         {/* Page numbers */}
                         <div className="flex items-center gap-1">
                           {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
@@ -860,7 +859,7 @@ export default function PosOrdersPage() {
                             } else {
                               pageNum = pagination.page - 2 + i;
                             }
-                            
+
                             return (
                               <Button
                                 key={pageNum}
@@ -874,9 +873,9 @@ export default function PosOrdersPage() {
                             );
                           })}
                         </div>
-                        
-                        <Button 
-                          variant="outline" 
+
+                        <Button
+                          variant="outline"
                           size="sm"
                           disabled={!pagination.hasNext || loadingPagination}
                           onClick={() => handlePageChange(pagination.page + 1)}
@@ -885,9 +884,9 @@ export default function PosOrdersPage() {
                           Next
                           <ChevronRight className="h-4 w-4" />
                         </Button>
-                        
-                        <Button 
-                          variant="outline" 
+
+                        <Button
+                          variant="outline"
                           size="sm"
                           disabled={!pagination.hasNext || loadingPagination}
                           onClick={() => handlePageChange(pagination.totalPages)}
@@ -896,7 +895,7 @@ export default function PosOrdersPage() {
                           Last
                         </Button>
                       </div>
-                      
+
                       <div className="text-sm text-gray-600">
                         Total: {pagination.total} orders
                       </div>
@@ -917,7 +916,7 @@ export default function PosOrdersPage() {
                 Order #{selectedOrder?.orderNumber}
               </DialogTitle>
             </DialogHeader>
-            
+
             {selectedOrder && (
               <div className="space-y-6">
                 {/* Order Info */}
@@ -926,7 +925,7 @@ export default function PosOrdersPage() {
                     <h4 className="font-semibold text-gray-900 mb-2">Customer Information</h4>
                     <div className="space-y-1 text-sm">
                       <p><span className="font-medium">Name:</span> {selectedOrder.user.fullName}</p>
-                      <p><span className="font-medium">Phone:</span> {selectedOrder.user.phone}</p>
+                      <p><span className="font-medium">Phone:</span> {formatPhoneNumber(selectedOrder.user.phone)}</p>
                     </div>
                   </div>
                   <div>
@@ -937,15 +936,14 @@ export default function PosOrdersPage() {
                       <p><span className="font-medium">Type:</span> {selectedOrder.orderType}</p>
                       <p><span className="font-medium">Payment:</span> {selectedOrder.paymentMethod}</p>
                       <p>
-                        <span className="font-medium">Status:</span> 
-                        <Badge 
-                          className={`ml-2 text-xs ${
-                            selectedOrder.status === 'COMPLETED' || selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'CONFIRMED'
-                              ? 'bg-green-100 text-green-800' 
+                        <span className="font-medium">Status:</span>
+                        <Badge
+                          className={`ml-2 text-xs ${selectedOrder.status === 'COMPLETED' || selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'CONFIRMED'
+                              ? 'bg-green-100 text-green-800'
                               : selectedOrder.status === 'PENDING'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
                         >
                           {selectedOrder.status}
                         </Badge>
@@ -989,21 +987,21 @@ export default function PosOrdersPage() {
                       <span>Subtotal:</span>
                       <span className="font-medium">${(selectedOrder.total - selectedOrder.tax + (selectedOrder.discount || 0)).toFixed(2)}</span>
                     </div>
-                    
+
                     {selectedOrder.discount && selectedOrder.discount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>Discount:</span>
                         <span className="font-medium">-${selectedOrder.discount.toFixed(2)}</span>
                       </div>
                     )}
-                    
+
                     <div className="flex justify-between">
                       <span>Tax:</span>
                       <span className="font-medium">${selectedOrder.tax.toFixed(2)}</span>
                     </div>
-                    
+
                     <Separator className="my-2" />
-                    
+
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total:</span>
                       <span className="text-green-600">${selectedOrder.total.toFixed(2)}</span>
