@@ -76,9 +76,26 @@ export async function GET(req: NextRequest) {
         isActive: true,
         isDelete: false,
         stock: {
-          lt: 5
+          lt: 10
         }
       }
+    });
+
+    // 7b. Low Stock Product Details (for graph)
+    const lowStockProductDetails = await prisma.product.findMany({
+      where: {
+        isActive: true,
+        isDelete: false,
+        stock: {
+          lt: 10
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        stock: true
+      },
+      orderBy: { stock: 'asc' }
     });
 
     // 8. Order Status Distribution
@@ -321,7 +338,8 @@ export async function GET(req: NextRequest) {
         dailyRevenue,
         hourlyOrders: hourlyOrders.filter(h => h.count > 0),
         monthlyTrends: monthlyOrderData,
-        categoryDistribution: categoryChartData
+        categoryDistribution: categoryChartData,
+        lowStockProducts: lowStockProductDetails
       }
     });
 
