@@ -1,17 +1,37 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import moment from 'moment';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState, useEffect, useCallback } from "react";
+import moment from "moment";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
 import { RequirePermission } from "@/components/PermissionWrapper";
 import { useAdminApi } from "@/app/admin/use-admin-api";
 import { formatPhoneNumber } from "@/lib/utils/commonFunctions";
+import { EnhancedPagination } from "@/components/ui/enhanced-pagination";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   Receipt,
   DollarSign,
@@ -20,17 +40,22 @@ import {
   CreditCard,
   Banknote,
   Search,
-  Filter,
-  TrendingUp,
-  Clock,
   ShoppingCart,
   Eye,
-  Download,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  List
-} from 'lucide-react';
+  Clock,
+  TrendingUp,
+  Hash,
+  X,
+} from "lucide-react";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface OrderItem {
+  id: string;
+  quantity: number;
+  price: number;
+  product: { name: string };
+}
 
 interface Order {
   id: string;
@@ -42,970 +67,614 @@ interface Order {
   orderType: string;
   paymentMethod: string;
   createdAt: string;
-  user: {
-    fullName: string;
-    phone: string;
-  };
-  items: {
-    id: string;
-    quantity: number;
-    price: number;
-    product: {
-      name: string;
-    };
-  }[];
+  user: { fullName: string; phone: string };
+  items: OrderItem[];
 }
 
-interface OrderStats {
-  totalOrders: number;
-  totalRevenue: number;
-  avgOrderValue: number;
-  todayOrders: number;
-}
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-interface PaginationData {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
+const statusColor = (status: string) => {
+  switch (status) {
+    case "COMPLETED":
+    case "DELIVERED":
+    case "CONFIRMED":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "PENDING":
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    case "CANCELLED":
+      return "bg-red-50 text-red-700 border-red-200";
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200";
+  }
+};
+
+const paymentIcon = (method: string) =>
+  method === "CASH" ? (
+    <Banknote className="h-3.5 w-3.5 text-emerald-600" />
+  ) : (
+    <CreditCard className="h-3.5 w-3.5 text-blue-600" />
+  );
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function PosOrdersPage() {
   const adminApiFetch = useAdminApi();
+
+  // Data
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [paymentFilter, setPaymentFilter] = useState('all');
+
+  // Filters
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState("all");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+
+  // Detail dialog
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [loadingPagination, setLoadingPagination] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
-  const [pagination, setPagination] = useState<PaginationData>({
-    page: 1,
-    limit: 20,
-    total: 0,
-    totalPages: 0,
-    hasNext: false,
-    hasPrev: false
-  });
-  const [stats, setStats] = useState<OrderStats>({
+
+  // Stats (derived from API pagination total)
+  const [stats, setStats] = useState({
     totalOrders: 0,
+    todayOrders: 0,
     totalRevenue: 0,
     avgOrderValue: 0,
-    todayOrders: 0
   });
 
-  const fetchOrders = async (page = 1, search = '', status = 'all', payment = 'all') => {
-    try {
-      setLoading(true);
-      setError(null);
+  // ── Fetch orders ──────────────────────────────────────────────────────────
 
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: pageSize.toString(),
-        search,
-        status: status === 'all' ? '' : status,
-        paymentMethod: payment === 'all' ? '' : payment
-      });
+  const fetchOrders = useCallback(
+    async (page: number) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const response = await adminApiFetch(`/api/admin/pos/orders?${params}`);
-      if (!response) {
-        throw new Error('No response from server');
-      }
-      const result = await response.json();
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: itemsPerPage.toString(),
+        });
+        if (debouncedSearch) params.append("search", debouncedSearch);
+        if (statusFilter !== "all") params.append("status", statusFilter);
+        if (paymentFilter !== "all")
+          params.append("paymentMethod", paymentFilter);
 
-      if (result.success) {
+        const response = await adminApiFetch(
+          `/api/admin/pos/orders?${params}`
+        );
+        if (!response) throw new Error("No response from server");
+
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || "Fetch failed");
+
         setOrders(result.data);
-        setPagination(result.pagination);
-        calculateStats(result.data);
-      } else {
-        setError(result.error || 'Failed to fetch orders');
+        setTotalPages(result.pagination.totalPages);
+        setTotalItems(result.pagination.total);
+
+        // Compute stats from current page data
+        const today = moment().startOf("day");
+        const todayOrders = result.data.filter((o: Order) =>
+          moment(o.createdAt).startOf("day").isSame(today)
+        );
+        const revenue = result.data.reduce(
+          (s: number, o: Order) => s + o.total,
+          0
+        );
+        setStats({
+          totalOrders: result.pagination.total,
+          todayOrders: todayOrders.length,
+          totalRevenue: revenue,
+          avgOrderValue:
+            result.data.length > 0 ? revenue / result.data.length : 0,
+        });
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Network error while fetching"
+        );
+        console.error("POS orders fetch error:", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError('Network error while fetching orders');
-      console.error('Orders fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [adminApiFetch, itemsPerPage, debouncedSearch, statusFilter, paymentFilter]
+  );
 
-  const calculateStats = (orderData: Order[]) => {
-    const today = moment().startOf('day');
-
-    const todayOrders = orderData.filter(order => {
-      const orderDate = moment(order.createdAt).startOf('day');
-      return orderDate.isSame(today);
-    });
-
-    const totalRevenue = orderData.reduce((sum, order) => sum + order.total, 0);
-
-    setStats({
-      totalOrders: pagination.total || orderData.length,
-      totalRevenue,
-      avgOrderValue: orderData.length > 0 ? totalRevenue / orderData.length : 0,
-      todayOrders: todayOrders.length
-    });
-  };
-
-  const handleSearch = () => {
+  // Reset to page 1 when filters change
+  useEffect(() => {
     setCurrentPage(1);
-    fetchOrders(1, searchTerm, statusFilter, paymentFilter);
-  };
+  }, [debouncedSearch, statusFilter, paymentFilter]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    setLoadingPagination(true);
-    fetchOrders(page, searchTerm, statusFilter, paymentFilter).finally(() => {
-      setLoadingPagination(false);
-    });
-  };
-
-  const handleRefresh = () => {
-    fetchOrders(currentPage, searchTerm, statusFilter, paymentFilter);
-  };
-
-  const handleViewOrder = (order: Order) => {
-    setSelectedOrder(order);
-    setIsDialogOpen(true);
-  };
-
+  // Fetch on page / filter change
   useEffect(() => {
-    handleSearch();
+    fetchOrders(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, paymentFilter]);
+  }, [currentPage, itemsPerPage, debouncedSearch, statusFilter, paymentFilter]);
 
-  useEffect(() => {
-    fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const hasActiveFilters =
+    search !== "" || statusFilter !== "all" || paymentFilter !== "all";
 
-  if (loading) {
-    return (
-      <RequirePermission permission="billing">
-        <div className="p-6">
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading POS Orders</h3>
-              <p className="text-gray-600">Fetching recent transactions...</p>
-            </div>
-          </div>
-        </div>
-      </RequirePermission>
-    );
-  }
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setPaymentFilter("all");
+  };
 
-  if (error) {
-    return (
-      <RequirePermission permission="billing">
-        <div className="p-6">
-          <div className="flex items-center justify-center h-96">
-            <Card className="w-full max-w-md">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Receipt className="h-8 w-8 text-gray-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Orders</h3>
-                <p className="text-gray-700 mb-6">{error}</p>
-                <div className="flex flex-col gap-3">
-                  <Button
-                    onClick={handleRefresh}
-                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 h-auto shadow-md hover:shadow-lg transition-all cursor-pointer"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Retry Loading
-                  </Button>
-                  <Button
-                    onClick={() => window.location.href = '/admin/billing-pos'}
-                    variant="outline"
-                    className="w-full border-2 border-gray-300 hover:border-gray-400 py-3 h-auto font-semibold cursor-pointer"
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Go to Live Billing
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </RequirePermission>
-    );
-  }
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <RequirePermission permission="billing">
-      <div className="min-h-screen bg-gray-50">
-        {/* Header Section */}
-        <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-          <div className="px-6 py-6">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="relative group cursor-pointer" onClick={() => window.location.href = '/admin/billing-pos'} title="Go to Live Billing">
-                  <div className="w-14 h-14 bg-gray-900 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
-                    <Receipt className="w-7 h-7 text-white" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-800 rounded-full border-2 border-white flex items-center justify-center group-hover:bg-gray-700 transition-colors">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    POS Transactions
-                  </h1>
-                  <p className="text-gray-600 mt-1">Point-of-sale transactions and walk-in customer orders</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => window.location.href = '/admin/billing-pos'}
-                  className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 h-auto font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  New Sale
-                </Button>
-                <Button
-                  onClick={handleRefresh}
-                  variant="outline"
-                  className="flex items-center gap-2 border-2 border-gray-300 hover:border-gray-400 px-4 py-2.5 h-auto cursor-pointer"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Refresh
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 border-2 border-gray-300 hover:border-gray-400 px-4 py-2.5 h-auto cursor-pointer"
-                >
-                  <Download className="h-4 w-4" />
-                  Export
-                </Button>
-              </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <Card className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = '/admin/billing-pos'}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-600 text-sm font-medium">Total Transactions</p>
-                      <p className="text-3xl font-bold mt-2 text-gray-900">{stats.totalOrders}</p>
-                      <p className="text-gray-500 text-xs mt-1">POS sales</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                      <ShoppingCart className="w-6 h-6 text-gray-700" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSearch()}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-600 text-sm font-medium">Today&apos;s Sales</p>
-                      <p className="text-3xl font-bold mt-2 text-gray-900">{stats.todayOrders}</p>
-                      <p className="text-gray-500 text-xs mt-1">In-store today</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-gray-700" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSearch()}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-600 text-sm font-medium">POS Revenue</p>
-                      <p className="text-3xl font-bold mt-2 text-gray-900">${stats.totalRevenue.toFixed(2)}</p>
-                      <p className="text-gray-500 text-xs mt-1">In-store sales</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-gray-700" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSearch()}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-600 text-sm font-medium">Avg Order Value</p>
-                      <p className="text-3xl font-bold mt-2 text-gray-900">${stats.avgOrderValue.toFixed(2)}</p>
-                      <p className="text-gray-500 text-xs mt-1">Per transaction</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-gray-700" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+      <div className="max-w-7xl mx-auto space-y-5">
+        {/* ── Header ─────────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              POS Orders
+            </h1>
+            <p className="text-gray-500 text-sm mt-0.5">
+              Point-of-sale transactions and walk-in orders
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => (window.location.href = "/admin/billing-pos")}
+              className="bg-gray-900 hover:bg-gray-800 text-white font-semibold shadow-sm cursor-pointer"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              New Sale
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => fetchOrders(currentPage)}
+              className="border-gray-300 cursor-pointer"
+            >
+              <RefreshCw className="h-4 w-4 mr-1.5" />
+              Refresh
+            </Button>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="px-6 pb-8">
-          {/* Filters Section */}
-          <Card className="mb-8 border border-gray-200 shadow-sm bg-white">
-            <CardContent className="p-6">
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Filter className="h-4 w-4 text-gray-700" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Filters & Search</h3>
-                </div>
+        {/* ── Compact Stats ──────────────────────────────────────────── */}
+        <div className="flex flex-wrap gap-3">
+          {[
+            {
+              label: "Total",
+              value: stats.totalOrders,
+              icon: <Hash className="h-3.5 w-3.5" />,
+            },
+            {
+              label: "Today",
+              value: stats.todayOrders,
+              icon: <Clock className="h-3.5 w-3.5" />,
+            },
+            {
+              label: "Revenue",
+              value: `$${stats.totalRevenue.toFixed(2)}`,
+              icon: <DollarSign className="h-3.5 w-3.5" />,
+            },
+            {
+              label: "Avg",
+              value: `$${stats.avgOrderValue.toFixed(2)}`,
+              icon: <TrendingUp className="h-3.5 w-3.5" />,
+            },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm shadow-sm"
+            >
+              <span className="text-gray-400">{s.icon}</span>
+              <span className="text-gray-500 font-medium">{s.label}</span>
+              <span className="font-bold text-gray-900">{s.value}</span>
+            </div>
+          ))}
+        </div>
 
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                      <Input
-                        placeholder="Search by order number or phone..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                        className="pl-12 h-12 bg-white border-gray-300 focus:border-gray-400 focus:ring-gray-400 text-base"
-                      />
-                    </div>
-                  </div>
+        {/* ── Filter Toolbar ─────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search order # or phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-10 bg-gray-50 border-gray-200 focus:border-gray-400 focus:ring-gray-400"
+            />
+          </div>
 
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={handleSearch}
-                      className="h-12 px-8 bg-gray-900 hover:bg-gray-800 text-white font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer"
-                    >
-                      <Search className="h-4 w-4 mr-2" />
-                      Search Orders
-                    </Button>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-44 h-12 bg-white border-gray-300">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                          <SelectValue placeholder="All Status" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                            All Status
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="PENDING">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                            Pending
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="CONFIRMED">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-gray-600"></div>
-                            Confirmed
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="DELIVERED">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-gray-900"></div>
-                            Delivered
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="CANCELLED">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-                            Cancelled
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-36 h-10 bg-gray-50 border-gray-200">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+              <SelectItem value="DELIVERED">Delivered</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
 
-                    <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                      <SelectTrigger className="w-44 h-12 bg-white border-gray-300">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="w-4 h-4 text-gray-500" />
-                          <SelectValue placeholder="All Payments" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-gray-500" />
-                            All Payments
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="CASH">
-                          <div className="flex items-center gap-2">
-                            <Banknote className="w-4 h-4 text-gray-700" />
-                            Cash
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="CARD">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-gray-700" />
-                            Card
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+          <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+            <SelectTrigger className="w-full sm:w-36 h-10 bg-gray-50 border-gray-200">
+              <SelectValue placeholder="All Payments" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Payments</SelectItem>
+              <SelectItem value="CASH">Cash</SelectItem>
+              <SelectItem value="CARD">Card</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="text-gray-500 hover:text-gray-700 cursor-pointer h-10"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
+        </div>
+
+        {/* ── Table ───────────────────────────────────────────────────── */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          {loading && orders.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <div className="w-10 h-10 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Loading orders...</p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Orders Content */}
-          {orders.length === 0 ? (
-            <Card className="bg-white">
-              <CardContent className="p-12 text-center">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Receipt className="h-12 w-12 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  {pagination.total === 0 ? 'No POS transactions yet' : 'No POS orders match your filters'}
-                </h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  {pagination.total === 0
-                    ? 'Point-of-sale transactions will appear here when customers make in-store purchases.'
-                    : 'Try adjusting your search or filter criteria to find the POS transactions you\'re looking for.'
-                  }
-                </p>
-                {pagination.total === 0 ? (
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button
-                      onClick={() => window.location.href = '/admin/billing-pos'}
-                      className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 h-auto text-base font-semibold shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                    >
-                      <ShoppingCart className="h-5 w-5 mr-2" />
-                      Start New Sale
-                    </Button>
-                    <Button
-                      onClick={handleRefresh}
-                      variant="outline"
-                      className="px-6 py-3 h-auto text-base font-semibold border-2 border-gray-300 hover:border-gray-400 cursor-pointer"
-                    >
-                      <RefreshCw className="h-5 w-5 mr-2" />
-                      Refresh Orders
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button
-                      onClick={() => {
-                        setSearchTerm('');
-                        setStatusFilter('all');
-                        setPaymentFilter('all');
-                        fetchOrders(1, '', 'all', 'all');
-                      }}
-                      className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 h-auto text-base font-semibold cursor-pointer"
-                    >
-                      Clear All Filters
-                    </Button>
-                    <Button
-                      onClick={() => window.location.href = '/admin/billing-pos'}
-                      variant="outline"
-                      className="px-6 py-3 h-auto text-base font-semibold border-2 border-gray-300 hover:border-gray-400 cursor-pointer"
-                    >
-                      <ShoppingCart className="h-5 w-5 mr-2" />
-                      Create New Sale
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-gray-600">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} orders
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Show:</span>
-                  <Select
-                    value={pageSize.toString()}
-                    onValueChange={(value) => {
-                      const newPageSize = Number(value);
-                      setPageSize(newPageSize);
-                      setCurrentPage(1);
-                      // Update the fetch function to use the new page size
-                      const params = new URLSearchParams({
-                        page: '1',
-                        limit: newPageSize.toString(),
-                        search: searchTerm,
-                        status: statusFilter === 'all' ? '' : statusFilter,
-                        paymentMethod: paymentFilter === 'all' ? '' : paymentFilter
-                      });
-
-                      fetch(`/api/admin/pos/orders?${params}`)
-                        .then(response => response.json())
-                        .then(result => {
-                          if (result.success) {
-                            setOrders(result.data);
-                            setPagination(result.pagination);
-                            calculateStats(result.data);
-                          }
-                        });
-                    }}
-                  >
-                    <SelectTrigger className="w-20 h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <div className="h-4 w-px bg-gray-300 mx-2"></div>
-
-                  <div className="flex items-center border border-gray-300 rounded-lg p-1 bg-white">
-                    <Button
-                      variant={viewMode === 'card' ? 'default' : 'ghost'}
-                      size="sm"
-                      className={`h-6 px-2 cursor-pointer ${viewMode === 'card' ? 'bg-gray-900 hover:bg-gray-800' : ''}`}
-                      onClick={() => setViewMode('card')}
-                    >
-                      <LayoutGrid className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'table' ? 'default' : 'ghost'}
-                      size="sm"
-                      className={`h-6 px-2 cursor-pointer ${viewMode === 'table' ? 'bg-gray-900 hover:bg-gray-800' : ''}`}
-                      onClick={() => setViewMode('table')}
-                    >
-                      <List className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {viewMode === 'card' ? (
-                // Card View - Enhanced Design
-                <div className="grid gap-3">
-                  {orders.map((order: Order) => (
-                    <Card key={order.id} className={`bg-white shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 cursor-pointer ${loadingPagination ? 'opacity-50' : ''}`} onClick={() => handleViewOrder(order)}>
-                      <CardContent className="p-0">
-                        {/* Compact Header Row */}
-                        <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                          <div className="flex items-center gap-3">
-                            {/* Order Number Badge */}
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white rounded-lg shadow-sm">
-                              <Receipt className="h-4 w-4" />
-                              <span className="font-bold text-sm">{order.orderNumber}</span>
-                            </div>
-
-                            {/* Status Badge */}
-                            <Badge
-                              className="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-900 border border-gray-300"
-                            >
-                              {order.status}
-                            </Badge>
-
-                            {/* Timestamp */}
-                            <div className="flex items-center gap-1.5 text-gray-600">
-                              <Clock className="h-3.5 w-3.5" />
-                              <span className="text-sm font-medium">{moment(order.createdAt).format('MMM D, h:mm A')}</span>
-                            </div>
-                          </div>
-
-                          {/* Total & View Button */}
-                          <div className="flex items-center gap-3">
-                            <div className="text-right">
-                              <div className="text-2xl font-bold text-gray-900">${order.total.toFixed(2)}</div>
-                              {order.discount && order.discount > 0 && (
-                                <div className="text-xs text-gray-600 font-medium">-${order.discount.toFixed(2)} saved</div>
-                              )}
-                            </div>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleViewOrder(order)}
-                              className="h-9 px-5 bg-gray-900 hover:bg-gray-800 text-white font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
-                            >
-                              <Eye className="h-4 w-4 mr-1.5" />
-                              View Details
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Content Row - Horizontal Layout */}
-                        <div className="px-4 py-3 border-t border-gray-100">
-                          <div className="flex items-center justify-between gap-6">
-                            {/* Payment Method */}
-                            <div className="flex items-center gap-3 min-w-[140px]">
-                              {order.paymentMethod === 'CASH' ? (
-                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shadow-sm">
-                                  <Banknote className="h-5 w-5 text-green-600" />
-                                </div>
-                              ) : order.paymentMethod === 'CARD' ? (
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shadow-sm">
-                                  <CreditCard className="h-5 w-5 text-blue-600" />
-                                </div>
-                              ) : (
-                                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shadow-sm">
-                                  <CreditCard className="h-5 w-5 text-purple-600" />
-                                </div>
-                              )}
-                              <div>
-                                <div className="text-xs text-gray-500 uppercase tracking-wide">Payment</div>
-                                <div className="text-sm font-bold text-gray-900">{order.paymentMethod}</div>
-                              </div>
-                            </div>
-
-                            {/* Divider */}
-                            <div className="h-10 w-px bg-gray-200" />
-
-                            {/* Items Summary - Takes more space */}
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
-                                <Package className="h-5 w-5 text-orange-600" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs text-gray-500 uppercase tracking-wide">Items ({order.items.length})</div>
-                                <div className="text-sm font-medium text-gray-900 truncate">
-                                  {order.items.map((item, idx) => (
-                                    <span key={idx}>
-                                      {item.product.name} × {item.quantity}
-                                      {idx < order.items.length - 1 && ', '}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Divider */}
-                            <div className="h-10 w-px bg-gray-200" />
-
-                            {/* Tax Info */}
-                            <div className="flex items-center gap-3 min-w-[120px]">
-                              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shadow-sm">
-                                <Receipt className="h-5 w-5 text-purple-600" />
-                              </div>
-                              <div>
-                                <div className="text-xs text-gray-500 uppercase tracking-wide">Tax</div>
-                                <div className="text-sm font-bold text-gray-900">${order.tax.toFixed(2)}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4">
+              <Receipt className="h-10 w-10 text-gray-300 mb-3" />
+              <p className="text-gray-600 font-medium mb-1">
+                Failed to load orders
+              </p>
+              <p className="text-gray-400 text-sm mb-4">{error}</p>
+              <Button
+                onClick={() => fetchOrders(currentPage)}
+                className="bg-gray-900 hover:bg-gray-800 text-white cursor-pointer"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4">
+              <Receipt className="h-10 w-10 text-gray-300 mb-3" />
+              <p className="text-gray-600 font-medium mb-1">
+                {hasActiveFilters ? "No matching orders" : "No POS orders yet"}
+              </p>
+              <p className="text-gray-400 text-sm mb-4">
+                {hasActiveFilters
+                  ? "Try adjusting your filters"
+                  : "Orders will appear here when customers make in-store purchases"}
+              </p>
+              {hasActiveFilters ? (
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="cursor-pointer"
+                >
+                  Clear Filters
+                </Button>
               ) : (
-                // Table View - Enhanced Design
-                <Card className="bg-white shadow-sm">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                          <tr>
-                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Order</th>
-                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Time</th>
-                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Status</th>
-                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Payment</th>
-                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Items</th>
-                            <th className="text-left px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Tax</th>
-                            <th className="text-right px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Total</th>
-                            <th className="text-center px-4 py-3 font-bold text-gray-900 text-sm uppercase tracking-wide">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody className={loadingPagination ? 'opacity-50' : ''}>
-                          {orders.map((order: Order, index: number) => (
-                            <tr key={order.id} className={`border-b border-gray-100 hover:bg-blue-50/50 transition-colors cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                              }`} onClick={() => handleViewOrder(order)}>
-                              <td className="px-4 py-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 bg-blue-600 text-white rounded-lg text-xs flex items-center justify-center font-bold shadow-sm">
-                                    <Receipt className="h-4 w-4" />
-                                  </div>
-                                  <span className="font-bold text-gray-900">{order.orderNumber}</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-4">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-gray-400" />
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">{moment(order.createdAt).format('MMM D')}</div>
-                                    <div className="text-xs text-gray-500">{moment(order.createdAt).format('h:mm A')}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-4">
-                                <Badge
-                                  className={`text-xs font-semibold px-2.5 py-1 ${order.status === 'COMPLETED' || order.status === 'DELIVERED' || order.status === 'CONFIRMED'
-                                      ? 'bg-green-100 text-green-700 border-green-300'
-                                      : order.status === 'PENDING'
-                                        ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
-                                        : 'bg-red-100 text-red-700 border-red-300'
-                                    }`}
-                                >
-                                  {order.status}
-                                </Badge>
-                              </td>
-                              <td className="px-4 py-4">
-                                <div className="flex items-center gap-2">
-                                  {order.paymentMethod === 'CASH' ? (
-                                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                      <Banknote className="h-4 w-4 text-green-600" />
-                                    </div>
-                                  ) : (
-                                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                      <CreditCard className="h-4 w-4 text-blue-600" />
-                                    </div>
-                                  )}
-                                  <span className="text-sm font-medium text-gray-900">{order.paymentMethod}</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-4">
-                                <div className="flex items-center gap-2">
-                                  <Package className="h-4 w-4 text-orange-500" />
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</div>
-                                    <div className="text-xs text-gray-500 max-w-40 truncate">
-                                      {order.items.map((item, idx) => (
-                                        <span key={idx}>
-                                          {item.product.name}
-                                          {idx < order.items.length - 1 && ', '}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-4">
-                                <span className="text-sm font-semibold text-purple-600">${order.tax.toFixed(2)}</span>
-                              </td>
-                              <td className="px-4 py-4 text-right">
-                                <div className="text-lg font-bold text-green-600">${order.total.toFixed(2)}</div>
-                                {order.discount && order.discount > 0 && (
-                                  <div className="text-xs text-green-600 font-medium">-${order.discount.toFixed(2)}</div>
-                                )}
-                              </td>
-                              <td className="px-4 py-4 text-center">
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewOrder(order);
-                                  }}
-                                  className="h-8 px-3 bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                                >
-                                  <Eye className="h-3.5 w-3.5 mr-1" />
-                                  View
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Button
+                  onClick={() =>
+                    (window.location.href = "/admin/billing-pos")
+                  }
+                  className="bg-gray-900 hover:bg-gray-800 text-white cursor-pointer"
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Start New Sale
+                </Button>
               )}
+            </div>
+          ) : (
+            <div className={`overflow-x-auto ${loading ? "opacity-60" : ""}`}>
+              <Table className="min-w-full">
+                <TableHeader>
+                  <TableRow className="border-b bg-gray-50/80">
+                    <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4">
+                      Order
+                    </TableHead>
+                    <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4">
+                      Customer
+                    </TableHead>
+                    <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4">
+                      Date / Time
+                    </TableHead>
+                    <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4">
+                      Status
+                    </TableHead>
+                    <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4">
+                      Payment
+                    </TableHead>
+                    <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4">
+                      Items
+                    </TableHead>
+                    <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4 text-right">
+                      Total
+                    </TableHead>
+                    <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4 text-center w-20">
+                      {/* Actions */}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order, idx) => (
+                    <TableRow
+                      key={order.id}
+                      className={`border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                        }`}
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      {/* Order # */}
+                      <TableCell className="py-3.5 px-4">
+                        <span className="font-mono text-sm font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
+                          {order.orderNumber}
+                        </span>
+                      </TableCell>
 
-              {/* Pagination Controls */}
-              {pagination.totalPages > 1 && (
-                <Card className="mt-6">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600">
-                        Page {pagination.page} of {pagination.totalPages}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={!pagination.hasPrev || loadingPagination}
-                          onClick={() => handlePageChange(1)}
-                          className="cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          First
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={!pagination.hasPrev || loadingPagination}
-                          onClick={() => handlePageChange(pagination.page - 1)}
-                          className="cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          Previous
-                        </Button>
-
-                        {/* Page numbers */}
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                            let pageNum;
-                            if (pagination.totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (pagination.page <= 3) {
-                              pageNum = i + 1;
-                            } else if (pagination.page >= pagination.totalPages - 2) {
-                              pageNum = pagination.totalPages - 4 + i;
-                            } else {
-                              pageNum = pagination.page - 2 + i;
-                            }
-
-                            return (
-                              <Button
-                                key={pageNum}
-                                variant={pageNum === pagination.page ? "default" : "outline"}
-                                size="sm"
-                                className="w-8 h-8 p-0 cursor-pointer"
-                                onClick={() => handlePageChange(pageNum)}
-                              >
-                                {pageNum}
-                              </Button>
-                            );
-                          })}
+                      {/* Customer */}
+                      <TableCell className="py-3.5 px-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {order.user.fullName}
                         </div>
+                        <div className="text-xs text-gray-500">
+                          {formatPhoneNumber(order.user.phone)}
+                        </div>
+                      </TableCell>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={!pagination.hasNext || loadingPagination}
-                          onClick={() => handlePageChange(pagination.page + 1)}
-                          className="cursor-pointer disabled:cursor-not-allowed"
+                      {/* Date / Time */}
+                      <TableCell className="py-3.5 px-4">
+                        <div className="text-sm text-gray-900">
+                          {moment(order.createdAt).format("MMM D")}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {moment(order.createdAt).format("h:mm A")}
+                        </div>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell className="py-3.5 px-4">
+                        <Badge
+                          className={`text-xs font-semibold px-2 py-0.5 border ${statusColor(
+                            order.status
+                          )}`}
                         >
-                          Next
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+                          {order.status}
+                        </Badge>
+                      </TableCell>
 
+                      {/* Payment */}
+                      <TableCell className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                          {paymentIcon(order.paymentMethod)}
+                          <span className="font-medium">
+                            {order.paymentMethod}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Items */}
+                      <TableCell className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5">
+                          <Package className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-700">
+                            {order.items.length} item
+                            {order.items.length !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-400 max-w-40 truncate">
+                          {order.items
+                            .map((i) => i.product.name)
+                            .join(", ")}
+                        </div>
+                      </TableCell>
+
+                      {/* Total */}
+                      <TableCell className="py-3.5 px-4 text-right">
+                        <div className="font-bold text-gray-900">
+                          ${order.total.toFixed(2)}
+                        </div>
+                        {order.discount && order.discount > 0 && (
+                          <div className="text-xs text-emerald-600 font-medium">
+                            -${order.discount.toFixed(2)} saved
+                          </div>
+                        )}
+                      </TableCell>
+
+                      {/* Action */}
+                      <TableCell
+                        className="py-3.5 px-4 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          disabled={!pagination.hasNext || loadingPagination}
-                          onClick={() => handlePageChange(pagination.totalPages)}
-                          className="cursor-pointer disabled:cursor-not-allowed"
+                          className="h-8 px-2.5 text-gray-500 hover:text-gray-900 cursor-pointer"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsDialogOpen(true);
+                          }}
                         >
-                          Last
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
-                      <div className="text-sm text-gray-600">
-                        Total: {pagination.total} orders
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+          {/* Pagination */}
+          {orders.length > 0 && (
+            <div className="px-4 pb-2">
+              <EnhancedPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={(n) => {
+                  setItemsPerPage(n);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
           )}
         </div>
 
-        {/* Order Details Dialog */}
+        {/* ── Order Details Dialog ────────────────────────────────────── */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-blue-600" />
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Receipt className="h-5 w-5 text-gray-700" />
                 Order #{selectedOrder?.orderNumber}
               </DialogTitle>
             </DialogHeader>
 
             {selectedOrder && (
-              <div className="space-y-6">
-                {/* Order Info */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-5 pt-2">
+                {/* Info grid */}
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Customer Information</h4>
-                    <div className="space-y-1 text-sm">
-                      <p><span className="font-medium">Name:</span> {selectedOrder.user.fullName}</p>
-                      <p><span className="font-medium">Phone:</span> {formatPhoneNumber(selectedOrder.user.phone)}</p>
-                    </div>
+                    <span className="text-gray-500 text-xs uppercase tracking-wide">
+                      Customer
+                    </span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {selectedOrder.user.fullName}
+                    </p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Order Details</h4>
-                    <div className="space-y-1 text-sm">
-                      <p><span className="font-medium">Date:</span> {moment(selectedOrder.createdAt).format('MMMM D, YYYY')}</p>
-                      <p><span className="font-medium">Time:</span> {moment(selectedOrder.createdAt).format('h:mm A')}</p>
-                      <p><span className="font-medium">Type:</span> {selectedOrder.orderType}</p>
-                      <p><span className="font-medium">Payment:</span> {selectedOrder.paymentMethod}</p>
-                      <p>
-                        <span className="font-medium">Status:</span>
-                        <Badge
-                          className={`ml-2 text-xs ${selectedOrder.status === 'COMPLETED' || selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'CONFIRMED'
-                              ? 'bg-green-100 text-green-800'
-                              : selectedOrder.status === 'PENDING'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                        >
-                          {selectedOrder.status}
-                        </Badge>
-                      </p>
+                    <span className="text-gray-500 text-xs uppercase tracking-wide">
+                      Phone
+                    </span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {formatPhoneNumber(selectedOrder.user.phone)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-xs uppercase tracking-wide">
+                      Date
+                    </span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {moment(selectedOrder.createdAt).format(
+                        "MMM D, YYYY · h:mm A"
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-xs uppercase tracking-wide">
+                      Payment
+                    </span>
+                    <p className="font-medium text-gray-900 mt-0.5 flex items-center gap-1.5">
+                      {paymentIcon(selectedOrder.paymentMethod)}
+                      {selectedOrder.paymentMethod}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-xs uppercase tracking-wide">
+                      Status
+                    </span>
+                    <div className="mt-1">
+                      <Badge
+                        className={`text-xs font-semibold px-2 py-0.5 border ${statusColor(
+                          selectedOrder.status
+                        )}`}
+                      >
+                        {selectedOrder.status}
+                      </Badge>
                     </div>
                   </div>
                 </div>
 
+                <Separator />
+
                 {/* Items */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <Package className="h-4 w-4" />
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-1.5">
+                    <Package className="h-4 w-4 text-gray-500" />
                     Items ({selectedOrder.items.length})
                   </h4>
-                  <div className="space-y-2">
-                    {selectedOrder.items.map(item => (
-                      <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <span className="text-blue-600 font-bold text-sm">{item.quantity}</span>
-                          </div>
-                          <span className="font-medium">{item.product.name}</span>
+                  <div className="space-y-1.5">
+                    {selectedOrder.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg text-sm"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 bg-gray-200 rounded text-xs font-bold flex items-center justify-center text-gray-700">
+                            {item.quantity}
+                          </span>
+                          <span className="font-medium text-gray-900">
+                            {item.product.name}
+                          </span>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold">${(item.quantity * parseFloat(item.price.toString())).toFixed(2)}</p>
-                          <p className="text-sm text-gray-500">${parseFloat(item.price.toString()).toFixed(2)} each</p>
+                          <span className="font-bold text-gray-900">
+                            $
+                            {(
+                              item.quantity *
+                              parseFloat(item.price.toString())
+                            ).toFixed(2)}
+                          </span>
+                          <span className="text-xs text-gray-400 ml-1.5">
+                            @ ${parseFloat(item.price.toString()).toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Order Summary */}
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    Order Summary
-                  </h4>
-                  <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span className="font-medium">${(selectedOrder.total - selectedOrder.tax + (selectedOrder.discount || 0)).toFixed(2)}</span>
-                    </div>
+                <Separator />
 
-                    {selectedOrder.discount && selectedOrder.discount > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Discount:</span>
-                        <span className="font-medium">-${selectedOrder.discount.toFixed(2)}</span>
+                {/* Summary */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>
+                      $
+                      {(
+                        selectedOrder.total -
+                        selectedOrder.tax +
+                        (selectedOrder.discount || 0)
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                  {selectedOrder.discount &&
+                    selectedOrder.discount > 0 && (
+                      <div className="flex justify-between text-emerald-600">
+                        <span>Discount</span>
+                        <span>
+                          -${selectedOrder.discount.toFixed(2)}
+                        </span>
                       </div>
                     )}
-
-                    <div className="flex justify-between">
-                      <span>Tax:</span>
-                      <span className="font-medium">${selectedOrder.tax.toFixed(2)}</span>
-                    </div>
-
-                    <Separator className="my-2" />
-
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total:</span>
-                      <span className="text-green-600">${selectedOrder.total.toFixed(2)}</span>
-                    </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Tax</span>
+                    <span>${selectedOrder.tax.toFixed(2)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold text-base text-gray-900">
+                    <span>Total</span>
+                    <span>${selectedOrder.total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
