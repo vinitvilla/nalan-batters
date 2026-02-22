@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapIcon, User, Phone, Package } from "lucide-react";
+import { MapIcon, MapPin, User, Phone, Package } from "lucide-react";
 import { AdminOrderResponse } from "@/types/order";
 import { useLoadScript, GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { formatCurrency, formatPhoneNumber } from "@/lib/utils/commonFunctions";
