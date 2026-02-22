@@ -13,17 +13,17 @@ export function LayoutClient({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/admin");
-  const isSignIn = pathname.startsWith("/signin") || pathname.startsWith("/signup");
+  const isAdminPage = pathname.startsWith("/admin");
+  const isSignInPage = pathname.startsWith("/signin") || pathname.startsWith("/signup");
 
   return (
     <>
       <SessionHydrator />
       <EnvironmentBadge />
-      {!(isAdmin || isSignIn) && <Header />}
+      {!(isAdminPage || isSignInPage) && <Header />}
       <Toaster />
       {children}
-      {!(isAdmin || isSignIn) && <Footer />}
+      {!(isAdminPage || isSignInPage) && <Footer />}
     </>
   );
 }
