@@ -36,22 +36,31 @@ export function UserPhoneStep({ onOtpSent }: UserPhoneStepProps) {
     };
   }, []);
 
-  // Ensure reCAPTCHA is only initialized once or re-initialized properly after hot-reload
+  // Always clear any stale reCAPTCHA instace before creating a new one.
+  // After sign-out, the container may still have a rendered widget which causes
+  // "reCAPTCHA has already been rendered in this element" on re-login.
   const setupRecaptcha = () => {
     const container = document.getElementById("recaptcha-container");
-    if (container && !container.hasChildNodes() && window.recaptchaVerifier) {
-      // Stale instance from Fast Refresh
+
+    // Clear any existing verifier (covers sign-out + re-login, hot-reload, etc.)
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch {
+        // Ignore errors from already-cleared instances
+      }
       delete window.recaptchaVerifier;
     }
 
-    if (!window.recaptchaVerifier) {
-      if (container) container.innerHTML = "";
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        { size: "invisible" },
-      );
-    }
+    // Always wipe the container so Firebase doesn't see a pre-rendered widget
+    if (container) container.innerHTML = "";
+
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      { size: "invisible" },
+    );
+
     return window.recaptchaVerifier!;
   };
 
@@ -74,6 +83,8 @@ export function UserPhoneStep({ onOtpSent }: UserPhoneStepProps) {
 
   return (
     <div className="w-full">
+      {/* Container lives here so it's destroyed on unmount — prevents "already rendered" on re-login */}
+      <div id="recaptcha-container" style={{ position: "absolute", zIndex: -1 }} />
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
           <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">

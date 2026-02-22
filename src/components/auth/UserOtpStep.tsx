@@ -7,6 +7,7 @@ import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
 import { UserResponse } from "@/types/user";
 import { useCartStore } from "@/store/cartStore";
+import { formatPhoneForDisplay } from "@/services/user/phoneFormatter.service";
 
 export interface UserOtpStepProps {
   onUserFound: (user: UserResponse) => void;
@@ -84,7 +85,7 @@ export function UserOtpStep({ onUserFound, onUserNotFound, onBack, confirmationR
         </h3>
         <p className="text-gray-600 text-sm">
           We sent a 6-digit code to{" "}
-          <span className="font-semibold text-gray-900">{phone}</span>
+          <span className="font-semibold text-gray-900">{formatPhoneForDisplay(phone)}</span>
         </p>
       </div>
 

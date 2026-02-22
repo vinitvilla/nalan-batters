@@ -15,12 +15,11 @@ export function LayoutClient({
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   const isSignIn = pathname.startsWith("/signin") || pathname.startsWith("/signup");
-  
+
   return (
     <>
       <SessionHydrator />
       <EnvironmentBadge />
-      <div id="recaptcha-container" style={{ position: "absolute", zIndex: -1 }} />
       {!(isAdmin || isSignIn) && <Header />}
       <Toaster />
       {children}
