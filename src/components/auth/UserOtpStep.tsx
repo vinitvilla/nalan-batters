@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { userStore } from "@/store/userStore";
 import { useAddressStore } from "@/store/addressStore";
 import { UserResponse } from "@/types/user";
-import { USER_ROLE } from "@/constants/userRole";
 import { useCartStore } from "@/store/cartStore";
 
 export interface UserOtpStepProps {

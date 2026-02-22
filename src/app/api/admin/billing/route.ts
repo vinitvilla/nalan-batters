@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { action, orderId, amount, reason } = body;
+    const { action, orderId } = body;
 
     switch (action) {
       case 'refund':

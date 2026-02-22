@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Home, UtensilsCrossed, Phone } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { userStore } from "@/store/userStore";
 import UserLoginButton from "@/components/UserLoginButton";
 import "../styles/theme.css";
 

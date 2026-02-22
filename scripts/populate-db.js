@@ -1474,7 +1474,7 @@ async function populateDatabase() {
 
     // ===== ESSENTIAL SYSTEM DATA =====
     console.log('\n🏗️  Step 2/3: Creating essential system data...');
-    const { systemUser, pickupAddress } = await createSystemUserAndAddresses();
+    await createSystemUserAndAddresses();
     const walkInUser = await createWalkInCustomer();
     const storeAddress = await createStoreAddress(walkInUser.id);
     console.log('✅ Essential system data created');

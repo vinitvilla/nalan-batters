@@ -6,7 +6,6 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { formatPhoneNumber } from "@/lib/utils/commonFunctions";
 
 export default function UserDropdown({ onClose }: { onClose?: () => void }) {
-  const user = userStore((s) => s.user);
   const phoneNumber = userStore((s) => s.phone);
   const fullName = userStore((s) => s.fullName);
   const { isAdmin } = useUserRole();

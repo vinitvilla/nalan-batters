@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapIcon, MapPin, User, Phone, Package } from "lucide-react";
+import { MapIcon, User, Phone, Package } from "lucide-react";
 import { AdminOrderResponse } from "@/types/order";
-import { useLoadScript, GoogleMap, Marker, InfoWindow, MarkerClusterer } from "@react-google-maps/api";
+import { useLoadScript, GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { formatCurrency, formatPhoneNumber } from "@/lib/utils/commonFunctions";
 
 const libraries: ("places" | "geometry")[] = ["places", "geometry"];
@@ -44,7 +44,7 @@ interface MarkerData {
     originalOrder?: AdminOrderResponse; // Keep track of the original order for backward compatibility
 }
 
-export default function DeliveryMapView({ orders, title }: DeliveryMapViewProps) {
+export default function DeliveryMapView({ orders }: DeliveryMapViewProps) {
     const [markers, setMarkers] = useState<MarkerData[]>([]);
     const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
     const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 43.6532, lng: -79.3832 }); // Toronto default
@@ -353,7 +353,7 @@ export default function DeliveryMapView({ orders, title }: DeliveryMapViewProps)
                                     </div>
                                     
                                     <div className="space-y-2 max-h-40 overflow-y-auto">
-                                        {selectedMarker.orders.map((order, index) => (
+                                        {selectedMarker.orders.map((order) => (
                                             <div key={order.id} className="p-2 bg-gray-50 rounded border-l-2 border-blue-200">
                                                 <div className="flex justify-between items-start mb-1">
                                                     <span className="font-medium text-sm">#{order.orderNumber || order.id.slice(-8)}</span>
