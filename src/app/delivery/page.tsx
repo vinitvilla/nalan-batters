@@ -44,6 +44,10 @@ interface Order {
 export default function DeliveryPage() {
   const [step, setStep] = useState<"phone" | "otp" | "orders">("phone");
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  // Force a fresh recaptcha-container DOM node every time we navigate back to
+  // the phone step, preventing "reCAPTCHA has already been rendered" errors.
+  const [phoneStepKey, setPhoneStepKey] = useState(0);
+  const goToPhone = useCallback(() => { setPhoneStepKey((k) => k + 1); setStep("phone"); }, []);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -80,12 +84,12 @@ export default function DeliveryPage() {
       } else {
         toast.error("Access Denied: You are not a driver");
         resetUser();
-        setStep("phone");
+        goToPhone();
       }
     } else {
       setStep("phone");
     }
-  }, [user, token, resetUser, fetchOrders]);
+  }, [user, token, resetUser, fetchOrders, goToPhone]);
 
   const handleMarkDelivered = async (orderId: string) => {
     if (!token) return;
@@ -130,6 +134,7 @@ export default function DeliveryPage() {
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <UserPhoneStep
+              key={phoneStepKey}
               onOtpSent={(cr) => {
                 setConfirmationResult(cr);
                 setStep("otp");
@@ -159,14 +164,14 @@ export default function DeliveryPage() {
                 } else {
                   toast.error("Access Denied: You are not a driver");
                   resetUser();
-                  setStep("phone");
+                  goToPhone();
                 }
               }}
               onUserNotFound={() => {
                 toast.error("Driver account not found");
-                setStep("phone");
+                goToPhone();
               }}
-              onBack={() => setStep("phone")}
+              onBack={() => goToPhone()}
             />
           </div>
         </div>

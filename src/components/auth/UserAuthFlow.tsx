@@ -14,11 +14,17 @@ export interface UserAuthFlowProps {
 export function UserAuthFlow({ onSuccess }: UserAuthFlowProps) {
   const [step, setStep] = useState<"phone" | "otp" | "register">("phone");
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  // Increment this counter each time we navigate back to the phone step so that
+  // React fully unmounts the previous <UserPhoneStep> (and its recaptcha-container
+  // DOM node) before mounting a fresh one. This prevents the Firebase error:
+  // "reCAPTCHA has already been rendered in this element".
+  const [phoneStepKey, setPhoneStepKey] = useState(0);
 
   // Step 1: Enter phone, check DB, send OTP if needed
   if (step === "phone") {
     return (
       <UserPhoneStep
+        key={phoneStepKey}
         onOtpSent={(cr) => {
           setConfirmationResult(cr);
           setStep("otp");
@@ -37,7 +43,7 @@ export function UserAuthFlow({ onSuccess }: UserAuthFlowProps) {
         onUserNotFound={() => {
           setStep("register");
         }}
-        onBack={() => setStep("phone")}
+        onBack={() => { setPhoneStepKey((k) => k + 1); setStep("phone"); }}
       />
     );
   }
