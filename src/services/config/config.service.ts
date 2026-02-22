@@ -18,13 +18,12 @@ function asObj(value: Config['value']): ConfigValue {
 
 // Pure function - parses charge config from DB config array
 export function parseChargeConfig(configs: Config[]): ChargeConfig {
-  const taxConfig = configs.find((c) => c.title === 'taxPercent');
-  const convenienceConfig = configs.find((c) => c.title === 'convenienceCharge');
-  const deliveryConfig = configs.find((c) => c.title === 'deliveryCharge');
+  const additionalChargesConfig = configs.find((c) => c.title === 'additionalCharges');
+  const val = additionalChargesConfig ? asObj(additionalChargesConfig.value) : {};
 
-  const taxVal = taxConfig ? asObj(taxConfig.value) : {};
-  const convVal = convenienceConfig ? asObj(convenienceConfig.value) : {};
-  const delVal = deliveryConfig ? asObj(deliveryConfig.value) : {};
+  const taxVal = asObj(val.taxPercent as Config['value']);
+  const convVal = asObj(val.convenienceCharge as Config['value']);
+  const delVal = asObj(val.deliveryCharge as Config['value']);
 
   return {
     taxPercent: {

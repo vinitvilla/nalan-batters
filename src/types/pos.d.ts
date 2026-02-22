@@ -18,6 +18,7 @@ export interface PosSaleRequest {
   discount: number;
   total: number;
   paymentMethod: 'cash' | 'card';
+  promoCodeId?: string;
   receivedAmount?: number;
   change?: number;
 }

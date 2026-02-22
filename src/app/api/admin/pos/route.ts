@@ -1,16 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/generated/prisma';
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import moment from 'moment';
 
-const prisma = new PrismaClient();
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get all active products with categories
     const products = await prisma.product.findMany({
-      where: { 
+      where: {
         isDelete: false,
-        isActive: true 
+        isActive: true
       },
       include: {
         category: true
@@ -28,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // Get configuration data for taxes and charges
     const configs = await prisma.config.findMany({
-      where: { 
+      where: {
         isDelete: false,
         isActive: true,
         title: {
@@ -58,7 +56,7 @@ export async function GET(request: NextRequest) {
     // Handle tax configuration with waive flag from additionalCharges
     let taxRate = 0.13; // Default 13% HST
     let taxWaived = false;
-    
+
     const additionalCharges = configMap.additionalCharges as AdditionalChargesConfig | undefined;
     if (additionalCharges && additionalCharges.taxPercent) {
       const taxConfig = additionalCharges.taxPercent;

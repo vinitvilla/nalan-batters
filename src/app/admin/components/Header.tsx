@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        
+
         <div className="flex flex-col">
           <h2 className="text-lg sm:text-xl font-bold truncate">
             {isManager ? 'Manager Dashboard' : 'Admin Dashboard'}
@@ -41,47 +41,47 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           )}
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2">
-        <Button 
-          className="cursor-pointer hidden sm:flex" 
-          variant="outline" 
+        <Button
+          className="cursor-pointer hidden sm:flex"
+          variant="outline"
           onClick={() => router.push("/")}
         >
           <Home className="h-4 w-4 mr-2" />
           <span className="hidden md:inline">Back to Home</span>
           <span className="md:hidden">Home</span>
         </Button>
-        
+
         {/* Mobile Home Button */}
-        <Button 
-          className="cursor-pointer sm:hidden" 
-          variant="outline" 
+        <Button
+          className="cursor-pointer sm:hidden"
+          variant="outline"
           size="icon"
           onClick={() => router.push("/")}
           aria-label="Back to Home"
         >
           <Home className="h-4 w-4" />
         </Button>
-        
+
         {user && (
           <>
-            <Button 
-              className="cursor-pointer hidden sm:flex" 
-              variant="outline" 
-              onClick={signOut}
+            <Button
+              className="cursor-pointer hidden sm:flex"
+              variant="outline"
+              onClick={() => signOut()}
             >
               <LogOut className="h-4 w-4 mr-2" />
               <span className="hidden md:inline">Sign Out</span>
               <span className="md:hidden">Sign Out</span>
             </Button>
-            
+
             {/* Mobile Sign Out Button */}
-            <Button 
-              className="cursor-pointer sm:hidden" 
-              variant="outline" 
+            <Button
+              className="cursor-pointer sm:hidden"
+              variant="outline"
               size="icon"
-              onClick={signOut}
+              onClick={() => signOut()}
               aria-label="Sign Out"
             >
               <LogOut className="h-4 w-4" />

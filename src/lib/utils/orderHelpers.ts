@@ -4,7 +4,7 @@ import { parse, isValid, startOfDay, endOfDay, isBefore } from 'date-fns';
 import { getAllConfigs, parseChargeConfig, parseFreeDeliveryConfig } from '@/services/config/config.service';
 import { isFreeDeliveryEligible, isDeliveryAvailable } from '@/services/order/delivery.service';
 import { calculateOrderCharges, calculateDiscountAmount, calculateOrderTotal } from '@/services/order/orderCalculation.service';
-import { validateAndApplyPromoCode, incrementPromoUsage } from '@/services/order/promoCode.service';
+import { validatePromoById, incrementPromoUsage } from '@/services/order/promoCode.service';
 
 const MAX_ORDER_NUMBER_ATTEMPTS = 20;
 
@@ -36,7 +36,8 @@ export async function getAllOrders() {
         include: {
             user: true,
             address: true,
-            items: { include: { product: true } }
+            items: { include: { product: true } },
+            promoCode: true
         },
         orderBy: { createdAt: "desc" }
     });
@@ -194,7 +195,8 @@ export async function getOrdersPaginated({
         include: {
             user: true,
             address: true,
-            items: { include: { product: true } }
+            items: { include: { product: true } },
+            promoCode: true
         },
         orderBy: orderByClause,
         skip: offset,
@@ -218,14 +220,15 @@ export async function getOrdersPaginated({
 
 export async function getOrderById(orderId: string) {
     return prisma.order.findFirst({
-        where: { 
+        where: {
             id: orderId,
-            isDelete: false 
+            isDelete: false
         },
         include: {
             user: true,
             address: true,
-            items: { include: { product: true } }
+            items: { include: { product: true } },
+            promoCode: true
         }
     });
 }
@@ -320,8 +323,9 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
     const charges = calculateOrderCharges(subtotal, chargeConfig, isFreeDelivery, orderType || 'DELIVERY');
 
     let discount = 0;
+    let promoSnapshot: { code: string; discount: number; discountType: 'PERCENTAGE' | 'VALUE' } | null = null;
     if (promoCodeId) {
-        const promoResult = await validateAndApplyPromoCode(promoCodeId, subtotal);
+        const promoResult = await validatePromoById(promoCodeId, subtotal);
         if (promoResult.valid && promoResult.promo) {
             discount = calculateDiscountAmount(
                 subtotal,
@@ -329,6 +333,11 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
                 promoResult.promo.discount,
                 promoResult.promo.maxDiscount
             );
+            promoSnapshot = {
+                code: promoResult.promo.code,
+                discount: promoResult.promo.discount,
+                discountType: promoResult.promo.discountType,
+            };
         }
     }
 
@@ -346,11 +355,18 @@ export async function createOrder({ userId, addressId, items, promoCodeId, deliv
             user: { connect: { id: userId } },
             address: { connect: { id: addressId } },
             ...(promoCodeId && { promoCode: { connect: { id: promoCodeId } } }),
+            subtotal,
             total: totals.finalTotal,
             tax: charges.tax,
+            taxRate: chargeConfig.taxPercent.waive ? 0 : chargeConfig.taxPercent.percent,
             convenienceCharges: charges.convenienceCharge,
             deliveryCharges: charges.deliveryCharge,
             discount,
+            ...(promoSnapshot && {
+                promoCodeCode: promoSnapshot.code,
+                promoDiscount: promoSnapshot.discount,
+                promoDiscountType: promoSnapshot.discountType,
+            }),
             status: OrderStatus.PENDING,
             deliveryType: (orderType || 'DELIVERY') as 'PICKUP' | 'DELIVERY',
             paymentMethod: (paymentMethod || 'ONLINE') as 'CASH' | 'CARD' | 'ONLINE',

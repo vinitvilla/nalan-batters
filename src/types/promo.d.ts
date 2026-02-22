@@ -6,6 +6,8 @@ export interface PromoState {
   applied: boolean;
   discount: number;
   discountType: DiscountType;
+  maxDiscount?: number;
+  minOrderAmount?: number;
 }
 
 // Promo code validation result
@@ -18,5 +20,6 @@ export interface PromoCodeResult {
     discountType: DiscountType;
     discount: number;
     maxDiscount?: number;
+    minOrderAmount?: number;
   };
 }

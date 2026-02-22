@@ -62,8 +62,13 @@ model Order {
   userId             String
   addressId          String
   status             OrderStatus   @default(PENDING)
+  subtotal           Decimal       @db.Decimal(10, 2)
   total              Decimal       @db.Decimal(10, 2)
   promoCodeId        String?
+  promoCodeCode      String?       // Snapshot of promo code string at order time
+  promoDiscount      Decimal?      @db.Decimal(5, 2)   // Snapshot of promo rate/value
+  promoDiscountType  DiscountType? // PERCENTAGE or VALUE
+  taxRate            Decimal?      @db.Decimal(5, 2)   // Snapshot of tax percentage applied
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   deliveryCharges    Decimal?      @db.Decimal(10, 2)

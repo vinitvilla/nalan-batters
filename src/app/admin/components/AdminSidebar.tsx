@@ -18,7 +18,6 @@ import {
     Tag,
     Flag,
     Settings,
-    Crown,
     MessageSquare,
     CreditCard,
     Receipt

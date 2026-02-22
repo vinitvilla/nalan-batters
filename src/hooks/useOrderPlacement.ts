@@ -29,8 +29,14 @@ export function useOrderPlacement() {
     config?: Config
   ): string | null => {
     if (cartItems.length === 0) return "Your cart is empty";
+    if (!deliveryType) return "Please select a delivery method";
     if (deliveryType === 'DELIVERY' && !selectedAddress) return "Please select a delivery address";
     if (deliveryType === 'DELIVERY' && !selectedDeliveryDate) return "Please select a delivery date";
+
+    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (promo.applied && promo.minOrderAmount && subtotal < promo.minOrderAmount) {
+      return `Promo code ${promo.code} requires a minimum order of $${promo.minOrderAmount}`;
+    }
 
     // Check if delivery is available for the selected address
     if (deliveryType === 'DELIVERY' && selectedAddress && config?.freeDelivery) {
@@ -63,8 +69,8 @@ export function useOrderPlacement() {
           addressId: selectedAddress?.id,
           items: cartItems.map(i => ({
             productId: i.id,
-            quantity: i.quantity,
-            price: i.price
+            quantity: Number(i.quantity),
+            price: Number(i.price)
           })),
           promoCodeId: promo.applied && promo.id ? promo.id : null,
           deliveryDate: selectedDeliveryDate,

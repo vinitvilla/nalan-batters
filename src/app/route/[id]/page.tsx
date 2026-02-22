@@ -130,7 +130,7 @@ export default function RouteSharePage() {
         await navigator.clipboard.writeText(window.location.href);
         toast.success('Route link copied to clipboard!');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to share route');
     }
   };

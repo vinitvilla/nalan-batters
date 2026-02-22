@@ -54,6 +54,7 @@ interface DashboardData {
         hourlyOrders: Array<{ hour: string; count: number }>;
         monthlyTrends: Array<{ month: string; orders: number; revenue: number }>;
         categoryDistribution: Array<{ name: string; quantity: number }>;
+        lowStockProducts: Array<{ id: string; name: string; stock: number }>;
     };
 }
 
@@ -157,7 +158,7 @@ export default function DashboardPage() {
     const dailyRevenueData = {
         labels: dashboardData.charts.dailyRevenue.map(item => item.label),
         datasets: [{
-            label: "Daily Revenue (₹)",
+            label: "Daily Revenue ($)",
             data: dashboardData.charts.dailyRevenue.map(item => item.revenue),
             fill: true,
             backgroundColor: "rgba(99, 102, 241, 0.1)",
@@ -190,7 +191,7 @@ export default function DashboardPage() {
                 pointRadius: 5,
             },
             {
-                label: "Revenue (₹)",
+                label: "Revenue ($)",
                 data: dashboardData.charts.monthlyTrends.map(item => item.revenue),
                 borderColor: "#ef4444",
                 backgroundColor: "rgba(239, 68, 68, 0.1)",
@@ -236,6 +237,27 @@ export default function DashboardPage() {
             ],
             borderWidth: 2,
             borderColor: "#ffffff",
+        }],
+    };
+
+    // Low Stock Products Chart
+    const lowStockData = {
+        labels: dashboardData.charts.lowStockProducts.map(item => item.name),
+        datasets: [{
+            label: "Current Stock",
+            data: dashboardData.charts.lowStockProducts.map(item => item.stock),
+            backgroundColor: dashboardData.charts.lowStockProducts.map(item => {
+                if (item.stock <= 2) return "rgba(239, 68, 68, 0.85)";
+                if (item.stock <= 5) return "rgba(245, 158, 11, 0.85)";
+                return "rgba(234, 179, 8, 0.85)";
+            }),
+            borderColor: dashboardData.charts.lowStockProducts.map(item => {
+                if (item.stock <= 2) return "#dc2626";
+                if (item.stock <= 5) return "#d97706";
+                return "#ca8a04";
+            }),
+            borderWidth: 2,
+            borderRadius: 6,
         }],
     };
     return (
@@ -439,7 +461,7 @@ export default function DashboardPage() {
                                             grid: { color: 'rgba(0,0,0,0.1)' },
                                             ticks: {
                                                 callback: function (value) {
-                                                    return '₹' + value;
+                                                    return '$' + value;
                                                 }
                                             }
                                         },
@@ -489,7 +511,7 @@ export default function DashboardPage() {
                                             position: 'right' as const,
                                             title: {
                                                 display: true,
-                                                text: 'Revenue (₹)'
+                                                text: 'Revenue ($)'
                                             },
                                             grid: {
                                                 drawOnChartArea: false,
@@ -568,6 +590,71 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Low Stock Products Chart */}
+                {dashboardData.charts.lowStockProducts.length > 0 && (
+                    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-800">Low Stock Products</h2>
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+                                {dashboardData.charts.lowStockProducts.length} items
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                                <span className="w-3 h-3 rounded-sm bg-red-500 inline-block"></span> Critical (≤2)
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <span className="w-3 h-3 rounded-sm bg-orange-500 inline-block"></span> Low (≤5)
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <span className="w-3 h-3 rounded-sm bg-yellow-500 inline-block"></span> Warning (≤10)
+                            </span>
+                        </div>
+                        <div style={{ height: Math.max(200, dashboardData.charts.lowStockProducts.length * 50) }}>
+                            <Bar
+                                data={lowStockData}
+                                options={{
+                                    indexAxis: 'y' as const,
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: {
+                                            backgroundColor: 'rgba(0,0,0,0.8)',
+                                            callbacks: {
+                                                label: function (context) {
+                                                    const stock = context.raw as number;
+                                                    const severity = stock <= 2 ? '🔴 Critical' : stock <= 5 ? '🟠 Low' : '🟡 Warning';
+                                                    return `Stock: ${stock} units — ${severity}`;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            beginAtZero: true,
+                                            max: 12,
+                                            ticks: { stepSize: 2 },
+                                            grid: { color: 'rgba(0,0,0,0.05)' },
+                                            title: {
+                                                display: true,
+                                                text: 'Stock Level',
+                                                font: { size: 12 }
+                                            }
+                                        },
+                                        y: {
+                                            grid: { display: false },
+                                            ticks: {
+                                                font: { size: 12, weight: 'bold' as const }
+                                            }
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
                     </div>
                 )}
 

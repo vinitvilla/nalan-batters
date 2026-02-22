@@ -3,8 +3,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { getDefaultRoute } from "@/lib/permissions";
-import { Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AdminPage: React.FC = () => {
   const router = useRouter();
@@ -26,13 +25,14 @@ const AdminPage: React.FC = () => {
 
   if (loading) {
     return (
-      <main className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-100">
-        <Card className="flex flex-col items-center p-8 shadow-lg">
-          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-6" />
-          <h2 className="text-indigo-600 font-semibold text-2xl">
-            Loading Admin Panel…
-          </h2>
-        </Card>
+      <main className="p-6 space-y-6">
+        <Skeleton className="h-10 w-1/4" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+        <Skeleton className="h-64 w-full" />
       </main>
     );
   }
@@ -42,14 +42,18 @@ const AdminPage: React.FC = () => {
   }
 
   return (
-    <main style={{ padding: "2rem" }}>
-      <h1>Admin Dashboard</h1>
-      <section>
-        <p>
-          Welcome to the admin panel. Use the navigation to manage the
-          application.
-        </p>
-      </section>
+    <main className="p-6 space-y-6">
+      <Skeleton className="h-10 w-1/4 mb-4" />
+      <div className="space-y-4">
+        <Skeleton className="h-6 w-3/4" />
+        <Skeleton className="h-6 w-1/2" />
+        <Skeleton className="h-6 w-5/6" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
     </main>
   );
 };

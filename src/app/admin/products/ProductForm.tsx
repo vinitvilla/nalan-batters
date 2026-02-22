@@ -99,7 +99,7 @@ export default function ProductForm({ initial, onSave, onCancel, categories }: P
                         stock: values.stock || 0,
                         imageUrl: values.imageUrl || "",
                     });
-                }, (errors) => {
+                }, () => {
                     toast.error("Please check the form for errors");
                 })}
             >

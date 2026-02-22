@@ -17,7 +17,7 @@ interface OrderStore {
   setPromo: (promo: Partial<PromoState>) => void;
   applyPromo: (code: string) => Promise<{ success: boolean }>;
   clearPromo: () => void;
-  
+
   // Calculation getters
   getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: AddressFields | null, deliveryDate?: string, deliveryType?: 'PICKUP' | 'DELIVERY' | null) => OrderCalculations;
 }
@@ -33,9 +33,11 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     applied: false,
     discount: 0,
     discountType: DiscountType.PERCENTAGE,
+    maxDiscount: undefined,
+    minOrderAmount: undefined,
   },
-  setPromo: (promoUpdate) => set((state) => ({ 
-    promo: { ...state.promo, ...promoUpdate } 
+  setPromo: (promoUpdate) => set((state) => ({
+    promo: { ...state.promo, ...promoUpdate }
   })),
   clearPromo: () => set({
     promo: {
@@ -44,6 +46,8 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       applied: false,
       discount: 0,
       discountType: DiscountType.PERCENTAGE,
+      maxDiscount: undefined,
+      minOrderAmount: undefined,
     }
   }),
   applyPromo: async (code: string) => {
@@ -63,6 +67,8 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
             applied: true,
             discount: data.discount,
             discountType: data.discountType,
+            maxDiscount: data.maxDiscount,
+            minOrderAmount: data.minOrderAmount,
           }
         }));
         return { success: true };
@@ -75,7 +81,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       return { success: false };
     }
   },
-  
+
   // Calculation getters
   getOrderCalculations: (cartItems: CartItem[], config?: Config, address?: AddressFields | null, deliveryDate?: string, deliveryType?: 'PICKUP' | 'DELIVERY' | null): OrderCalculations => {
     const state = get();
@@ -129,8 +135,9 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     const charges = calculateOrderCharges(subtotal, chargeConfig, isFreeDelivery, currentDeliveryType);
 
     // Calculate promo discount using service
-    const discountAmount = state.promo.applied
-      ? calculateDiscountAmount(subtotal, state.promo.discountType, state.promo.discount)
+    const isPromoValid = state.promo.applied && (!state.promo.minOrderAmount || subtotal >= state.promo.minOrderAmount);
+    const discountAmount = isPromoValid
+      ? calculateDiscountAmount(subtotal, state.promo.discountType, state.promo.discount, state.promo.maxDiscount)
       : 0;
 
     // Calculate total using service

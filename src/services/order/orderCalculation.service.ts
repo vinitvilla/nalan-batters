@@ -42,7 +42,7 @@ export function calculateOrderCharges(
     originalDeliveryCharge: chargeConfig.deliveryCharge.amount,
     isTaxWaived: chargeConfig.taxPercent.waive,
     isConvenienceWaived: chargeConfig.convenienceCharge.waive,
-    isDeliveryWaived: isFreeDelivery || deliveryType === 'PICKUP',
+    isDeliveryWaived: isFreeDelivery || deliveryType === 'PICKUP' || chargeConfig.deliveryCharge.waive,
   };
 }
 

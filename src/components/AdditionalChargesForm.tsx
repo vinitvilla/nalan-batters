@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Percent, DollarSign } from 'lucide-react';
 
 interface AdditionalChargesConfig {

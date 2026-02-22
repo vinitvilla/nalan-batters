@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import CartDropdown from './CartDropdown';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useCartStore } from '@/store/cartStore';

@@ -3,6 +3,7 @@ import type {
   DeliveryType,
   OrderSource,
   PaymentMethod,
+  DiscountType,
 } from '@/generated/prisma';
 import type { User, UserResponse } from './user';
 import type { Address, AddressResponse } from './address';
@@ -16,6 +17,7 @@ export interface Order {
   deliveryType: DeliveryType;
   orderType: OrderSource;
   paymentMethod: PaymentMethod;
+  subtotal: number;
   total: number;
   tax: number;
   discount: number | null;
@@ -25,6 +27,10 @@ export interface Order {
   orderNumber: string;
   deliveryDate?: Date | null;
   promoCodeId?: string | null;
+  promoCodeCode?: string | null;
+  promoDiscount?: number | null;
+  promoDiscountType?: DiscountType | null;
+  taxRate?: number | null;
   driverId?: string | null;
   isDelete: boolean;
   createdAt: Date;
@@ -39,6 +45,7 @@ export interface OrderResponse {
   deliveryType: DeliveryType;
   orderType: OrderSource;
   paymentMethod: PaymentMethod;
+  subtotal: number;
   total: number;
   tax: number;
   discount: number | null;
@@ -48,6 +55,10 @@ export interface OrderResponse {
   orderNumber: string;
   deliveryDate?: string | null;
   promoCodeId?: string | null;
+  promoCodeCode?: string | null;
+  promoDiscount?: number | null;
+  promoDiscountType?: DiscountType | null;
+  taxRate?: number | null;
   driverId?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -157,6 +168,7 @@ export interface AdminOrderResponse extends OrderResponse {
   promoCode?: {
     code: string;
     discount: number;
+    discountType: DiscountType;
   };
 }
 

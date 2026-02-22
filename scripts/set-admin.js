@@ -18,7 +18,7 @@ function loadEnvFile() {
         process.env[key.trim()] = cleanValue;
       }
     });
-  } catch (error) {
+  } catch {
     console.warn('⚠️  Could not load .env file. Make sure environment variables are set.');
   }
 }

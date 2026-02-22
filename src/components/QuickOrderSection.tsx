@@ -1,7 +1,5 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { GoldButton } from "@/components/GoldButton";
 import Image from "next/image";
 import { useCartStore } from "@/store/cartStore";

@@ -14,9 +14,9 @@ export function formatPhoneNumber(phone: string): string {
 }
 
 /**
- * Formats phone number for display (e.g., +1 123-456-7890)
+ * Formats phone number for display (e.g., (123) 456-7890)
  * @param phone - Phone number to format
- * @returns Formatted phone number for display
+ * @returns Formatted phone number for display without country code
  */
 export function formatPhoneForDisplay(phone: string): string {
   const formatted = formatPhoneNumber(phone);
@@ -24,7 +24,7 @@ export function formatPhoneForDisplay(phone: string): string {
   const digits = formatted.replace(/^\+1/, '');
 
   if (digits.length === 10) {
-    return `+1 ${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
 
   return formatted;
