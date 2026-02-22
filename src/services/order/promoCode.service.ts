@@ -60,6 +60,51 @@ export async function validateAndApplyPromoCode(
   };
 }
 
+// Async - validates a promo code by its UUID (used when frontend sends promo.id)
+export async function validatePromoById(
+  promoId: string,
+  subtotal: number
+): Promise<PromoCodeResult> {
+  const promo = await prisma.promoCode.findUnique({
+    where: { id: promoId, isDeleted: false },
+  });
+
+  if (!promo) {
+    return { valid: false, error: 'Invalid promo code' };
+  }
+
+  if (!promo.isActive) {
+    return { valid: false, error: 'Promo code is no longer active' };
+  }
+
+  if (promo.expiresAt && new Date() > promo.expiresAt) {
+    return { valid: false, error: 'Promo code has expired' };
+  }
+
+  if (promo.minOrderAmount && subtotal < Number(promo.minOrderAmount)) {
+    return {
+      valid: false,
+      error: `Minimum order of ${formatCurrency(Number(promo.minOrderAmount))} required`,
+    };
+  }
+
+  if (promo.usageLimit && promo.currentUsage >= promo.usageLimit) {
+    return { valid: false, error: 'Promo code usage limit reached' };
+  }
+
+  return {
+    valid: true,
+    promo: {
+      id: promo.id,
+      code: promo.code,
+      discountType: promo.discountType,
+      discount: Number(promo.discount),
+      maxDiscount: promo.maxDiscount ? Number(promo.maxDiscount) : undefined,
+      minOrderAmount: promo.minOrderAmount ? Number(promo.minOrderAmount) : undefined,
+    },
+  };
+}
+
 // Async - increments promo code usage after successful order
 export async function incrementPromoUsage(promoId: string): Promise<void> {
   await prisma.promoCode.update({

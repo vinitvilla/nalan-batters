@@ -306,6 +306,18 @@ export default function OrdersPage() {
                                             </Select>
                                             <div className="text-right">
                                                 <p className="font-bold text-xl text-gray-900">{formatCurrency(order.total)}</p>
+                                                {Number(order.discount) > 0 && (
+                                                    <div className="flex flex-col items-end mt-1">
+                                                        <span className="text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
+                                                            -{formatCurrency(Number(order.discount))}
+                                                        </span>
+                                                        {order.promoCode && (
+                                                            <span className="text-[10px] text-gray-500 mt-0.5 font-medium tracking-wide pb-1">
+                                                                Code: {order.promoCode.code}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -544,6 +556,18 @@ export default function OrdersPage() {
                                                         <div className="font-bold text-sm text-gray-900 whitespace-nowrap">
                                                             {formatCurrency(order.total)}
                                                         </div>
+                                                        {Number(order.discount) > 0 && (
+                                                            <div className="flex flex-col items-end">
+                                                                <div className="text-xs font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 whitespace-nowrap">
+                                                                    -{formatCurrency(Number(order.discount))}
+                                                                </div>
+                                                                {order.promoCode && (
+                                                                    <div className="text-[10px] text-gray-500 mt-0.5 font-medium whitespace-nowrap">
+                                                                        Code: {order.promoCode.code}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                         <div className="text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded text-center whitespace-nowrap">
                                                             {capitalize(order.paymentMethod || "N/A")}
                                                         </div>

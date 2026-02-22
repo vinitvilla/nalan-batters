@@ -151,7 +151,7 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
             <div className="space-y-2">
               <ChargeRow label="Subtotal" amount={subtotal} />
               <ChargeRow
-                label={`Tax (${Math.round(taxRate * 100)}%)`}
+                label={`Tax (${Math.round(taxRate)}%)`}
                 amount={tax}
                 isWaived={isTaxWaived}
                 originalAmount={originalTax}

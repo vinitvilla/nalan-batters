@@ -6,14 +6,17 @@ import { userStore } from '@/store/userStore';
 import { signInWithPhoneNumber } from 'firebase/auth';
 
 // Mock Firebase
-vi.mock('firebase/auth', () => ({
-  getAuth: vi.fn(),
-  RecaptchaVerifier: vi.fn().mockImplementation(() => ({
-    render: vi.fn(),
-    clear: vi.fn(),
-  })),
-  signInWithPhoneNumber: vi.fn(),
-}));
+vi.mock('firebase/auth', () => {
+  const RecaptchaVerifier = class {
+    render = vi.fn();
+    clear = vi.fn();
+  };
+  return {
+    getAuth: vi.fn(),
+    RecaptchaVerifier,
+    signInWithPhoneNumber: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/firebase/firebase', () => ({
   auth: {},

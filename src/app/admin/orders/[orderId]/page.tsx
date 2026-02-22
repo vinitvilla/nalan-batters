@@ -396,33 +396,22 @@ export default function OrderDetailPage() {
                                                             <span className="font-semibold">{formatCurrency(order.deliveryCharges || 0)}</span>
                                                         </div>
 
-                                                        {((order.discount || 0) > 0 || order.promoCode) && (
-                                                            <div className="space-y-2">
-                                                                {(order.discount || 0) > 0 && !order.promoCode && (
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-gray-600 font-medium">Discount</span>
-                                                                        <span className="font-semibold text-gray-600">-{formatCurrency(order.discount || 0)}</span>
-                                                                    </div>
-                                                                )}
-
-                                                                {order.promoCode && (
-                                                                    <div className="flex justify-between items-center">
-                                                                        <div className="flex flex-col">
-                                                                            <span className="text-gray-600 font-medium">Promo Code Discount</span>
-                                                                            <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 w-fit mt-1 text-xs">
-                                                                                {order.promoCode.code}
-                                                                            </Badge>
-                                                                        </div>
-                                                                        <span className="font-semibold text-gray-600">-{formatCurrency(order.promoCode.discount || order.discount || 0)}</span>
-                                                                    </div>
-                                                                )}
-
-                                                                {(order.discount || 0) > 0 && order.promoCode && (order.discount !== order.promoCode.discount) && (
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-gray-600 font-medium">Additional Discount</span>
-                                                                        <span className="font-semibold text-gray-600">-{formatCurrency(Math.abs((order.discount || 0) - (order.promoCode.discount || 0)))}</span>
-                                                                    </div>
-                                                                )}
+                                                        {(order.discount || 0) > 0 && (
+                                                            <div className="flex justify-between items-center">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-gray-600 font-medium">
+                                                                        {(order.promoCodeCode || order.promoCode) ? 'Promo Discount' : 'Discount'}
+                                                                    </span>
+                                                                    {(order.promoCodeCode || order.promoCode?.code) && (
+                                                                        <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 w-fit mt-1 text-xs">
+                                                                            {order.promoCodeCode || order.promoCode?.code}
+                                                                            {(order.promoDiscountType || order.promoCode?.discountType) === 'PERCENTAGE'
+                                                                                ? ` (${order.promoDiscount || order.promoCode?.discount}% OFF)`
+                                                                                : ''}
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+                                                                <span className="font-semibold text-gray-600">-{formatCurrency(order.discount || 0)}</span>
                                                             </div>
                                                         )}
                                                     </div>
@@ -552,33 +541,22 @@ export default function OrderDetailPage() {
                                                         <span className="font-semibold text-lg">{formatCurrency(order.deliveryCharges || 0)}</span>
                                                     </div>
 
-                                                    {((order.discount || 0) > 0 || order.promoCode) && (
-                                                        <div className="space-y-3">
-                                                            {(order.discount || 0) > 0 && !order.promoCode && (
-                                                                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                                                                    <span className="text-gray-700 font-medium">Discount Applied</span>
-                                                                    <span className="font-semibold text-lg text-gray-600">-{formatCurrency(order.discount || 0)}</span>
-                                                                </div>
-                                                            )}
-
-                                                            {order.promoCode && (
-                                                                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                                                                    <div className="space-y-1">
-                                                                        <span className="text-gray-700 font-medium">Promo Code Discount</span>
-                                                                        <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">
-                                                                            {order.promoCode.code}
-                                                                        </Badge>
-                                                                    </div>
-                                                                    <span className="font-semibold text-lg text-gray-600">-{formatCurrency(order.promoCode.discount || order.discount || 0)}</span>
-                                                                </div>
-                                                            )}
-
-                                                            {(order.discount || 0) > 0 && order.promoCode && (order.discount !== order.promoCode.discount) && (
-                                                                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                                                                    <span className="text-gray-700 font-medium">Additional Discount</span>
-                                                                    <span className="font-semibold text-lg text-gray-600">-{formatCurrency(Math.abs((order.discount || 0) - (order.promoCode.discount || 0)))}</span>
-                                                                </div>
-                                                            )}
+                                                    {(order.discount || 0) > 0 && (
+                                                        <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                                                            <div className="space-y-1">
+                                                                <span className="text-gray-700 font-medium">
+                                                                    {(order.promoCodeCode || order.promoCode) ? 'Promo Discount' : 'Discount Applied'}
+                                                                </span>
+                                                                {(order.promoCodeCode || order.promoCode?.code) && (
+                                                                    <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">
+                                                                        {order.promoCodeCode || order.promoCode?.code}
+                                                                        {(order.promoDiscountType || order.promoCode?.discountType) === 'PERCENTAGE'
+                                                                            ? ` (${order.promoDiscount || order.promoCode?.discount}% OFF)`
+                                                                            : ''}
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                            <span className="font-semibold text-lg text-gray-600">-{formatCurrency(order.discount || 0)}</span>
                                                         </div>
                                                     )}
                                                 </div>

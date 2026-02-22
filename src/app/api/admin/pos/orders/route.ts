@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Prisma, OrderStatus, PaymentMethod } from '@/generated/prisma';
+import { Prisma, OrderStatus, PaymentMethod } from '@/generated/prisma';
 import { requireAdmin } from '@/lib/requireAdmin';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
