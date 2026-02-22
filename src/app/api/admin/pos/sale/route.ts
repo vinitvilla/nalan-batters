@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
           taxRate: chargeConfig.taxPercent.waive ? 0 : chargeConfig.taxPercent.percent,
           discount: discount > 0 ? discount : null,
           ...(promoSnapshot && {
-            promoCode: { connect: { id: promoSnapshot.id } },
+            promoCodeId: promoSnapshot.id,
             promoCodeCode: promoSnapshot.code,
             promoDiscount: promoSnapshot.discount,
             promoDiscountType: promoSnapshot.discountType,
