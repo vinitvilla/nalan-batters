@@ -134,8 +134,8 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
                   size="sm"
                   disabled={promo.applied || !promo.code || applyingPromo}
                   className={`rounded-lg text-sm font-medium px-4 h-9 ${promo.applied
-                      ? 'bg-green-600 hover:bg-green-600 text-white'
-                      : 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                    ? 'bg-green-600 hover:bg-green-600 text-white'
+                    : 'bg-yellow-500 hover:bg-yellow-600 text-white'
                     }`}
                   onClick={() => applyPromo(promo.code)}
                 >
@@ -168,8 +168,8 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
                 isWaived={isDeliveryWaived}
                 originalAmount={originalDeliveryCharge}
               />
-              {!!appliedDiscount && (
-                <div className="flex justify-between text-sm text-green-700">
+              {promo.applied && (
+                <div className={`flex justify-between text-sm ${appliedDiscount > 0 ? 'text-green-700' : 'text-gray-500'}`}>
                   <div className="flex items-center gap-1.5">
                     <span>Promo discount</span>
                     <button
@@ -180,9 +180,13 @@ export function OrderSummary({ cartItems, removeFromCart, selectedAddress, updat
                     </button>
                   </div>
                   <span className="font-medium">
-                    -{promo.discountType === "PERCENTAGE"
-                      ? `${promo.discount}% ($${appliedDiscount.toFixed(2)})`
-                      : `$${appliedDiscount.toFixed(2)}`}
+                    {appliedDiscount > 0 ? (
+                      `-${promo.discountType === "PERCENTAGE"
+                        ? `${promo.discount}% ($${appliedDiscount.toFixed(2)})`
+                        : `$${appliedDiscount.toFixed(2)}`}`
+                    ) : (
+                      "$0.00"
+                    )}
                   </span>
                 </div>
               )}

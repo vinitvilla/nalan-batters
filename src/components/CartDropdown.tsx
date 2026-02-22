@@ -34,7 +34,7 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
 
   // Store hooks
   const config = useConfigStore(s => s.configs);
-  
+
   // Cart store
   const cartItems = useCartStore(s => s.items);
   const updateQuantity = useCartStore(s => s.updateQuantity);
@@ -58,12 +58,12 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
 
   // Calculations using orderStore with config  
   const calculations = getOrderCalculations(cartItems, config);
-  const { 
-    subtotal, 
-    tax, 
-    convenienceCharge, 
-    deliveryCharge, 
-    appliedDiscount, 
+  const {
+    subtotal,
+    tax,
+    convenienceCharge,
+    deliveryCharge,
+    appliedDiscount,
     finalTotal,
     originalTax,
     originalConvenienceCharge,
@@ -88,7 +88,7 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
   const handlePromoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isApplyingPromo) return;
-    
+
     setIsApplyingPromo(true);
     const result = await applyPromo(promo.code);
     setPromoError(!result.success);
@@ -102,19 +102,19 @@ export default function CartDropdown({ onClose, anchorRef }: CartDropdownProps) 
   };
 
   const animationClass = isCartOpen ? "animate-cart-in" : "animate-cart-out";
-  
+
   if (!visible) return null;
 
   // --- Render ---
   return (
     <Dropdown open onClose={onClose} anchorRef={anchorRef}>
-      <div 
-        ref={dropdownRef} 
-        id="cartDropdown" 
+      <div
+        ref={dropdownRef}
+        id="cartDropdown"
         className={`p-4 ${animationClass} rounded-lg shadow-lg`}
       >
         <h4 className="font-bold mb-2 text-yellow-700">Cart</h4>
-        
+
         {cartItems.length === 0 ? (
           <EmptyCart onClose={onClose} />
         ) : (
@@ -232,16 +232,16 @@ function CartContent({
   return (
     <>
       {/* Cart Items */}
-      <CartItems 
+      <CartItems
         cartItems={cartItems}
         updateQuantity={updateQuantity}
         removeFromCart={removeFromCart}
       />
-      
+
       <Separator className="my-2" />
-      
+
       {/* Price Summary */}
-      <PriceSummary 
+      <PriceSummary
         subtotal={subtotal}
         tax={tax}
         taxRate={taxRate}
@@ -257,8 +257,9 @@ function CartContent({
         isConvenienceWaived={isConvenienceWaived}
         isDeliveryWaived={isDeliveryWaived}
         handlePromoReset={handlePromoReset}
+        promoApplied={promoApplied}
       />
-      
+
       {/* Promo Form */}
       <PromoForm
         promo={promo}
@@ -268,10 +269,10 @@ function CartContent({
         setPromoError={setPromoError}
         handlePromoSubmit={handlePromoSubmit}
       />
-      
+
       {/* Promo Messages */}
       <PromoMessages promoError={promoError} promoApplied={promoApplied} />
-      
+
       {/* Checkout Button */}
       <GoldButton
         className="w-full mt-3"
@@ -287,10 +288,10 @@ function CartContent({
 }
 
 // Cart items component
-function CartItems({ 
-  cartItems, 
-  updateQuantity, 
-  removeFromCart 
+function CartItems({
+  cartItems,
+  updateQuantity,
+  removeFromCart
 }: {
   cartItems: CartItem[];
   updateQuantity: (id: string, quantity: number) => void;
@@ -326,13 +327,13 @@ function CartItems({
 }
 
 // Price summary component
-function PriceSummary({ 
-  subtotal, 
-  tax, 
+function PriceSummary({
+  subtotal,
+  tax,
   taxRate,
   convenienceCharge,
   deliveryCharge,
-  discount, 
+  discount,
   total,
   originalTax,
   originalConvenienceCharge,
@@ -340,7 +341,8 @@ function PriceSummary({
   isTaxWaived,
   isConvenienceWaived,
   isDeliveryWaived,
-  handlePromoReset 
+  handlePromoReset,
+  promoApplied
 }: {
   subtotal: number;
   tax: number;
@@ -358,6 +360,7 @@ function PriceSummary({
   isConvenienceWaived: boolean;
   isDeliveryWaived: boolean;
   handlePromoReset: () => void;
+  promoApplied: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1 mb-2">
@@ -398,18 +401,18 @@ function PriceSummary({
           <span>${deliveryCharge.toFixed(2)}</span>
         )}
       </div>
-      {!!discount && (
-        <div className="flex justify-between text-sm text-green-700">
+      {promoApplied && (
+        <div className={`flex justify-between text-sm ${discount > 0 ? 'text-green-700' : 'text-gray-500'}`}>
           <div>
-            Promo Discount
-            <span 
-              className="text-xs ml-2 text-red-700 cursor-pointer"
+            <span className={discount === 0 ? "line-through text-gray-400" : ""}>Promo Discount</span>
+            <span
+              className="text-xs ml-2 text-red-500 hover:text-red-700 cursor-pointer underline underline-offset-2"
               onClick={handlePromoReset}
             >
               remove
             </span>
           </div>
-          <span>-${discount.toFixed(2)}</span>
+          <span>{discount > 0 ? `-$${discount.toFixed(2)}` : "$0.00"}</span>
         </div>
       )}
       <div className="flex justify-between font-semibold border-t border-yellow-200 pt-2 mt-2 text-yellow-700">
@@ -476,9 +479,9 @@ function PromoForm({
 }
 
 // Promo messages component
-function PromoMessages({ 
-  promoError, 
-  promoApplied 
+function PromoMessages({
+  promoError,
+  promoApplied
 }: {
   promoError: boolean;
   promoApplied: boolean;

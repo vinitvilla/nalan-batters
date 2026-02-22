@@ -55,6 +55,7 @@ export async function validateAndApplyPromoCode(
       discountType: promo.discountType,
       discount: Number(promo.discount),
       maxDiscount: promo.maxDiscount ? Number(promo.maxDiscount) : undefined,
+      minOrderAmount: promo.minOrderAmount ? Number(promo.minOrderAmount) : undefined,
     },
   };
 }

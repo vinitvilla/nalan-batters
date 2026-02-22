@@ -32,6 +32,11 @@ export function useOrderPlacement() {
     if (deliveryType === 'DELIVERY' && !selectedAddress) return "Please select a delivery address";
     if (deliveryType === 'DELIVERY' && !selectedDeliveryDate) return "Please select a delivery date";
 
+    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (promo.applied && promo.minOrderAmount && subtotal < promo.minOrderAmount) {
+      return `Promo code ${promo.code} requires a minimum order of $${promo.minOrderAmount}`;
+    }
+
     // Check if delivery is available for the selected address
     if (deliveryType === 'DELIVERY' && selectedAddress && config?.freeDelivery) {
       const deliveryDates = getNextAvailableDeliveryDates(
