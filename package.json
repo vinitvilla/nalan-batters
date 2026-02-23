@@ -10,6 +10,7 @@
     "test:ui": "NODE_ENV=test vitest src/components",
     "test:api": "NODE_ENV=test vitest src/app/api",
     "build": "NODE_ENV=test npm run test:ci && prisma generate && next build",
+    "build:ci": "prisma generate && next build",
     "build:staging": "NODE_ENV=test npm run test:ci && prisma generate && NEXT_PUBLIC_APP_ENV=staging NODE_ENV=production next build",
     "start": "next start --port 3000",
     "start:staging": "NEXT_PUBLIC_APP_ENV=staging NODE_ENV=production next start --port 8080",
