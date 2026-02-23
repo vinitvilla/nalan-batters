@@ -17,6 +17,9 @@ Nalan Batters is a full-stack web application built with Next.js 15, TypeScript,
 - **Pickup & Delivery Orders**: Dual order types with conditional checkout flow and charge management
 - **Admin Dashboard**: Complete admin interface with analytics and management
 - **POS System**: Point-of-sale system with customer lookup and order management
+- **Delivery & Driver Management**: Dedicated driver roles and delivery assignment features
+- **Google Maps Integration**: For visualization of delivery locations and routes
+- **Comprehensive Testing**: Setup with Vitest for unit, API, and UI components test coverage
 - **Phone Number Standardization**: Automatic phone number formatting to +1XXXXXXXXXX format
 - **User Authentication**: Phone-based user auth flow with OTP verification
 - **Reusable Hooks**: Custom hooks for authentication, data fetching, and state management
@@ -53,6 +56,9 @@ npm run seed
 
 # Start development server
 npm run dev
+
+# Run tests
+npm run test
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
@@ -65,10 +71,18 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 
+### Testing
+- `npm run test` - Run unit tests with Vitest
+- `npm run test:ci` - Run tests suited for CI environments
+- `npm run test:ui` - Run component and UI tests specifically
+- `npm run test:api` - Run API endpoint tests
+
 ### Database
 - `npm run migrate` - Run Prisma database migrations
 - `npm run seed` - Seed database with initial data
+- `npm run populate` - Populate database with extended test data
 - `npm run db:setup` - Run migrations and seed data
+- `npm run db:setup:full` - Reset database, re-seed, and fully populate
 
 ### Staging
 - `npm run build:staging` - Build for staging environment
@@ -76,6 +90,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 - `npm run migrate:staging` - Run staging migrations
 - `npm run seed:staging` - Seed staging database
 - `npm run deploy:staging` - Deploy to staging environment
+- `npm run deploy:staging:full` - Run migrations, build, and deploy staging
 
 ## Complete Project Structure
 
@@ -138,7 +153,6 @@ admin/
 ├── page.tsx                  # Admin dashboard home
 ├── use-admin-api.ts         # Admin API utilities
 ├── use-case-doc.js          # Documentation utilities
-├── billing/                  # Billing and analytics pages
 ├── billing-pos/             # Point-of-sale system
 ├── components/              # Admin-specific components
 ├── contact-messages/        # Contact message management
@@ -146,6 +160,7 @@ admin/
 ├── delivery/                # Delivery management
 ├── feature-flags/           # Feature flag management
 ├── orders/                  # Order management
+├── payments/                # Payments monitoring and configurations
 ├── pos-orders/              # POS order history
 ├── products/                # Product management
 ├── promo-codes/             # Promotional code management
@@ -157,7 +172,6 @@ admin/
 ```
 api/
 ├── admin/                   # Admin-only API endpoints
-│   ├── billing/            # Billing analytics API
 │   ├── categories/         # Category management API
 │   ├── config/             # Configuration API
 │   ├── contact-messages/   # Contact message API
@@ -167,29 +181,35 @@ api/
 │   ├── products/           # Product management API
 │   ├── promoCodes/         # Promo code API
 │   └── users/              # User management API
+├── driver/                 # Driver API endpoints
 ├── google-reviews/         # Google Reviews integration
-└── public/                 # Public API endpoints
-    ├── addresses/          # Address management
-    ├── cart/               # Shopping cart API
-    ├── config/             # Public configuration
-    ├── contact/            # Contact form API
-    ├── me/                 # User profile API
-    ├── orders/             # Order placement API
-    ├── products/           # Product catalog API
-    ├── promoCodes/         # Promo code validation
-    └── users/              # User registration/auth
+├── public/                 # Public API endpoints
+│   ├── addresses/          # Address management
+│   ├── cart/               # Shopping cart API
+│   ├── config/             # Public configuration
+│   ├── contact/            # Contact form API
+│   ├── me/                 # User profile API
+│   ├── orders/             # Order placement API
+│   ├── products/           # Product catalog API
+│   ├── promoCodes/         # Promo code validation
+│   └── users/              # User registration/auth
+├── store-locations/        # External storage locations data API
+└── user/                   # Enhanced user specific API endpoints
 ```
 
 ### Components (`/src/components`)
 ```
 components/
 ├── AddressForm.tsx          # Address input component
+├── AvailableStores.tsx      # Multi-store location selector
 ├── CartButton.tsx           # Shopping cart button
 ├── CartDropdown.tsx         # Cart dropdown menu
 ├── CartToast.tsx            # Cart notification toasts
 ├── CheckoutContactDelivery.tsx # Checkout delivery form
 ├── ChooseDeliveryDate.tsx   # Delivery date picker
 ├── ContactSection.tsx       # Contact information section
+├── DeliveryMapView.tsx      # Google Maps interface for delivery
+├── DeliveryPartnerSection.tsx # Management for third party delivery
 ├── EnvironmentBadge.tsx     # Environment indicator
 ├── FeaturesSection.tsx      # Product features section
 ├── Footer.tsx               # Site footer
@@ -200,6 +220,7 @@ components/
 ├── MainNav.tsx              # Main navigation
 ├── OpeningHours.tsx         # Business hours display
 ├── OrderSummary.tsx         # Order summary component
+├── OrderTypeSelector.tsx    # Select between delivery or pickup
 ├── PermissionWrapper.tsx    # Role-based access control
 ├── ProductList.tsx          # Product listing component
 ├── QuickOrderSection.tsx    # Quick order interface
@@ -209,6 +230,7 @@ components/
 ├── UserLoginButton.tsx      # Login/logout button
 ├── admin/                   # Admin-specific components
 ├── auth/                    # Authentication components
+├── shared/                  # Common generic UI components
 └── ui/                      # Reusable UI components (shadcn/ui)
 ```
 
@@ -292,7 +314,8 @@ prisma/
 └── seeds/                 # Database seeding scripts
     ├── category.js        # Category seed data
     ├── config.js          # Configuration seed data
-    └── product.js         # Product seed data
+    ├── product.js         # Product seed data
+    └── seed-pickup-location.ts # Default pickup location config
 ```
 
 ### Scripts (`/scripts`)
@@ -317,10 +340,10 @@ public/
 ## Database Schema
 
 ### Core Models
-- **User**: Customer and admin accounts with phone-based authentication
+- **User**: Customer, admin, and driver accounts with phone-based authentication
 - **Product**: Product catalog with categories, pricing, and inventory
 - **Category**: Product categorization
-- **Order**: Customer orders with items, pricing, and status tracking
+- **Order**: Customer orders with items, pricing, status tracking, and driver assignments
 - **OrderItem**: Individual items within orders
 - **Cart**: Shopping cart functionality
 - **CartItem**: Items in shopping carts
@@ -334,7 +357,8 @@ public/
 - **Phone Standardization**: All phone numbers stored in +1XXXXXXXXXX format
 - **Order Types**: Supports both DELIVERY and PICKUP orders
 - **Payment Methods**: Cash and card payment support
-- **Role-Based Access**: USER, ADMIN, and MANAGER roles
+- **Role-Based Access**: USER, ADMIN, MANAGER, and DRIVER roles
+- **Driver Integration**: Assign drivers to specific orders with dedicated relationship sets
 - **Inventory Tracking**: Real-time stock management
 
 ## Configuration Management
@@ -444,6 +468,11 @@ GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
 ## Deployment
+
+### GitHub Actions CI/CD
+The project uses GitHub Actions (`.github/workflows/ci.yml`) for continuous integration and deployment:
+- **Deploy Preview**: Automatically triggered on Pull Requests. Builds a temporary, isolated preview environment using Vercel and comments the URL on the PR for testing before merging.
+- **Deploy Production**: Automatically triggered on pushes to the `main` branch. Deploys the finalized, optimized application to the live production environment.
 
 ### Vercel Deployment
 - **Configuration**: `vercel.json` with environment-specific builds
