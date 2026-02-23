@@ -105,6 +105,7 @@ function makeRequest(body: Record<string, unknown>) {
 describe('POST /api/admin/pos/sale', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => { });
     vi.mocked(requireAdmin).mockResolvedValue({ admin: true } as any);
     vi.mocked(getAllConfigs).mockResolvedValue([]);
     vi.mocked(parseChargeConfig).mockReturnValue(mockChargeConfig as any);

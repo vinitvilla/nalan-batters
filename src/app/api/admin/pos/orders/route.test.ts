@@ -52,6 +52,7 @@ function makeRequest(params: Record<string, string> = {}) {
 describe('GET /api/admin/pos/orders', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => { });
     vi.mocked(requireAdmin).mockResolvedValue({ admin: true } as any);
     vi.mocked(prisma.order.count).mockResolvedValue(1);
     vi.mocked(prisma.order.findMany).mockResolvedValue(mockOrders as any);
