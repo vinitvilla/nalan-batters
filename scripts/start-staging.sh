@@ -18,7 +18,7 @@ export PORT=3001
 echo "🚀 Starting staging server..."
 echo "🌐 Environment: $NEXT_PUBLIC_APP_ENV"
 echo "🔗 Server will be available at: http://localhost:$PORT"
-echo "📊 Database: ${DATABASE_URL%%@*}@***"
+echo "📊 Database: ${PRISMA_DATABASE_URL%%@*}@***"
 echo ""
 
 # Start the Next.js server

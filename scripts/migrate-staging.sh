@@ -9,7 +9,7 @@ echo "🔄 Database Migration Script for Staging"
 echo "========================================"
 
 # Check if we're in staging mode
-if [ "$NODE_ENV" != "staging" ] && [ -z "$DATABASE_URL_STAGING" ]; then
+if [ "$NODE_ENV" != "staging" ] && [ -z "$PRISMA_MIGRATION_URL_STAGING" ]; then
     echo "⚠️  Warning: This script is intended for staging deployment"
     read -p "Continue anyway? (y/N): " -n 1 -r
     echo
@@ -19,23 +19,23 @@ if [ "$NODE_ENV" != "staging" ] && [ -z "$DATABASE_URL_STAGING" ]; then
     fi
 fi
 
-# Backup current DATABASE_URL if staging URL is provided
-if [ -n "$DATABASE_URL_STAGING" ]; then
-    export DATABASE_URL_BACKUP="$DATABASE_URL"
-    export DATABASE_URL="$DATABASE_URL_STAGING"
-    echo "🔧 Using staging database URL"
+# Backup current PRISMA_MIGRATION_URL if staging URL is provided
+if [ -n "$PRISMA_MIGRATION_URL_STAGING" ]; then
+    export PRISMA_MIGRATION_URL_BACKUP="$PRISMA_MIGRATION_URL"
+    export PRISMA_MIGRATION_URL="$PRISMA_MIGRATION_URL_STAGING"
+    echo "🔧 Using staging migration URL"
 fi
 
-# Function to restore DATABASE_URL on exit
+# Function to restore PRISMA_MIGRATION_URL on exit
 cleanup() {
-    if [ -n "$DATABASE_URL_BACKUP" ]; then
-        export DATABASE_URL="$DATABASE_URL_BACKUP"
-        echo "🔄 Restored original DATABASE_URL"
+    if [ -n "$PRISMA_MIGRATION_URL_BACKUP" ]; then
+        export PRISMA_MIGRATION_URL="$PRISMA_MIGRATION_URL_BACKUP"
+        echo "🔄 Restored original PRISMA_MIGRATION_URL"
     fi
 }
 trap cleanup EXIT
 
-echo "📊 Target database: ${DATABASE_URL%%@*}@***"
+echo "📊 Target database: ${PRISMA_MIGRATION_URL%%@*}@***"
 
 # Generate Prisma client first
 echo "📝 Generating Prisma client..."

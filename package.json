@@ -32,6 +32,7 @@
     "@hookform/resolvers": "^5.1.1",
     "@mapbox/polyline": "^1.2.1",
     "@prisma/client": "^6.11.1",
+    "@prisma/extension-accelerate": "^3.0.1",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-dialog": "^1.1.14",

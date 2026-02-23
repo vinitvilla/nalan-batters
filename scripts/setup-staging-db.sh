@@ -13,8 +13,8 @@ else
     exit 1
 fi
 
-# Extract database name from DATABASE_URL
-DB_NAME=$(echo $DATABASE_URL | sed 's/.*\/\([^?]*\).*/\1/')
+# Extract database name from PRISMA_MIGRATION_URL
+DB_NAME=$(echo $PRISMA_MIGRATION_URL | sed 's/.*\/\([^?]*\).*/\1/')
 
 echo "📝 Database name: $DB_NAME"
 
@@ -38,4 +38,4 @@ npx prisma generate
 
 echo "✅ Staging database setup completed!"
 echo "🗄️  Database: $DB_NAME"
-echo "🔗 Connection: ${DATABASE_URL%%@*}@***"
+echo "🔗 Connection: ${PRISMA_MIGRATION_URL%%@*}@***"

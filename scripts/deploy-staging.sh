@@ -19,7 +19,7 @@ fi
 export $(cat .env.staging | xargs)
 
 echo "📝 Environment: $NEXT_PUBLIC_APP_ENV"
-echo "🗄️  Database: ${DATABASE_URL%%@*}@***"
+echo "🗄️  Database: ${PRISMA_MIGRATION_URL%%@*}@***"
 
 # Install dependencies
 echo "📦 Installing dependencies..."
