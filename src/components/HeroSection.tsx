@@ -79,7 +79,7 @@ export default function HeroSection() {
         <h1
           className="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6 drop-shadow-2xl leading-tight"
           style={{
-            fontFamily: "'Dancing Script', cursive",
+            fontFamily: "var(--font-dancing-script), cursive",
             background: "linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #fff 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -87,6 +87,9 @@ export default function HeroSection() {
           }}
         >
           Nalan Batters
+          <span className="sr-only">
+            {" "}— Fresh Dosa Batter &amp; South Indian Food Delivery in Scarborough, Toronto
+          </span>
         </h1>
 
         {/* Subtitle */}

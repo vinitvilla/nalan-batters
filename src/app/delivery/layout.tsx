@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
-// Order success is a post-purchase confirmation page — session-specific, must not be indexed.
+// Delivery portal is an internal driver-only tool — must never be indexed by search engines.
 export const metadata: Metadata = {
-  title: 'Order Confirmed | Nalan Batters',
+  title: 'Driver Portal | Nalan Batters',
   robots: {
     index: false,
     follow: false,
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function OrderSuccessLayout({
+export default function DeliveryLayout({
   children,
 }: {
   children: React.ReactNode;

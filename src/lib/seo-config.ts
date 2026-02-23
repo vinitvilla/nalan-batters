@@ -2,19 +2,21 @@ export const seoConfig = {
   domain: process.env.NEXT_PUBLIC_APP_URL || 'https://nalanbatters.ca',
   businessName: 'Nalan Batters',
   businessDescription: 'Fresh, authentic South Indian dosa batter and traditional food products',
-  businessPhone: '+1 437-215 (4049)',
+  // E.164 format — required by schema.org and Google Business Profile
+  businessPhone: '+14372154049',
   businessEmail: 'info@nalanbatters.ca',
   businessAddress: {
-    streetAddress: '',
-    addressLocality: 'Toronto',
+    streetAddress: '2623 Eglinton Ave E, Unit 1',
+    addressLocality: 'Scarborough',
     addressRegion: 'ON',
-    postalCode: '',
+    postalCode: 'M1K 2S2',
     addressCountry: 'CA'
   },
   socialMedia: {
     facebook: 'https://www.facebook.com/p/Nalan-Batters-61566853659372/',
-    whatsapp: 'https://wa.me/14372154049',
     instagram: 'https://www.instagram.com/nalan_batters/'
+    // WhatsApp action links (wa.me) are not valid sameAs social profile URLs
+    // and have been removed from structured data.
   },
   businessHours: {
     monday: '09:00-21:00',
@@ -32,11 +34,11 @@ export const seoConfig = {
   priceRange: '$10-$50',
   currencies: ['CAD'],
   languages: ['English', 'Tamil', 'Hindi'],
-  serviceArea: 'Toronto and surrounding areas',
+  serviceArea: 'Scarborough, Toronto, and surrounding GTA areas',
   keywords: {
     primary: ['dosa batter', 'south indian food', 'authentic indian products'],
     secondary: ['idli batter', 'traditional recipes', 'fresh ingredients'],
-    location: ['Toronto', 'GTA', 'Ontario', 'Canada'],
+    location: ['Scarborough', 'Toronto', 'GTA', 'Ontario', 'Canada'],
     product: ['dosa mix', 'fermented batter', 'gluten-free options']
   }
 };
@@ -64,7 +66,20 @@ export const getBusinessStructuredData = () => ({
     "latitude": seoConfig.location.latitude,
     "longitude": seoConfig.location.longitude
   },
-  "openingHours": Object.values(seoConfig.businessHours),
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      "opens": "09:00",
+      "closes": "21:00"
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Sunday"],
+      "opens": "09:30",
+      "closes": "21:00"
+    }
+  ],
   "servesCuisine": "South Indian",
   "paymentAccepted": ["Cash", "Credit Card", "Online Payment"],
   "areaServed": {

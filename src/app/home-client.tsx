@@ -25,12 +25,12 @@ export default function HomePageClient() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-stone-50">
-      <StructuredData data={homepageStructuredData} />
-      <StructuredData data={organizationStructuredData} />
-      
+      <StructuredData id="sd-food-establishment" data={homepageStructuredData} />
+      <StructuredData id="sd-organization" data={organizationStructuredData} />
+
       {/* Hero Section - Full width */}
       <HeroSection />
-      
+
       {/* Main Content - Centered with proper spacing */}
       <div className="relative">
         {/* Background decoration */}

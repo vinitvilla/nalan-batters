@@ -11,10 +11,10 @@ export default function Footer() {
         </span>
         <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center md:justify-end items-center w-full md:w-auto">
           <a
-            href="mailto:hello@nalanbatters.com"
+            href="mailto:info@nalanbatters.ca"
             className="hover:text-green-600 transition-colors cursor-pointer"
           >
-            hello@nalanbatters.com
+            info@nalanbatters.ca
           </a>
           <a
             href="https://www.instagram.com/nalan_batters/"

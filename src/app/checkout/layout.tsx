@@ -1,11 +1,14 @@
 import { Metadata } from 'next';
-import { generatePageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = generatePageMetadata(
-  'Checkout - Complete Your Order | Nalan Batters',
-  'Complete your order for fresh South Indian dosa batter and traditional food products. Secure checkout with multiple payment options and fast delivery.',
-  '/checkout'
-);
+// Checkout is a transactional state page — no SEO value, must not be indexed.
+export const metadata: Metadata = {
+  title: 'Checkout | Nalan Batters',
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
+};
 
 export default function CheckoutLayout({
   children,

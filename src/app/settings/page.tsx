@@ -1,12 +1,15 @@
 import { Metadata } from 'next';
-import { generatePageMetadata } from "@/lib/metadata";
 import SettingsPageClient from "./settings-client";
 
-export const metadata: Metadata = generatePageMetadata(
-  'Account Settings - Nalan Batters',
-  'Manage your account settings, profile information, and preferences',
-  '/settings'
-);
+// Settings is an authenticated user page — no public SEO value, must not be indexed.
+export const metadata: Metadata = {
+  title: 'Account Settings | Nalan Batters',
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
+};
 
 export default function SettingsPage() {
   return <SettingsPageClient />;

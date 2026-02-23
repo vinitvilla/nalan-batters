@@ -28,6 +28,7 @@ export const defaultMetadata: Metadata = {
     'south indian cuisine',
     'nalan batters',
     'nalan batters Toronto',
+    'scarborough south indian food',
   ],
   authors: [{ name: 'Nalan Batters' }],
   creator: 'Nalan Batters',
@@ -81,26 +82,38 @@ export const defaultMetadata: Metadata = {
   },
 };
 
+/**
+ * Generates page-level metadata that inherits all global defaults.
+ * Always provide a unique title and description per page.
+ * Optionally provide a canonical path and OG image URL.
+ */
 export const generatePageMetadata = (
   title: string,
   description: string,
   path: string = '',
   image?: string
 ): Metadata => ({
+  // Inherit all global defaults so child pages keep robots, verification,
+  // metadataBase, keywords, formatDetection, etc.
+  ...defaultMetadata,
   title,
   description,
   alternates: {
     canonical: path,
   },
   openGraph: {
+    ...defaultMetadata.openGraph,
     title,
     description,
     url: path,
-    images: image ? [{ url: image, width: 1200, height: 630, alt: title }] : undefined,
+    ...(image && {
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
+    }),
   },
   twitter: {
+    ...defaultMetadata.twitter,
     title,
     description,
-    images: image ? [image] : undefined,
+    ...(image && { images: [image] }),
   },
 });

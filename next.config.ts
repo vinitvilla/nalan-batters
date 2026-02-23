@@ -13,10 +13,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-      },
-      {
+        // Firebase Storage for product images — the only external image host needed.
+        // picsum.photos (placeholder service) has been removed; hero images are now local.
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
         port: '',
@@ -24,7 +22,7 @@ const nextConfig: NextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 86400, // 24 hours — product images from Firebase change infrequently
   },
 
   // SEO and Performance optimizations
