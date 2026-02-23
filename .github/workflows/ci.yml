@@ -155,6 +155,9 @@ jobs:
     needs: [lint, test]
     runs-on: ubuntu-latest
     environment: preview
+    permissions:
+      pull-requests: write
+      issues: read
 
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
