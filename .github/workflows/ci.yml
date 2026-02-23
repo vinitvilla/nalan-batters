@@ -83,6 +83,11 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/placeholder
+      # Placeholders so Firebase Admin SDK cert() doesn't crash during
+      # Next.js "Collecting page data" build phase. No real calls are made.
+      FIREBASE_PROJECT_ID: ci-placeholder
+      FIREBASE_CLIENT_EMAIL: ci@placeholder.iam.gserviceaccount.com
+      FIREBASE_PRIVATE_KEY: placeholder-key
 
     steps:
       - uses: actions/checkout@v4
