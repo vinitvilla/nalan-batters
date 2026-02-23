@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { usePathname } from "next/navigation";
 import { SessionHydrator } from "@/components/SessionHydrator";
 import Footer from "@/components/Footer";
-import EnvironmentBadge from "@/components/EnvironmentBadge";
 
 export function LayoutClient({
   children,
@@ -19,7 +18,6 @@ export function LayoutClient({
   return (
     <>
       <SessionHydrator />
-      <EnvironmentBadge />
       {!(isAdminPage || isSignInPage) && <Header />}
       <Toaster />
       {children}

@@ -84,14 +84,6 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 - `npm run db:setup` - Run migrations and seed data
 - `npm run db:setup:full` - Reset database, re-seed, and fully populate
 
-### Staging
-- `npm run build:staging` - Build for staging environment
-- `npm run start:staging` - Start staging server
-- `npm run migrate:staging` - Run staging migrations
-- `npm run seed:staging` - Seed staging database
-- `npm run deploy:staging` - Deploy to staging environment
-- `npm run deploy:staging:full` - Run migrations, build, and deploy staging
-
 ## Complete Project Structure
 
 ### Root Directory
@@ -321,10 +313,8 @@ prisma/
 ### Scripts (`/scripts`)
 ```
 scripts/
-├── deploy-staging.sh      # Staging deployment automation
-├── migrate-staging.sh     # Staging migration script
-├── setup-staging-db.sh    # Staging database setup
-└── start-staging.sh       # Staging server startup
+├── populate-db.js         # Test data population script
+└── set-admin.js           # Firebase admin role assignment script
 ```
 
 ### Public Assets (`/public`)

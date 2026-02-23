@@ -10,14 +10,12 @@ import Autoplay from "embla-carousel-autoplay";
 
 export default function HeroSection() {
   const images = [
-    "https://picsum.photos/id/1015/1600/600",
-    "https://picsum.photos/id/1016/1600/600",
-    "https://picsum.photos/id/1020/1600/600",
-    "https://picsum.photos/id/1024/1600/600",
-    "https://picsum.photos/id/1035/1600/600"
+    "/hero1.jpg",
+    "/hero2.jpg",
+    "/hero3.jpg",
   ];
   const plugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: false  })
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: false })
   );
 
   return (
@@ -46,10 +44,14 @@ export default function HeroSection() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/10 border-white/20 hover:bg-white/20" />
-          <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/10 border-white/20 hover:bg-white/20" />
+          {images.length > 1 && (
+            <>
+              <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/10 border-white/20 hover:bg-white/20" />
+              <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/10 border-white/20 hover:bg-white/20" />
+            </>
+          )}
         </Carousel>
-        
+
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/70 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/20 to-transparent pointer-events-none" />

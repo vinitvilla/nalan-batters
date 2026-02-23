@@ -1,14 +1,5 @@
 {
-  "env": {
-    "NEXT_PUBLIC_APP_ENV": "staging",
-    "NODE_ENV": "production"
-  },
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_APP_ENV": "staging"
-    }
-  },
-  "buildCommand": "npm run build:staging",
+  "buildCommand": "npm run build:ci",
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
