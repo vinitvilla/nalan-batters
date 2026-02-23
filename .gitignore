@@ -34,6 +34,7 @@ yarn-error.log*
 .env*
 !.env.example
 !.env.staging.example
+!.env.test.example
 
 # Staging-specific files
 staging-deploy.log
