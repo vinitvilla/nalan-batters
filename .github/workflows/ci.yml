@@ -83,6 +83,14 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/placeholder
+      # Dummy values for client-side Firebase SDK during prerendering
+      # (not used in CI, only needed to satisfy Firebase client init)
+      NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "0"
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:0:web:0"
 
     steps:
       - uses: actions/checkout@v4
