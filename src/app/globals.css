@@ -128,4 +128,35 @@
   [type='submit'] {
     @apply cursor-pointer;
   }
+
+  /**
+   * Safe Area Support for Notched Devices
+   * Ensures content doesn't get hidden behind notches, safe areas, or rounded corners
+   * Works with viewport-fit=cover meta tag
+   */
+  @supports (padding: max(0px)) {
+    /* Fixed headers should respect top safe area */
+    [role="banner"],
+    header[class*="fixed"],
+    .header-fixed {
+      padding-top: max(var(--header-padding-top, 1rem), env(safe-area-inset-top));
+      padding-left: max(var(--header-padding-left, 1rem), env(safe-area-inset-left));
+      padding-right: max(var(--header-padding-right, 1rem), env(safe-area-inset-right));
+    }
+
+    /* Fixed footers should respect bottom safe area */
+    footer[class*="fixed"],
+    .footer-fixed {
+      padding-bottom: max(var(--footer-padding-bottom, 1rem), env(safe-area-inset-bottom));
+      padding-left: max(var(--footer-padding-left, 1rem), env(safe-area-inset-left));
+      padding-right: max(var(--footer-padding-right, 1rem), env(safe-area-inset-right));
+    }
+
+    /* Side drawers/sidebars should respect horizontal safe areas */
+    .sidebar-fixed,
+    nav[class*="fixed"][class*="sidebar"] {
+      padding-left: max(var(--sidebar-padding-left, 0), env(safe-area-inset-left));
+      padding-right: max(var(--sidebar-padding-right, 0), env(safe-area-inset-right));
+    }
+  }
 }

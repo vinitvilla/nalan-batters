@@ -29,6 +29,17 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Handle keyboard navigation for mobile menu
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileNavOpen) {
+        setMobileNavOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [mobileNavOpen]);
+
   // Handle smooth scroll navigation
   const handleNavigation = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -42,7 +53,7 @@ export default function Header() {
     <>
       {/* Main Header */}
       <header className={`
-        fixed top-0 left-0 right-0 z-50 transition-all duration-300
+        fixed top-0 left-0 right-0 z-50 transition-all duration-300 header-fixed
         ${scrolled
           ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-100'
           : 'bg-white/80 backdrop-blur-md'
@@ -53,11 +64,11 @@ export default function Header() {
             {/* Logo */}
             <Link
               href="/"
-              className="flex items-center gap-3 hover:scale-105 transition-all duration-300 cursor-pointer group z-10"
+              className="flex items-center gap-3 hover:scale-105 transition-all duration-300 cursor-pointer group z-10 p-1"
               aria-label="Go to home page"
             >
               <div className="relative">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 lg:w-12 lg:h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
                   <Image
                     src="/icon.svg"
                     alt="Nalan Batters Logo"
@@ -93,32 +104,28 @@ export default function Header() {
               <CartButton ref={cartButtonRef} />
 
               {/* Mobile Menu Toggle */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden relative p-2 hover:bg-orange-50 text-gray-600 hover:text-orange-600 transition-all duration-200 rounded-xl"
+              <button
+                className="lg:hidden w-11 h-11 flex items-center justify-center hover:bg-orange-50 text-gray-600 hover:text-orange-600 transition-all duration-200 rounded-xl"
                 aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
                 onClick={() => setMobileNavOpen(!mobileNavOpen)}
               >
-                <div className="relative w-6 h-6">
+                <div className="relative w-6 h-6 flex items-center justify-center">
                   <Menu
-                    className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${mobileNavOpen ? 'rotate-180 opacity-0' : 'rotate-0 opacity-100'
-                      }`}
+                    className={`absolute w-6 h-6 transition-all duration-300 ${mobileNavOpen ? 'rotate-180 opacity-0' : 'rotate-0 opacity-100'}`}
                   />
                   <X
-                    className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${mobileNavOpen ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'
-                      }`}
+                    className={`absolute w-6 h-6 transition-all duration-300 ${mobileNavOpen ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'}`}
                   />
                 </div>
-              </Button>
+              </button>
             </div>
           </nav>
         </div>
       </header>
 
-      {/* Mobile Navigation Overlay */}
+      {/* Mobile Navigation Overlay — starts BELOW the fixed header (top-16) */}
       <div className={`
-        fixed inset-0 z-40 lg:hidden transition-all duration-300
+        fixed inset-x-0 bottom-0 top-0 z-100 lg:hidden transition-all duration-300
         ${mobileNavOpen ? 'visible opacity-100' : 'invisible opacity-0'}
       `}>
         {/* Backdrop */}
@@ -133,44 +140,53 @@ export default function Header() {
           transform transition-transform duration-300 ease-out
           ${mobileNavOpen ? 'translate-x-0' : 'translate-x-full'}
         `}>
-          {/* Mobile Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
+
+          {/* Panel Branding Header */}
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-md flex-shrink-0">
                 <Image
                   src="/icon.svg"
                   alt="Nalan Batters Logo"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7"
                   unoptimized
                   loading="eager"
                 />
               </div>
               <div>
-                <span className="font-bold text-lg text-gray-800" style={{ fontFamily: "'Dancing Script', cursive" }}>
+                <span className="font-bold text-base text-gray-800" style={{ fontFamily: "'Dancing Script', cursive" }}>
                   Nalan Batters
                 </span>
                 <div className="text-xs text-gray-500 font-medium">Premium Quality</div>
               </div>
             </div>
+            {/* Close Button */}
+            <button
+              onClick={() => setMobileNavOpen(false)}
+              aria-label="Close menu"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white/80 hover:bg-white text-gray-500 hover:text-gray-800 shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Navigation Links */}
-          <div className="p-6">
-            <nav className="space-y-2">
+          <div className="p-4 sm:p-6 flex-1 overflow-y-auto">
+            <nav className="space-y-1">
               {navigationItems.map((item) => {
                 const IconComponent = item.icon;
                 return (
                   <button
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
-                    className="w-full flex items-center gap-4 px-4 py-4 text-left text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-200 font-medium group"
+                    className="w-full flex items-center gap-4 px-4 py-3 sm:py-4 text-left text-gray-700 hover:text-orange-600 hover:bg-orange-50 active:bg-orange-100 rounded-xl transition-all duration-200 font-medium group min-h-12 sm:min-h-14"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center transition-colors flex-shrink-0">
                       <IconComponent className="w-5 h-5" />
                     </div>
-                    <span className="text-lg">{item.label}</span>
+                    <span className="text-base sm:text-lg">{item.label}</span>
                   </button>
                 );
               })}

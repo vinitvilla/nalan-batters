@@ -45,15 +45,25 @@ const config: Config = {
       padding: {
         /**
          * Safe area insets for notched devices (iPhone X, etc.)
-         * Usage: p-safe, pt-safe, pl-safe, etc.
+         * Usage: pt-safe, pr-safe, pb-safe, pl-safe
+         * Ensures content doesn't get hidden behind notches/cutouts
          */
-        safe: 'max(env(safe-area-inset-top, 0px), 1rem)',
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-right': 'env(safe-area-inset-right)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
       },
       margin: {
-        safe: 'max(env(safe-area-inset-top, 0px), 1rem)',
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-right': 'env(safe-area-inset-right)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
       },
       inset: {
-        safe: 'max(env(safe-area-inset-top, 0px), 1rem)',
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-right': 'env(safe-area-inset-right)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
       },
     },
   },
