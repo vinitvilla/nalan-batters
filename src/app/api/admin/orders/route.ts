@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
                 limit: limit ? parseInt(limit) : 1000, // Use higher default limit for delivery date filtering
                 search: searchParams.get('search') || undefined,
                 status: searchParams.get('status') || undefined,
-                orderType: searchParams.get('orderType') || undefined,
+                deliveryType: searchParams.get('orderType') || undefined,
                 paymentMethod: searchParams.get('paymentMethod') || undefined,
                 startDate: searchParams.get('startDate') || undefined,
                 endDate: searchParams.get('endDate') || undefined,
