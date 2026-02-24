@@ -12,7 +12,7 @@ export const CartItemSchema = z.object({
 
 export const CartSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
-  items: z.array(CartItemSchema).min(1, "Cart must have at least one item"),
+  items: z.array(CartItemSchema),
   merge: z.boolean().optional(),
 });
 
