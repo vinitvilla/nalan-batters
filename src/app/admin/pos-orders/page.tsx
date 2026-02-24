@@ -381,7 +381,7 @@ export default function PosOrdersPage() {
             </div>
           ) : (
             <div className={`overflow-x-auto ${loading ? "opacity-60" : ""}`}>
-              <Table className="min-w-full">
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow className="border-b bg-gray-50/80">
                     <TableHead className="font-semibold text-gray-600 text-xs uppercase tracking-wider py-3 px-4">

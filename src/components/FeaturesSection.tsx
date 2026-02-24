@@ -63,32 +63,31 @@ export default function FeaturesSection() {
   return (
     <section className="relative">
       {/* Section Header */}
-      <div className="text-center mb-16">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Star className="w-5 h-5 text-amber-600 fill-amber-600" />
-          <Badge variant="secondary" className="bg-amber-50 text-amber-800 border-amber-200">
+      <div className="text-center mb-12 sm:mb-16 px-4">
+        <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
+          <Star className="w-4 sm:w-5 h-4 sm:h-5 text-amber-600 fill-amber-600" />
+          <Badge variant="secondary" className="bg-amber-50 text-amber-800 border-amber-200 text-xs sm:text-sm">
             Why Choose Us
           </Badge>
-          <Star className="w-5 h-5 text-amber-600 fill-amber-600" />
+          <Star className="w-4 sm:w-5 h-4 sm:h-5 text-amber-600 fill-amber-600" />
         </div>
-        
-        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-          <span 
+
+        <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6">
+          <span
             className="bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-700 bg-clip-text text-transparent font-cursive"
             style={{ fontFamily: "'Dancing Script', cursive" }}
           >
             Exceptional Quality
           </span>
         </h2>
-        
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          Discover what makes our batters truly special. From traditional recipes to modern convenience, 
-          we deliver an unmatched culinary experience that brings joy to every meal.
+
+        <p className="text-sm sm:text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          Discover what makes our batters special. Fresh ingredients, traditional recipes, modern convenience.
         </p>
       </div>
 
       {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         {features.map((feature, index) => {
           const Icon = feature.icon;
           return (

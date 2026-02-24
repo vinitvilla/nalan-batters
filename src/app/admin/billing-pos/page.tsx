@@ -33,6 +33,7 @@ export default function BillingPage() {
   const { data: posData, loading, error } = usePosData();
   const [cart, setCart] = useState<PosCartItem[]>([]);
   const [customer, setCustomer] = useState<PosCustomerData>({});
+  const [mobileView, setMobileView] = useState<'products' | 'cart'>('products');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
@@ -396,21 +397,42 @@ export default function BillingPage() {
           </div>
         </div>
       ) : (
-      <div className="flex h-full max-h-screen bg-gray-50">
-        
+      <div className="flex flex-col lg:flex-row h-full max-h-screen bg-gray-50">
+
+        {/* Mobile Tab Bar — only visible on mobile */}
+        <div className="lg:hidden flex border-b border-gray-200 bg-white sticky top-0 z-10">
+          <button
+            onClick={() => setMobileView('products')}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${mobileView === 'products' ? 'border-b-2 border-black text-black' : 'text-gray-500'}`}
+          >
+            Products
+          </button>
+          <button
+            onClick={() => setMobileView('cart')}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${mobileView === 'cart' ? 'border-b-2 border-black text-black' : 'text-gray-500'}`}
+          >
+            Cart
+            {cart.length > 0 && (
+              <span className="bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {cart.length}
+              </span>
+            )}
+          </button>
+        </div>
+
         {/* Product Selection Area */}
-        <div className="flex-1 p-6 overflow-hidden">
-          <div className="mb-6">
+        <div className={`${mobileView === 'products' ? 'flex' : 'hidden'} lg:flex flex-col flex-1 p-4 lg:p-6 overflow-hidden`}>
+          <div className="mb-4 lg:mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-black mb-2">Live Billing (POS)</h1>
-                <p className="text-gray-700">Point of Sale system for walk-in customers</p>
+                <h1 className="text-xl lg:text-3xl font-bold text-black mb-1">Live Billing (POS)</h1>
+                <p className="text-sm text-gray-700 hidden sm:block">Point of Sale system for walk-in customers</p>
               </div>
             </div>
           </div>
 
           {/* Search and Filters */}
-          <div className="mb-6 flex gap-4">
+          <div className="mb-4 lg:mb-6 flex flex-col sm:flex-row gap-2 lg:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -421,7 +443,7 @@ export default function BillingPage() {
               />
             </div>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48 border-gray-300 focus:border-black focus:ring-black">
+              <SelectTrigger className="w-full sm:w-48 border-gray-300 focus:border-black focus:ring-black">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -438,8 +460,8 @@ export default function BillingPage() {
           </div>
 
           {/* Product Grid */}
-          <ScrollArea className="h-[calc(100vh-280px)]">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <ScrollArea className="h-[calc(100vh-220px)] lg:h-[calc(100vh-280px)]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
               {filteredProducts.map(product => (
                 <Card 
                   key={product.id} 
@@ -458,16 +480,31 @@ export default function BillingPage() {
               ))}
             </div>
           </ScrollArea>
+
+          {/* Mobile "View Cart" CTA — only shown when there are items */}
+          {cart.length > 0 && (
+            <div className="lg:hidden pt-3 pb-1">
+              <button
+                onClick={() => setMobileView('cart')}
+                className="w-full bg-black text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                View Cart ({cart.length} item{cart.length !== 1 ? 's' : ''}) — ${finalTotal.toFixed(2)}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Cart and Checkout Area */}
-        <div className="w-96 bg-white border-l shadow-lg flex flex-col">
-          <div className="p-6 border-b">
+        <div className={`${mobileView === 'cart' ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-96 bg-white lg:border-l shadow-lg`}>
+          <div className="p-4 lg:p-6 border-b">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
-                Current Sale
-              </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  Current Sale
+                </h2>
+              </div>
               <Badge variant="outline">{cart.length} items</Badge>
             </div>
 

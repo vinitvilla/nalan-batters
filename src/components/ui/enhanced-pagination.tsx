@@ -157,11 +157,11 @@ export function EnhancedPagination({
             {showItemsPerPage && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Items per page:</span>
-                <Select 
-                  value={itemsPerPage.toString()} 
+                <Select
+                  value={itemsPerPage.toString()}
                   onValueChange={(value) => onItemsPerPageChange(parseInt(value))}
                 >
-                  <SelectTrigger className="w-20 h-8">
+                  <SelectTrigger className="w-24 h-10 sm:h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

@@ -96,7 +96,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     <div className="relative flex items-center justify-between p-6 lg:hidden">
                         <div className="flex items-center space-x-3">
                             <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-primary-foreground/10 flex items-center justify-center">
-                                <Image src="/logo-nalan2.jpg" alt="Logo" width={40} height={40} className="object-cover" />
+                                <Image src="/logo-nalan2.jpg" alt="Logo" fill sizes="40px" className="object-cover" />
                             </div>
                             <div>
                                 <div className="font-bold text-lg text-primary-foreground">
@@ -121,7 +121,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     <div className="relative hidden lg:block p-6 pb-8">
                         <div className="flex items-center space-x-3 mb-2">
                             <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl bg-primary-foreground/10 flex items-center justify-center">
-                                <Image src="/logo-nalan2.jpg" alt="Logo" width={56} height={56} className="object-cover" />
+                                <Image src="/logo-nalan2.jpg" alt="Logo" fill sizes="56px" className="object-cover" />
                             </div>
                             <div>
                                 <div className="font-bold text-xl text-primary-foreground">

@@ -163,19 +163,21 @@ export default function OrdersPage() {
                                     className="h-11 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 />
                             </div>
-                            <Tabs value={filters.status} onValueChange={setStatus} className="w-full md:w-auto">
-                                <TabsList className="flex w-full md:w-auto bg-gray-100 p-1 rounded-lg">
+                            <div className="w-full md:w-auto overflow-x-auto">
+                              <Tabs value={filters.status} onValueChange={setStatus} className="w-full md:w-auto">
+                                <TabsList className="flex w-max md:w-auto bg-gray-100 p-1 rounded-lg min-w-full md:min-w-0">
                                     {ORDER_STATUS_FILTERS.map(s => (
                                         <TabsTrigger
                                             key={s}
                                             value={s}
-                                            className="flex-1 md:flex-none cursor-pointer text-xs sm:text-sm font-medium px-3 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all"
+                                            className="flex-none cursor-pointer text-xs sm:text-sm font-medium px-3 py-2 whitespace-nowrap data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all"
                                         >
                                             {capitalize(s)}
                                         </TabsTrigger>
                                     ))}
                                 </TabsList>
-                            </Tabs>
+                              </Tabs>
+                            </div>
                         </div>
 
                         <div className="flex flex-col md:flex-row gap-4">

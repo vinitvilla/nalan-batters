@@ -63,19 +63,19 @@ export default function TestimonialsSection() {
   const testimonialsToShow = reviews.length > 0 ? reviews : testimonials;
 
   return (
-    <section className="py-16 sm:py-20 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-orange-100 to-amber-100 rounded-full mb-6">
-            <span className="text-3xl">💬</span>
+        <div className="text-center mb-12 sm:mb-16">
+          <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-orange-100 to-amber-100 rounded-full mb-4 sm:mb-6">
+            <span className="text-2xl sm:text-3xl">💬</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent"
+          <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent"
             style={{ fontFamily: "'Dancing Script', cursive" }}
           >
             What Our Customers Say
           </h2>
-          <p className="text-gray-600 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
+          <p className="text-gray-600 text-sm sm:text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed px-2">
             Real stories from our happy customers who love our authentic batters
           </p>
         </div>
@@ -97,10 +97,10 @@ export default function TestimonialsSection() {
                 const displayText = isExpanded || !shouldTruncate ? t.quote : truncateText(t.quote);
 
                 return (
-                  <CarouselItem key={t.name + idx} className="pl-6 py-8 md:basis-1/2 lg:basis-1/3 basis-full">
+                  <CarouselItem key={t.name + idx} className="pl-4 sm:pl-6 py-4 sm:py-8 md:basis-1/2 lg:basis-1/3 basis-full">
                     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden border border-gray-100 h-full">
                       {/* Card Content */}
-                      <div className="p-8 h-full flex flex-col">
+                      <div className="p-4 sm:p-8 h-full flex flex-col">
                         {/* Quote Icon */}
                         <div className="flex justify-center mb-6">
                           <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center shadow-lg">
@@ -171,24 +171,24 @@ export default function TestimonialsSection() {
         </div>
 
         {/* Call to action */}
-        <div className="text-center mt-16">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-orange-200/50 shadow-lg">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="text-center mt-12 sm:mt-16">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-orange-200/50 shadow-lg">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Join Our Happy Customers!
             </h3>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-gray-600">
-              <div className="flex items-center gap-3">
-                <span className="text-amber-400 text-2xl">★★★★★</span>
-                <span className="font-semibold">4.9/5 Average Rating</span>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-gray-600">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <span className="text-amber-400 text-lg sm:text-2xl">★★★★★</span>
+                <span className="font-semibold">4.9/5 Rating</span>
               </div>
               <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">👥</span>
-                <span className="font-semibold">1000+ Happy Customers</span>
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <span className="text-lg sm:text-2xl">👥</span>
+                <span className="font-semibold">1000+ Happy</span>
               </div>
               <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🚚</span>
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <span className="text-lg sm:text-2xl">🚚</span>
                 <span className="font-semibold">Fast Delivery</span>
               </div>
             </div>

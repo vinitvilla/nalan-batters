@@ -257,7 +257,7 @@ export default function DeliveryPage() {
 
         return (
             <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[700px]">
                     <TableHeader>
                         <TableRow>
                             <TableHead>Order</TableHead>
@@ -324,7 +324,7 @@ export default function DeliveryPage() {
                                         value={order.driverId || "unassigned"}
                                         onValueChange={(driverId) => handleAssignDriver(order.id, driverId)}
                                     >
-                                        <SelectTrigger className="w-40">
+                                        <SelectTrigger className="w-32 text-xs">
                                             <SelectValue placeholder="Assign Driver" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -345,7 +345,7 @@ export default function DeliveryPage() {
                                         disabled={updatingStatus === order.id}
                                         onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}
                                     >
-                                        <SelectTrigger className="w-32 cursor-pointer">
+                                        <SelectTrigger className="w-28 text-xs cursor-pointer">
                                             <SelectValue placeholder="Update Status" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -501,7 +501,7 @@ export default function DeliveryPage() {
                                 ) : currentView === 'list' ? (
                                     renderOrdersTable(todayOrders)
                                 ) : (
-                                    <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
+                                    <div className="h-[280px] sm:h-[420px] lg:h-[600px] relative bg-white rounded-lg border overflow-hidden">
                                         <DeliveryMapView
                                             orders={todayOrders.filter(order => order.address && order.status !== 'CANCELLED')}
                                             title="Today&apos;s Deliveries"
@@ -531,7 +531,7 @@ export default function DeliveryPage() {
                                 ) : currentView === 'list' ? (
                                     renderOrdersTable(tomorrowOrders)
                                 ) : (
-                                    <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
+                                    <div className="h-[280px] sm:h-[420px] lg:h-[600px] relative bg-white rounded-lg border overflow-hidden">
                                         <DeliveryMapView
                                             orders={tomorrowOrders.filter(order => order.address && order.status !== 'CANCELLED')}
                                             title="Tomorrow&apos;s Deliveries"
@@ -579,7 +579,7 @@ export default function DeliveryPage() {
                                 ) : currentView === 'list' ? (
                                     renderOrdersTable(selectedDateOrders)
                                 ) : (
-                                    <div className="h-[600px] relative bg-white rounded-lg border overflow-hidden">
+                                    <div className="h-[280px] sm:h-[420px] lg:h-[600px] relative bg-white rounded-lg border overflow-hidden">
                                         <DeliveryMapView
                                             orders={selectedDateOrders.filter(order => order.address && order.status !== 'CANCELLED')}
                                             title={`Deliveries for ${moment(selectedDate).format('MMM DD, YYYY')}`}

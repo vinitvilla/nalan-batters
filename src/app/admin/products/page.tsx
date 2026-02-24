@@ -151,14 +151,16 @@ export default function ProductsPage() {
                             onChange={(e) => setSearch(e.target.value)}
                             className="max-w-xs"
                         />
-                        <Tabs value={tab} onValueChange={setTab} className="w-full md:w-auto">
-                            <TabsList>
-                                <TabsTrigger value="all">All</TabsTrigger>
-                                {categories.map((cat) => (
-                                    <TabsTrigger key={cat.id} value={cat.name}>{cat.name}</TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
+                        <div className="w-full md:w-auto overflow-x-auto">
+                            <Tabs value={tab} onValueChange={setTab} className="w-full md:w-auto">
+                                <TabsList className="w-max md:w-auto min-w-full md:min-w-0">
+                                    <TabsTrigger value="all" className="whitespace-nowrap">All</TabsTrigger>
+                                    {categories.map((cat) => (
+                                        <TabsTrigger key={cat.id} value={cat.name} className="whitespace-nowrap">{cat.name}</TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
                     </div>
                     
                     {/* Mobile Card View */}

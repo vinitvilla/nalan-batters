@@ -138,12 +138,12 @@ export default function OrderDetailPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8">
+            <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-8">
                 {/* Enhanced Header */}
                 <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                     {/* Top Section - Navigation and Actions */}
-                    <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 bg-gray-50">
-                        <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 lg:p-6 border-b border-gray-200 bg-gray-50">
+                        <div className="flex items-center gap-3 flex-wrap">
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -154,7 +154,7 @@ export default function OrderDetailPage() {
                                 Back to Orders
                             </Button>
 
-                            <div className="h-6 border-l border-gray-300"></div>
+                            <div className="h-6 border-l border-gray-300 hidden sm:block"></div>
 
                             <Badge className={`${getStatusColor(order.status)} border px-3 py-1.5 font-semibold text-sm flex items-center gap-2`}>
                                 {getStatusIcon(order.status)}
@@ -162,9 +162,9 @@ export default function OrderDetailPage() {
                             </Badge>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Select value={status} onValueChange={handleStatusChange}>
-                                <SelectTrigger className="w-40 cursor-pointer border-gray-300 focus:border-black focus:ring-gray-100 bg-white text-sm">
+                                <SelectTrigger className="flex-1 sm:flex-none sm:w-40 cursor-pointer border-gray-300 focus:border-black focus:ring-gray-100 bg-white text-sm">
                                     <SelectValue placeholder="Change status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -182,7 +182,7 @@ export default function OrderDetailPage() {
                             <Button
                                 onClick={handleSave}
                                 disabled={saving || status === order.status}
-                                className="cursor-pointer bg-black hover:bg-gray-800 text-white px-4 shadow-md hover:shadow-lg transition-all duration-200"
+                                className="cursor-pointer bg-black hover:bg-gray-800 text-white px-4 shadow-md hover:shadow-lg transition-all duration-200 sm:w-auto"
                                 size="sm"
                             >
                                 {saving ? (
@@ -274,34 +274,34 @@ export default function OrderDetailPage() {
                 {/* Main Content with Tabs */}
                 <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
                     <Tabs defaultValue="overview" className="w-full">
-                        <div className="border-b border-gray-200 px-6 lg:px-8 py-6">
+                        <div className="border-b border-gray-200 px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
                             <TabsList className="grid w-full grid-cols-3 bg-gray-100 rounded-xl p-1">
                                 <TabsTrigger
                                     value="overview"
-                                    className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium"
+                                    className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium text-xs sm:text-sm"
                                 >
-                                    <Package className="w-4 h-4 mr-2" />
+                                    <Package className="w-4 h-4 mr-1 sm:mr-2 hidden sm:inline-block" />
                                     Overview
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="customer"
-                                    className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium"
+                                    className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium text-xs sm:text-sm"
                                 >
-                                    <User className="w-4 h-4 mr-2" />
+                                    <User className="w-4 h-4 mr-1 sm:mr-2 hidden sm:inline-block" />
                                     Customer
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="billing"
-                                    className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium"
+                                    className="cursor-pointer data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm font-medium text-xs sm:text-sm"
                                 >
-                                    <CreditCard className="w-4 h-4 mr-2" />
+                                    <CreditCard className="w-4 h-4 mr-1 sm:mr-2 hidden sm:inline-block" />
                                     Billing
                                 </TabsTrigger>
                             </TabsList>
                         </div>
 
-                        <ScrollArea className="h-[calc(100vh-300px)]">
-                            <div className="p-6 lg:p-8">
+                        <ScrollArea className="h-[calc(100vh-200px)] sm:h-[calc(100vh-300px)]">
+                            <div className="p-4 sm:p-6 lg:p-8">
                                 {/* Overview Tab */}
                                 <TabsContent value="overview" className="mt-0 space-y-8">
                                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -324,15 +324,15 @@ export default function OrderDetailPage() {
                                                         {order.items.map((item, index) => (
                                                             <div
                                                                 key={`${item.productId}-${index}`}
-                                                                className={`flex items-center justify-between p-6 hover:bg-gray-50 transition-colors group ${index !== order.items.length - 1 ? 'border-b border-gray-100' : ''
+                                                                className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 hover:bg-gray-50 transition-colors group gap-3 ${index !== order.items.length - 1 ? 'border-b border-gray-100' : ''
                                                                     }`}
                                                             >
-                                                                <div className="flex items-center gap-4 flex-1">
-                                                                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:shadow-md transition-shadow">
-                                                                        <Package className="w-6 h-6 text-gray-600" />
+                                                                <div className="flex items-center gap-3 sm:gap-4 flex-1">
+                                                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:shadow-md transition-shadow flex-shrink-0">
+                                                                        <Package className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                                                                     </div>
                                                                     <div className="flex-1">
-                                                                        <h4 className="font-semibold text-gray-900 text-lg group-hover:text-black transition-colors">
+                                                                        <h4 className="font-semibold text-gray-900 text-base sm:text-lg group-hover:text-black transition-colors">
                                                                             {item.product?.name || `Product ${item.productId}`}
                                                                         </h4>
                                                                         <div className="flex items-center gap-3 mt-1">
@@ -341,17 +341,17 @@ export default function OrderDetailPage() {
                                                                     </div>
                                                                 </div>
 
-                                                                <div className="flex items-center gap-6">
+                                                                <div className="flex items-center gap-4 sm:gap-6 self-end sm:self-auto">
                                                                     <div className="text-center">
-                                                                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Quantity</p>
-                                                                        <Badge variant="outline" className="bg-gray-50 text-gray-700 font-bold text-lg px-3 py-1 mt-1 group-hover:bg-gray-100 group-hover:text-black transition-colors">
+                                                                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Qty</p>
+                                                                        <Badge variant="outline" className="bg-gray-50 text-gray-700 font-bold text-base sm:text-lg px-3 py-1 mt-1 group-hover:bg-gray-100 group-hover:text-black transition-colors">
                                                                             {item.quantity}
                                                                         </Badge>
                                                                     </div>
 
                                                                     <div className="text-right">
                                                                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Subtotal</p>
-                                                                        <p className="font-bold text-xl text-gray-900 mt-1 group-hover:text-black transition-colors">
+                                                                        <p className="font-bold text-lg sm:text-xl text-gray-900 mt-1 group-hover:text-black transition-colors">
                                                                             {formatCurrency(Number(item.price) * item.quantity)}
                                                                         </p>
                                                                     </div>
@@ -451,8 +451,8 @@ export default function OrderDetailPage() {
                                                 Customer Details
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="p-8">
-                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                        <CardContent className="p-4 sm:p-8">
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                                                 <div className="space-y-6">
                                                     <div className="flex items-start gap-4">
                                                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
@@ -517,7 +517,7 @@ export default function OrderDetailPage() {
                                                 Billing Summary
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="p-8">
+                                        <CardContent className="p-4 sm:p-8">
                                             <div className="max-w-lg mx-auto space-y-6">
                                                 {/* Detailed Breakdown */}
                                                 <div className="space-y-4">

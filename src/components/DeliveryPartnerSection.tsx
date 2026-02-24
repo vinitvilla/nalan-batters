@@ -61,7 +61,7 @@ export default function DeliveryPartnerSection() {
   };
 
   return (
-    <section className="relative py-16 lg:py-24 overflow-hidden">
+    <section className="relative py-12 sm:py-16 lg:py-24 overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-stone-50"></div>
       <div className="absolute inset-0 opacity-20">
@@ -70,67 +70,67 @@ export default function DeliveryPartnerSection() {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
+
           {/* Left Column - Content */}
-          <div className="space-y-8">
-            <div className="space-y-6">
-              <div className="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-semibold">
-                <Truck className="w-4 h-4 mr-2" />
+          <div className="space-y-6 sm:space-y-8">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="inline-flex items-center px-3 py-2 bg-amber-100 text-amber-800 rounded-full text-xs sm:text-sm font-semibold">
+                <Truck className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                 Join Our Team
               </div>
-              
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
                 Wanna be our{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-yellow-600">
                   delivery partner?
                 </span>
               </h2>
-              
-              <p className="text-xl text-gray-600 leading-relaxed">
+
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed">
                 Join our growing network of delivery partners and earn flexible income while serving your community with fresh, authentic batters.
               </p>
             </div>
 
             {/* Benefits Grid */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="flex items-center space-x-3 p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-amber-100">
-                <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-5 h-5" />
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="flex items-center space-x-3 p-3 sm:p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-amber-100">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-4 sm:w-5 h-4 sm:h-5" />
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Competitive Pay</p>
-                  <p className="text-sm text-gray-600">Earn per delivery</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3 p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-slate-100">
-                <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Flexible Hours</p>
-                  <p className="text-sm text-gray-600">Work when you want</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base">Competitive Pay</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Earn per delivery</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-stone-100">
-                <div className="w-10 h-10 bg-stone-100 text-stone-600 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5" />
+              <div className="flex items-center space-x-3 p-3 sm:p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-slate-100">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 sm:w-5 h-4 sm:h-5" />
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Great Community</p>
-                  <p className="text-sm text-gray-600">Join our team</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base">Flexible Hours</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Work when you want</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-yellow-100">
-                <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
-                  <Star className="w-5 h-5" />
+              <div className="flex items-center space-x-3 p-3 sm:p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-stone-100">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-stone-100 text-stone-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Users className="w-4 sm:w-5 h-4 sm:h-5" />
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Growth Potential</p>
-                  <p className="text-sm text-gray-600">Advance with us</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base">Great Community</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Join our team</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 sm:p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-yellow-100">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Star className="w-4 sm:w-5 h-4 sm:h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base">Growth Potential</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Advance with us</p>
                 </div>
               </div>
             </div>
@@ -138,20 +138,20 @@ export default function DeliveryPartnerSection() {
 
           {/* Right Column - Form */}
           <div className="lg:pl-8">
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 p-8 lg:p-10">
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 p-6 sm:p-8 lg:p-10">
               {!isSubmitted ? (
                 <>
-                  <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-yellow-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Truck className="w-8 h-8" />
+                  <div className="text-center mb-6 sm:mb-8">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-600 to-yellow-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                      <Truck className="w-7 h-7 sm:w-8 sm:h-8" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Get Started Today</h3>
-                    <p className="text-gray-600">Enter your contact number and we&apos;ll reach out to you!</p>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Get Started Today</h3>
+                    <p className="text-sm sm:text-base text-gray-600">Enter your contact number and we&apos;ll reach out to you!</p>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label htmlFor="phone" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
                         Phone Number
                       </label>
                       <Input
@@ -161,7 +161,7 @@ export default function DeliveryPartnerSection() {
                         value={phoneNumber}
                         onChange={handlePhoneChange}
                         maxLength={14}
-                        className="w-full px-4 py-3 text-lg border-2 border-amber-100 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all duration-200"
+                        className="w-full border-2 border-amber-100 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all duration-200"
                         required
                       />
                     </div>
@@ -169,7 +169,7 @@ export default function DeliveryPartnerSection() {
                     <Button
                       type="submit"
                       disabled={isSubmitting || !phoneNumber.trim()}
-                      className="w-full bg-gradient-to-r from-amber-600 to-yellow-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl hover:from-amber-700 hover:to-yellow-700 transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-lg"
+                      className="w-full bg-gradient-to-r from-amber-600 to-yellow-600 text-white font-bold py-3 sm:py-4 px-8 rounded-xl shadow-lg hover:shadow-xl hover:from-amber-700 hover:to-yellow-700 transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
                     >
                       {isSubmitting ? (
                         <div className="flex items-center justify-center">
@@ -178,24 +178,24 @@ export default function DeliveryPartnerSection() {
                         </div>
                       ) : (
                         <>
-                          <Truck className="w-5 h-5 mr-2" />
+                          <Truck className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                           Join Us
                         </>
                       )}
                     </Button>
                   </form>
 
-                  <p className="text-center text-sm text-gray-500 mt-4">
+                  <p className="text-center text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4">
                     We&apos;ll contact you within 24 hours to discuss opportunities.
                   </p>
                 </>
               ) : (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8" />
+                <div className="text-center py-6 sm:py-8">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <CheckCircle className="w-7 h-7 sm:w-8 sm:h-8" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h3>
-                  <p className="text-gray-600 mb-6">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Thank You!</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                     We&apos;ve received your application. Our team will contact you within 24 hours to discuss delivery partner opportunities.
                   </p>
                   <Button

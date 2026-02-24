@@ -42,6 +42,29 @@ const config: Config = {
         'gold-dark': '#bfa100',
         'gold-light': '#fffbe6',
       },
+      padding: {
+        /**
+         * Safe area insets for notched devices (iPhone X, etc.)
+         * Usage: pt-safe, pr-safe, pb-safe, pl-safe
+         * Ensures content doesn't get hidden behind notches/cutouts
+         */
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-right': 'env(safe-area-inset-right)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+      },
+      margin: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-right': 'env(safe-area-inset-right)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+      },
+      inset: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-right': 'env(safe-area-inset-right)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+      },
     },
   },
   plugins: [],
