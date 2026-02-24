@@ -120,7 +120,7 @@ export default function UsersPage() {
                         onValueChange={val => handleRoleChange(user.id, val)}
                         disabled={savingRole === user.id}
                       >
-                        <SelectTrigger className="w-24 h-8 text-xs">
+                        <SelectTrigger className="w-24 h-10 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

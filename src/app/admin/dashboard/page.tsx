@@ -263,16 +263,16 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="space-y-6 p-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                             Nalan Batters Analytics
                         </h1>
-                        <p className="text-gray-600 mt-1">Real-time business insights and performance metrics</p>
+                        <p className="text-gray-600 mt-1 text-sm sm:text-base">Real-time business insights and performance metrics</p>
                     </div>
                     <button
                         onClick={fetchDashboardData}
-                        className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                        className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

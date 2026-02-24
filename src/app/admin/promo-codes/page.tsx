@@ -217,7 +217,7 @@ export default function PromoCodesPage() {
                       <Label htmlFor="promoCodeInput" className="text-xs text-gray-600 mb-1">Promo Code</Label>
                       <Input
                         id="promoCodeInput"
-                        className="w-48"
+                        className="w-full"
                         placeholder="Promo Code"
                         value={editIdx !== null ? editPromo?.code ?? "" : newPromo.code}
                         onChange={e => {
@@ -241,12 +241,12 @@ export default function PromoCodesPage() {
                         disabled={saving}
                       />
                     </div>
-                    <div className="flex gap-2 items-end">
-                      <div className="flex flex-col">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex flex-col flex-1">
                         <Label htmlFor="discountInput" className="text-xs text-gray-600 mb-1">Discount</Label>
                         <Input
                           id="discountInput"
-                          className="w-32"
+                          className="w-full"
                           type="number"
                           placeholder={editIdx !== null ? (editPromo?.discountType === DiscountType.PERCENTAGE ? "Discount (%)" : "Discount Value") : (newPromo.discountType === DiscountType.PERCENTAGE ? "Discount (%)" : "Discount Value")}
                           value={editIdx !== null ? editPromo?.discount ?? 0 : newPromo.discount}
@@ -257,7 +257,7 @@ export default function PromoCodesPage() {
                           disabled={saving}
                         />
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col flex-1">
                         <Label htmlFor="discountTypeSelect" className="text-xs text-gray-600 mb-1">Discount Type</Label>
                         <Select
                           value={editIdx !== null ? editPromo?.discountType ?? DiscountType.PERCENTAGE : newPromo.discountType}
@@ -267,7 +267,7 @@ export default function PromoCodesPage() {
                           }}
                           disabled={saving}
                         >
-                          <SelectTrigger id="discountTypeSelect" className="w-32 border border-gray-300 rounded-md px-2 py-1 text-xs bg-white">
+                          <SelectTrigger id="discountTypeSelect" className="w-full border border-gray-300 rounded-md px-2 py-1 text-xs bg-white">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -277,12 +277,12 @@ export default function PromoCodesPage() {
                         </Select>
                       </div>
                     </div>
-                    <div className="flex gap-2 items-end">
-                      <div className="flex flex-col">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex flex-col flex-1">
                         <Label htmlFor="minOrderAmountInput" className="text-xs text-gray-600 mb-1">Min Order Amount ($)</Label>
                         <Input
                           id="minOrderAmountInput"
-                          className="w-32"
+                          className="w-full"
                           type="number"
                           step="0.01"
                           placeholder="Min Amount"
@@ -295,11 +295,11 @@ export default function PromoCodesPage() {
                           disabled={saving}
                         />
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col flex-1">
                         <Label htmlFor="maxDiscountInput" className="text-xs text-gray-600 mb-1">Max Discount ($)</Label>
                         <Input
                           id="maxDiscountInput"
-                          className="w-32"
+                          className="w-full"
                           type="number"
                           step="0.01"
                           placeholder="Max Discount"
@@ -313,29 +313,27 @@ export default function PromoCodesPage() {
                         />
                       </div>
                     </div>
-                    <div className="flex gap-2 items-end">
-                      <div className="flex flex-col">
-                        <Label htmlFor="usageLimitInput" className="text-xs text-gray-600 mb-1">Usage Limit</Label>
-                        <Input
-                          id="usageLimitInput"
-                          className="w-32"
-                          type="number"
-                          placeholder="Usage Limit"
-                          value={editIdx !== null ? editPromo?.usageLimit ?? "" : newPromo.usageLimit ?? ""}
-                          onChange={e => {
-                            const value = e.target.value ? Number(e.target.value) : undefined;
-                            if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, usageLimit: value } : editPromo);
-                            else setNewPromo({ ...newPromo, usageLimit: value });
-                          }}
-                          disabled={saving}
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="usageLimitInput" className="text-xs text-gray-600 mb-1">Usage Limit</Label>
+                      <Input
+                        id="usageLimitInput"
+                        className="w-full"
+                        type="number"
+                        placeholder="Usage Limit"
+                        value={editIdx !== null ? editPromo?.usageLimit ?? "" : newPromo.usageLimit ?? ""}
+                        onChange={e => {
+                          const value = e.target.value ? Number(e.target.value) : undefined;
+                          if (editIdx !== null) setEditPromo(editPromo => editPromo ? { ...editPromo, usageLimit: value } : editPromo);
+                          else setNewPromo({ ...newPromo, usageLimit: value });
+                        }}
+                        disabled={saving}
+                      />
                     </div>
                     <div>
                       <Label htmlFor="expiresAtInput" className="text-xs text-gray-600 mb-1">Expires At</Label>
                       <Input
                         id="expiresAtInput"
-                        className="w-fit"
+                        className="w-full"
                         type="date"
                         placeholder="Expires At"
                         value={editIdx !== null ? (typeof editPromo?.expiresAt === "string" ? editPromo.expiresAt.split("T")[0] : "") : (typeof newPromo.expiresAt === "string" ? newPromo.expiresAt.split("T")[0] : "")}
@@ -362,9 +360,54 @@ export default function PromoCodesPage() {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-            {/* Promo Codes Table */}
-            <div className="overflow-x-auto">
-              <Table>
+            {/* Mobile Card View — visible only on mobile */}
+            <div className="block lg:hidden space-y-3">
+              {filteredPromoCodes.length === 0 ? (
+                <p className="text-center text-gray-500 py-6">No promo codes found.</p>
+              ) : (
+                filteredPromoCodes.map((promo, idx) => (
+                  <div key={promo.id || idx} className="border border-gray-200 rounded-xl p-4 bg-white space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm font-mono bg-gray-100 px-2 py-1 rounded">{promo.code}</span>
+                      <div className="flex items-center gap-1">
+                        <Switch checked={promo.isActive} onCheckedChange={() => handleToggle(idx)} disabled={saving} />
+                        <Button variant="outline" size="sm" className="cursor-pointer px-2" onClick={() => handleEditOpen(idx)} disabled={saving}>
+                          <Pen size={14} />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="cursor-pointer px-2 text-red-500" onClick={() => setDeleteIdx(idx)} disabled={saving}>
+                              <Trash2 size={14} />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>Delete Promo Code?</AlertDialogTitle></AlertDialogHeader>
+                            <div className="text-sm">Are you sure you want to delete this promo code? This action cannot be undone.</div>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel asChild><Button variant="outline" className="cursor-pointer">Cancel</Button></AlertDialogCancel>
+                              <AlertDialogAction asChild>
+                                <Button variant="destructive" onClick={() => { if (deleteIdx !== null) handleDelete(deleteIdx); setDeleteIdx(null); }} className="cursor-pointer">Delete</Button>
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                    {promo.description && <p className="text-xs text-gray-500 truncate">{promo.description}</p>}
+                    <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
+                      <span><span className="font-medium">Discount:</span> {promo.discount}{promo.discountType === 'PERCENTAGE' ? '%' : '$'}</span>
+                      <span><span className="font-medium">Usage:</span> {promo.usageLimit ? `${promo.currentUsage}/${promo.usageLimit}` : `${promo.currentUsage}/∞`}</span>
+                      {promo.minOrderAmount && <span><span className="font-medium">Min Order:</span> ${promo.minOrderAmount}</span>}
+                      {promo.expiresAt && <span><span className="font-medium">Expires:</span> {moment(promo.expiresAt).format('MMM DD, YYYY')}</span>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table — hidden on mobile */}
+            <div className="hidden lg:block overflow-x-auto">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Code</TableHead>
@@ -395,55 +438,20 @@ export default function PromoCodesPage() {
                         <TableCell>{promo.maxDiscount ? `$${promo.maxDiscount}` : "-"}</TableCell>
                         <TableCell>{promo.usageLimit ? `${promo.currentUsage}/${promo.usageLimit}` : `${promo.currentUsage}/∞`}</TableCell>
                         <TableCell>{promo.expiresAt ? moment(promo.expiresAt).format('YYYY-MM-DD') : ""}</TableCell>
+                        <TableCell><Switch checked={promo.isActive} onCheckedChange={() => handleToggle(idx)} disabled={saving} /></TableCell>
                         <TableCell>
-                          <Switch
-                            checked={promo.isActive}
-                            onCheckedChange={() => handleToggle(idx)}
-                            disabled={saving}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="cursor-pointer px-2 rounded-md"
-                            onClick={() => handleEditOpen(idx)}
-                            disabled={saving}
-                          >
-                            <Pen size={16} />
-                          </Button>
+                          <Button variant="outline" size="sm" className="cursor-pointer px-2 rounded-md" onClick={() => handleEditOpen(idx)} disabled={saving}><Pen size={16} /></Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="cursor-pointer px-2 rounded-md text-red-500 ml-2"
-                                onClick={() => setDeleteIdx(idx)}
-                                disabled={saving}
-                              >
-                                <Trash2 size={16} />
-                              </Button>
+                              <Button variant="outline" size="sm" className="cursor-pointer px-2 rounded-md text-red-500 ml-2" onClick={() => setDeleteIdx(idx)} disabled={saving}><Trash2 size={16} /></Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Promo Code?</AlertDialogTitle>
-                              </AlertDialogHeader>
+                              <AlertDialogHeader><AlertDialogTitle>Delete Promo Code?</AlertDialogTitle></AlertDialogHeader>
                               <div className="text-sm">Are you sure you want to delete this promo code? This action cannot be undone.</div>
                               <AlertDialogFooter>
-                                <AlertDialogCancel asChild>
-                                  <Button variant="outline" className="cursor-pointer">Cancel</Button>
-                                </AlertDialogCancel>
+                                <AlertDialogCancel asChild><Button variant="outline" className="cursor-pointer">Cancel</Button></AlertDialogCancel>
                                 <AlertDialogAction asChild>
-                                  <Button
-                                    variant="destructive"
-                                    onClick={() => {
-                                      if (deleteIdx !== null) handleDelete(deleteIdx);
-                                      setDeleteIdx(null);
-                                    }}
-                                    className="cursor-pointer"
-                                  >
-                                    Delete
-                                  </Button>
+                                  <Button variant="destructive" onClick={() => { if (deleteIdx !== null) handleDelete(deleteIdx); setDeleteIdx(null); }} className="cursor-pointer">Delete</Button>
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
