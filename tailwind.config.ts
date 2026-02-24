@@ -42,6 +42,19 @@ const config: Config = {
         'gold-dark': '#bfa100',
         'gold-light': '#fffbe6',
       },
+      padding: {
+        /**
+         * Safe area insets for notched devices (iPhone X, etc.)
+         * Usage: p-safe, pt-safe, pl-safe, etc.
+         */
+        safe: 'max(env(safe-area-inset-top, 0px), 1rem)',
+      },
+      margin: {
+        safe: 'max(env(safe-area-inset-top, 0px), 1rem)',
+      },
+      inset: {
+        safe: 'max(env(safe-area-inset-top, 0px), 1rem)',
+      },
     },
   },
   plugins: [],

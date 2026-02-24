@@ -90,21 +90,21 @@ export default function QuickOrderSection() {
 	return (
 		<section
 			id="quickOrder"
-			className="py-16 sm:py-20 rounded-lg shadow-lg"
+			className="py-12 sm:py-16 lg:py-20 rounded-lg shadow-lg"
 		>
 			<div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
 				{
 					products.length > 0 && (
-						<div className="text-center mb-16">
-							<div className="inline-flex items-center justify-center p-2 bg-orange-100 rounded-full mb-6">
-								<span className="text-2xl">🛒</span>
+						<div className="text-center mb-12 sm:mb-16">
+							<div className="inline-flex items-center justify-center p-2 bg-orange-100 rounded-full mb-4 sm:mb-6">
+								<span className="text-xl sm:text-2xl">🛒</span>
 							</div>
-							<h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent"
+							<h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent"
 								style={{ fontFamily: "'Dancing Script', cursive" }}>
 								Quick Order
 							</h2>
-							<p className="text-gray-600 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed">
-								Fresh batters made with love, delivered to your doorstep. Order now for same-day delivery!
+							<p className="text-gray-600 text-sm sm:text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed px-2">
+								Fresh batters made with love. Order now for same-day delivery!
 							</p>
 						</div>
 					)}
@@ -147,24 +147,25 @@ export default function QuickOrderSection() {
 							</div>
 
 							{/* Product Content */}
-							<div className="p-6">
-								<h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+							<div className="p-4 sm:p-6">
+								<h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
 									{item.name}
 								</h3>
 
-								<p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2">
+								<p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 line-clamp-2">
 									{item.description}
 								</p>
 
 								{/* Quantity and Add to Cart */}
-								<div className="flex items-center gap-3">
-									<div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+								<div className="space-y-3 sm:space-y-0 sm:flex sm:flex-row sm:items-stretch sm:gap-3">
+									{/* Quantity Selector */}
+									<div className="flex items-center border border-gray-200 rounded-lg overflow-hidden w-fit">
 										<button
 											type="button"
 											onClick={() => handleQuantityChange(item.id, Math.max(1, (quantities[item.id] || 1) - 1))}
-											className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold transition-colors cursor-pointer"
+											className="px-2 sm:px-3 py-2 sm:py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold transition-colors cursor-pointer text-sm h-10 sm:h-11"
 										>
-											-
+											−
 										</button>
 										<input
 											id={`quantity-${item.id}`}
@@ -177,18 +178,19 @@ export default function QuickOrderSection() {
 													Number(e.target.value) || 1
 												)
 											}
-											className="w-16 text-center py-2 border-0 focus:ring-0 focus:outline-none font-semibold text-gray-900 cursor-pointer"
+											className="w-10 sm:w-12 sm:w-16 text-center py-2 border-0 focus:ring-0 focus:outline-none font-semibold text-gray-900 cursor-pointer text-sm"
 										/>
 										<button
 											type="button"
 											onClick={() => handleQuantityChange(item.id, (quantities[item.id] || 1) + 1)}
-											className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold transition-colors cursor-pointer"
+											className="px-2 sm:px-3 py-2 sm:py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold transition-colors cursor-pointer text-sm h-10 sm:h-11"
 										>
 											+
 										</button>
 									</div>
+									{/* Add to Cart Button */}
 									<GoldButton
-										className="flex-1 py-3 text-sm font-semibold shadow-lg transition-all duration-300 hover:shadow-xl"
+										className="w-full sm:flex-1 py-2.5 sm:py-3 text-sm sm:text-base font-semibold shadow-lg transition-all duration-300 hover:shadow-xl h-11 sm:h-auto"
 										onClick={() =>
 											handleAddToCart({
 												id: item.id,
@@ -207,14 +209,14 @@ export default function QuickOrderSection() {
 				</div>
 
 				{/* Enhanced info section */}
-				<div className="flex flex-col xl:flex-row items-stretch justify-between gap-8">
-					<div className="flex-1">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mt-12 sm:mt-16">
+					<div className="order-2 md:order-1">
 						<OpeningHours />
 					</div>
-					<div className="flex-1">
+					<div className="order-2 md:order-1">
 						<AvailableStores />
 					</div>
-					<div className="flex-[1.5]">
+					<div className="order-1 md:order-3 md:col-span-2 lg:col-span-1">
 						<FreeDeliverySchedule deliverySchedule={deliverySchedule} />
 					</div>
 				</div>

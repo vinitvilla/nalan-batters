@@ -21,7 +21,7 @@ export default function HeroSection() {
   return (
     <section
       id="hero"
-      className="relative h-[85vh] w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] flex items-center justify-center bg-black overflow-hidden"
+      className="relative h-[60vh] sm:h-[75vh] lg:h-[85vh] w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] flex items-center justify-center bg-black overflow-hidden"
     >
       {/* Background Carousel */}
       <div className="absolute inset-0 h-full w-full">
@@ -31,7 +31,7 @@ export default function HeroSection() {
         >
           <CarouselContent className="h-full w-full">
             {images.map((src, idx) => (
-              <CarouselItem key={idx} className="h-[85vh] w-screen relative">
+              <CarouselItem key={idx} className="h-[60vh] sm:h-[75vh] lg:h-[85vh] w-screen relative">
                 <Image
                   src={src}
                   alt={`Fresh South Indian dosa batter and authentic food products - Hero image ${idx + 1}`}
@@ -44,12 +44,12 @@ export default function HeroSection() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          {images.length > 1 && (
+          {/* {images.length > 1 && (
             <>
               <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/10 border-white/20 hover:bg-white/20" />
               <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/10 border-white/20 hover:bg-white/20" />
             </>
-          )}
+          )} */}
         </Carousel>
 
         {/* Gradient overlays */}
@@ -58,26 +58,29 @@ export default function HeroSection() {
       </div>
 
       {/* Hero Content */}
-      <div className="relative z-10 text-center text-white w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
-        {/* Trust Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-          <Badge variant="secondary" className="bg-white/15 text-white border-white/30 backdrop-blur-sm px-3 py-1">
-            <Star className="w-3 h-3 mr-1 fill-amber-300 text-amber-300" />
-            Premium Quality
+      <div className="relative z-10 text-center text-white w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-col items-center justify-center py-4 sm:py-0">
+        {/* Trust Badges - Optimized for mobile */}
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-6">
+          <Badge variant="secondary" className="bg-white/15 text-white border-white/30 backdrop-blur-sm px-2 sm:px-3 py-1 text-xs sm:text-sm">
+            <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 fill-amber-300 text-amber-300" />
+            <span className="hidden sm:inline">Premium Quality</span>
+            <span className="sm:hidden">Premium</span>
           </Badge>
-          <Badge variant="secondary" className="bg-white/15 text-white border-white/30 backdrop-blur-sm px-3 py-1">
-            <Clock className="w-3 h-3 mr-1 text-stone-300" />
-            Fresh Daily
+          <Badge variant="secondary" className="bg-white/15 text-white border-white/30 backdrop-blur-sm px-2 sm:px-3 py-1 text-xs sm:text-sm">
+            <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 text-stone-300" />
+            <span className="hidden sm:inline">Fresh Daily</span>
+            <span className="sm:hidden">Fresh</span>
           </Badge>
-          <Badge variant="secondary" className="bg-white/15 text-white border-white/30 backdrop-blur-sm px-3 py-1">
-            <MapPin className="w-3 h-3 mr-1 text-slate-300" />
-            Local Delivery
+          <Badge variant="secondary" className="bg-white/15 text-white border-white/30 backdrop-blur-sm px-2 sm:px-3 py-1 text-xs sm:text-sm">
+            <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 text-slate-300" />
+            <span className="hidden sm:inline">Local Delivery</span>
+            <span className="sm:hidden">Local</span>
           </Badge>
         </div>
 
         {/* Main Headline */}
         <h1
-          className="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6 drop-shadow-2xl leading-tight"
+          className="text-2xl sm:text-5xl lg:text-7xl font-extrabold mb-2 sm:mb-6 drop-shadow-2xl leading-tight"
           style={{
             fontFamily: "var(--font-dancing-script), cursive",
             background: "linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #fff 100%)",
@@ -93,21 +96,21 @@ export default function HeroSection() {
         </h1>
 
         {/* Subtitle */}
-        <h2 className="text-lg sm:text-xl lg:text-2xl mb-8 drop-shadow-lg text-gray-100 font-light tracking-wide max-w-3xl mx-auto leading-relaxed">
+        <h2 className="text-xs sm:text-lg lg:text-2xl mb-3 sm:mb-8 drop-shadow-lg text-gray-100 font-light tracking-wide max-w-3xl mx-auto leading-relaxed">
           Fresh, authentic South Indian{" "}
           <span className="text-amber-200 font-medium">dosa batter & traditional food products</span>{" "}
-          delivered to your door. Premium quality, traditional recipes.
+          delivered to your door.
         </h2>
 
         {/* CTA Section */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-3 sm:mb-8 w-full sm:w-auto px-2 sm:px-0">
           <GoldButton
             onClick={(e) => {
               e.preventDefault();
               const el = document.getElementById("quickOrder");
               if (el) el.scrollIntoView({ behavior: "smooth" });
             }}
-            className="px-8 py-4 text-lg font-semibold shadow-2xl"
+            className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-4 text-sm sm:text-lg font-semibold shadow-2xl"
           >
             Order Now
           </GoldButton>
@@ -117,25 +120,25 @@ export default function HeroSection() {
               const el = document.getElementById("contact");
               if (el) el.scrollIntoView({ behavior: "smooth" });
             }}
-            className="px-6 py-3 text-white border border-white/40 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-medium cursor-pointer"
+            className="w-full sm:w-auto px-6 py-2.5 sm:py-3 text-xs sm:text-base text-white border border-white/40 rounded-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-medium cursor-pointer"
           >
             Learn More
           </button>
         </div>
 
-        {/* Value Proposition */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto text-sm">
+        {/* Value Proposition - Optimized for mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-6 max-w-2xl mx-auto text-xs sm:text-sm px-2">
           <div className="text-center">
-            <div className="text-amber-300 font-semibold">100% Fresh</div>
-            <div className="text-gray-300">Made daily with premium ingredients</div>
+            <div className="text-amber-300 font-semibold text-xs sm:text-base">100% Fresh</div>
+            <div className="text-gray-300 text-xs sm:text-sm">Made daily with premium ingredients</div>
           </div>
           <div className="text-center">
-            <div className="text-amber-300 font-semibold">Fast Delivery</div>
-            <div className="text-gray-300">Same-day delivery available</div>
+            <div className="text-amber-300 font-semibold text-xs sm:text-base">Fast Delivery</div>
+            <div className="text-gray-300 text-xs sm:text-sm">Same-day delivery available</div>
           </div>
           <div className="text-center">
-            <div className="text-amber-300 font-semibold">Trusted Quality</div>
-            <div className="text-gray-300">Loved by thousands of customers</div>
+            <div className="text-amber-300 font-semibold text-xs sm:text-base">Trusted Quality</div>
+            <div className="text-gray-300 text-xs sm:text-sm">Loved by thousands</div>
           </div>
         </div>
       </div>
