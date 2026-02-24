@@ -7,12 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 interface Column {
   key: string
   label: string
-  render?: (value: any) => React.ReactNode
+  render?: (value: unknown) => React.ReactNode
 }
 
 interface MobileOptimizedTableProps {
   columns: Column[]
-  data: Record<string, any>[]
+  data: Record<string, unknown>[]
   className?: string
 }
 
@@ -58,7 +58,7 @@ export function MobileOptimizedTable({
                   {column.label}
                 </span>
                 <span className="text-sm text-right">
-                  {column.render ? column.render(row[column.key]) : row[column.key]}
+                  {column.render ? column.render(row[column.key]) : row[column.key] as React.ReactNode}
                 </span>
               </div>
             ))}
@@ -86,7 +86,7 @@ export function MobileOptimizedTable({
             <TableRow key={idx} className="hover:bg-muted/50">
               {columns.map((column) => (
                 <TableCell key={column.key}>
-                  {column.render ? column.render(row[column.key]) : row[column.key]}
+                  {column.render ? column.render(row[column.key]) : row[column.key] as React.ReactNode}
                 </TableCell>
               ))}
             </TableRow>
