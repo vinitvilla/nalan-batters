@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guard";
 import { OrderSchema } from "@/lib/validation/schemas";
 import { parse, isValid, startOfDay, isBefore } from "date-fns";
+import { createOrderNotifications } from "@/services/notification/notification.service";
 
 export async function POST(req: NextRequest) {
     const authUser = await requireAuth(req);
@@ -66,6 +67,10 @@ export async function POST(req: NextRequest) {
             deliveryDate,
             orderType: (deliveryType || 'DELIVERY') as 'PICKUP' | 'DELIVERY',
         });
+
+        // Fire-and-forget: notify admin/manager users without blocking the response
+        void createOrderNotifications({ id: order.id, orderNumber: order.orderNumber });
+
         return NextResponse.json({ order });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'An error occurred';
