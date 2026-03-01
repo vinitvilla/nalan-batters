@@ -21,7 +21,10 @@ import {
     AlertTriangle,
     RefreshCw,
     List,
-    Map as MapIcon
+    Map as MapIcon,
+    CheckCircle2,
+    Search,
+    Package,
 } from "lucide-react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { formatCurrency, formatPhoneNumber, formatDate } from "@/lib/utils/commonFunctions";
@@ -40,14 +43,11 @@ export default function DeliveryPage() {
     const [drivers, setDrivers] = useState<{ id: string, fullName: string, phone: string }[]>([]);
     const [assigningDriver, setAssigningDriver] = useState<string | null>(null);
 
-
     const token = userStore((s) => s.token);
     const adminApiFetch = useAdminApi();
 
-    // Filter orders by search term
     const filterOrders = (orders: AdminOrderResponse[]) => {
         if (!search) return orders;
-
         const searchLower = search.toLowerCase();
         return orders.filter(order =>
             order.user?.fullName?.toLowerCase().includes(searchLower) ||
@@ -58,7 +58,6 @@ export default function DeliveryPage() {
         );
     };
 
-    // Fetch orders for today
     const fetchTodayOrders = useCallback(async () => {
         if (!token) return;
         setLoading(true);
@@ -86,7 +85,6 @@ export default function DeliveryPage() {
         }
     }, [token, adminApiFetch]);
 
-    // Fetch orders for tomorrow
     const fetchTomorrowOrders = useCallback(async () => {
         if (!token) return;
         try {
@@ -111,7 +109,6 @@ export default function DeliveryPage() {
         }
     }, [token, adminApiFetch]);
 
-    // Fetch drivers
     const fetchDrivers = useCallback(async () => {
         if (!token) return;
         try {
@@ -125,7 +122,6 @@ export default function DeliveryPage() {
         }
     }, [token, adminApiFetch]);
 
-    // Assign driver
     const handleAssignDriver = async (orderId: string, driverId: string) => {
         if (!token) return;
         setAssigningDriver(orderId);
@@ -157,7 +153,6 @@ export default function DeliveryPage() {
         }
     };
 
-    // Fetch orders for selected date
     const fetchOrdersForDate = useCallback(async (date: string) => {
         if (!token || !date) return;
         setLoading(true);
@@ -199,9 +194,7 @@ export default function DeliveryPage() {
 
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         if (!token) return;
-
         setUpdatingStatus(orderId);
-
         try {
             const res = await adminApiFetch(`/api/admin/orders/${orderId}`, {
                 method: "PUT",
@@ -215,7 +208,6 @@ export default function DeliveryPage() {
                 throw new Error(errorData?.message || "Failed to update order status");
             }
 
-            // Update the order in all relevant state arrays
             const updateOrder = (orders: AdminOrderResponse[]) =>
                 orders.map(order =>
                     order.id === orderId
@@ -236,363 +228,552 @@ export default function DeliveryPage() {
         }
     };
 
-    // Format date for display (date only, no time)
     const formatDeliveryDate = (date: string | Date | null | undefined) => {
         if (!date) return 'N/A';
         return moment(date).format('MMM DD, YYYY');
     };
 
-    // Render orders table
-    const renderOrdersTable = (orders: AdminOrderResponse[]) => {
-        const filteredOrders = filterOrders(orders);
+    const pendingCount = [...todayOrders, ...tomorrowOrders, ...selectedDateOrders]
+        .filter(order => order.status === 'PENDING').length;
 
-        if (filteredOrders.length === 0) {
-            return (
-                <div className="text-center py-8 text-gray-500">
-                    <Truck className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>No delivery orders found</p>
-                </div>
-            );
-        }
+    const deliveredTodayCount = todayOrders.filter(order => order.status === 'DELIVERED').length;
 
-        return (
-            <div className="overflow-x-auto">
-                <Table className="min-w-[700px]">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Order</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Delivery Address</TableHead>
-                            <TableHead>Delivery Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Driver</TableHead>
-                            <TableHead>Total</TableHead>
-                            <TableHead>Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredOrders.map((order) => (
-                            <TableRow key={order.id}>
-                                <TableCell>
-                                    <div className="flex flex-col">
-                                        <span className="font-medium">#{order.orderNumber || order.id.slice(-8)}</span>
-                                        <span className="text-sm text-gray-500">
-                                            {formatDate(order.createdAt)}
-                                        </span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                            <User className="w-4 h-4 text-gray-400" />
-                                            <span className="font-medium">{order.user?.fullName || 'Unknown'}</span>
-                                        </div>
-                                        {order.user?.phone && (
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <Phone className="w-4 h-4 text-gray-400" />
-                                                <span className="text-sm text-gray-500">
-                                                    {formatPhoneNumber(order.user.phone)}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-start gap-2">
-                                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div className="text-sm">
-                                            {order.address?.street && <div>{order.address.street}</div>}
-                                            {order.address?.unit && <div>Unit: {order.address.unit}</div>}
-                                            <div>
-                                                {order.address?.city}, {order.address?.province} {order.address?.postal}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="w-4 h-4 text-gray-400" />
-                                        <span>{formatDeliveryDate(order.deliveryDate)}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <StatusBadge status={order.status} />
-                                </TableCell>
-                                <TableCell>
-                                    <Select
-                                        disabled={assigningDriver === order.id}
-                                        value={order.driverId || "unassigned"}
-                                        onValueChange={(driverId) => handleAssignDriver(order.id, driverId)}
-                                    >
-                                        <SelectTrigger className="w-32 text-xs">
-                                            <SelectValue placeholder="Assign Driver" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="unassigned">Unassigned</SelectItem>
-                                            {drivers.map(driver => (
-                                                <SelectItem key={driver.id} value={driver.id}>
-                                                    {driver.fullName}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </TableCell>
-                                <TableCell>
-                                    <span className="font-medium">${formatCurrency(order.total)}</span>
-                                </TableCell>
-                                <TableCell>
-                                    <Select
-                                        disabled={updatingStatus === order.id}
-                                        onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}
-                                    >
-                                        <SelectTrigger className="w-28 text-xs cursor-pointer">
-                                            <SelectValue placeholder="Update Status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="PENDING" className="cursor-pointer">Pending</SelectItem>
-                                            <SelectItem value="CONFIRMED" className="cursor-pointer">Confirmed</SelectItem>
-                                            <SelectItem value="SHIPPED" className="cursor-pointer">Shipped</SelectItem>
-                                            <SelectItem value="DELIVERED" className="cursor-pointer">Delivered</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    {updatingStatus === order.id && (
-                                        <RefreshCw className="w-4 h-4 animate-spin ml-2" />
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-        );
-    };
-
-    // Reusable View Toggle Component
+    // View Toggle
     const ViewToggle = () => (
-        <div className="flex border border-gray-200 rounded-md">
+        <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
             <Button
                 variant={currentView === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setCurrentView('list')}
-                className="rounded-r-none cursor-pointer"
+                className={`cursor-pointer h-8 px-3 gap-1.5 transition-all ${currentView === 'list'
+                    ? 'bg-white shadow-sm text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-transparent'
+                    }`}
             >
-                <List className="w-4 h-4 mr-1" />
+                <List className="w-3.5 h-3.5" />
                 List
             </Button>
             <Button
                 variant={currentView === 'map' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setCurrentView('map')}
-                className="rounded-l-none border-l cursor-pointer"
+                className={`cursor-pointer h-8 px-3 gap-1.5 transition-all ${currentView === 'map'
+                    ? 'bg-white shadow-sm text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-transparent'
+                    }`}
             >
-                <MapIcon className="w-4 h-4 mr-1" />
+                <MapIcon className="w-3.5 h-3.5" />
                 Map
             </Button>
         </div>
     );
 
-    return (
-        <div className="min-h-screen bg-white">
-            {/* Simple Header */}
-            <div className="border-b border-gray-200 bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <Truck className="w-6 h-6" />
-                                Delivery Management
-                            </h1>
-                            <p className="text-gray-500 text-sm mt-1">Manage and track order deliveries</p>
-                        </div>
+    // Loading skeleton rows
+    const LoadingRows = () => (
+        <>
+            {[...Array(5)].map((_, i) => (
+                <TableRow key={i} className="animate-pulse">
+                    {[...Array(8)].map((_, j) => (
+                        <TableCell key={j} className="py-4 px-4">
+                            <div className="h-4 bg-gray-100 rounded w-full" />
+                        </TableCell>
+                    ))}
+                </TableRow>
+            ))}
+        </>
+    );
 
-                        <div className="flex items-center gap-4">
-                            {/* Search */}
+    // Empty state
+    const EmptyState = ({ message = "No delivery orders found" }: { message?: string }) => (
+        <div className="flex flex-col items-center justify-center py-16">
+            <Truck className="w-12 h-12 text-gray-300 mb-4" />
+            <p className="text-gray-500 font-medium text-lg">{message}</p>
+            <p className="text-gray-400 text-sm mt-1">Try adjusting your search or date selection</p>
+        </div>
+    );
+
+    // Mobile delivery card
+    const MobileDeliveryCard = ({ order }: { order: AdminOrderResponse }) => (
+        <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4 hover:shadow-md hover:border-gray-300 transition-all duration-200">
+            <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                    <div className="font-mono text-sm font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg inline-block border border-blue-200">
+                        #{order.orderNumber || order.id.slice(-8)}
+                    </div>
+                    <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                </div>
+                <StatusBadge status={order.status} />
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <span className="font-semibold text-gray-900 text-sm">{order.user?.fullName || 'Unknown'}</span>
+                </div>
+                {order.user?.phone && (
+                    <div className="flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">{formatPhoneNumber(order.user.phone)}</span>
+                    </div>
+                )}
+                <div className="flex items-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-gray-600">
+                        {order.address?.street && <div>{order.address.street}</div>}
+                        <div>{order.address?.city}, {order.address?.province} {order.address?.postal}</div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-600">{formatDeliveryDate(order.deliveryDate)}</span>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                <span className="font-bold text-gray-900">{formatCurrency(order.total)}</span>
+                <div className="flex items-center gap-2">
+                    <Select
+                        disabled={assigningDriver === order.id}
+                        value={order.driverId || "unassigned"}
+                        onValueChange={(driverId) => handleAssignDriver(order.id, driverId)}
+                    >
+                        <SelectTrigger className="w-36 h-8 text-xs border-gray-300">
+                            <SelectValue placeholder="Assign Driver" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {drivers.map(driver => (
+                                <SelectItem key={driver.id} value={driver.id}>{driver.fullName}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        disabled={updatingStatus === order.id}
+                        onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}
+                    >
+                        <SelectTrigger className="w-32 h-8 text-xs border-gray-300 cursor-pointer">
+                            <SelectValue placeholder="Update Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                            <SelectItem value="SHIPPED">Shipped</SelectItem>
+                            <SelectItem value="DELIVERED">Delivered</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Desktop table
+    const renderOrdersTable = (orders: AdminOrderResponse[]) => {
+        const filteredOrders = filterOrders(orders);
+
+        return (
+            <>
+                {/* Mobile card view */}
+                <div className="block lg:hidden space-y-3">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-16">
+                            <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4" />
+                            <span className="text-gray-600 font-medium">Loading deliveries...</span>
+                        </div>
+                    ) : filteredOrders.length === 0 ? (
+                        <EmptyState />
+                    ) : (
+                        filteredOrders.map(order => (
+                            <MobileDeliveryCard key={order.id} order={order} />
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop table view */}
+                <div className="hidden lg:block">
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+                        <Table className="min-w-[900px]">
+                            <TableHeader>
+                                <TableRow className="border-b bg-gradient-to-r from-gray-50 to-gray-100">
+                                    <TableHead className="font-semibold text-gray-700 py-4 px-4">Order #</TableHead>
+                                    <TableHead className="font-semibold text-gray-700 py-4 px-4">Customer</TableHead>
+                                    <TableHead className="font-semibold text-gray-700 py-4 px-4">Delivery Address</TableHead>
+                                    <TableHead className="font-semibold text-gray-700 py-4 px-4">Delivery Date</TableHead>
+                                    <TableHead className="font-semibold text-gray-700 py-4 px-4">Status</TableHead>
+                                    <TableHead className="font-semibold text-gray-700 py-4 px-4">Driver</TableHead>
+                                    <TableHead className="font-semibold text-gray-700 py-4 px-4 text-right">Total</TableHead>
+                                    <TableHead className="font-semibold text-gray-700 py-4 px-4 text-center">Update Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    <LoadingRows />
+                                ) : filteredOrders.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={8} className="py-0">
+                                            <EmptyState />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filteredOrders.map((order, index) => (
+                                        <TableRow
+                                            key={order.id}
+                                            className={`border-b border-gray-100 hover:bg-blue-50/40 transition-all duration-150 group ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                                                }`}
+                                        >
+                                            <TableCell className="py-4 px-4">
+                                                <div className="space-y-1">
+                                                    <div className="font-mono text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-200 whitespace-nowrap inline-block">
+                                                        #{order.orderNumber || order.id.slice(-8)}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 whitespace-nowrap">
+                                                        {formatDate(order.createdAt)}
+                                                    </p>
+                                                </div>
+                                            </TableCell>
+
+                                            <TableCell className="py-4 px-4">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                                        <span className="font-semibold text-gray-900 text-sm">
+                                                            {order.user?.fullName || 'Unknown'}
+                                                        </span>
+                                                    </div>
+                                                    {order.user?.phone && (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                                            <span className="text-xs text-gray-500">
+                                                                {formatPhoneNumber(order.user.phone)}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+
+                                            <TableCell className="py-4 px-4">
+                                                <div className="flex items-start gap-1.5 max-w-[200px]">
+                                                    <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+                                                    <div className="text-sm text-gray-600">
+                                                        {order.address?.street && (
+                                                            <div className="font-medium text-gray-800 truncate max-w-[170px]">
+                                                                {order.address.street}
+                                                                {order.address.unit && `, Unit ${order.address.unit}`}
+                                                            </div>
+                                                        )}
+                                                        <div className="text-xs text-gray-500 whitespace-nowrap">
+                                                            {order.address?.city}, {order.address?.province} {order.address?.postal}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+
+                                            <TableCell className="py-4 px-4">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                                    <span className="text-sm font-medium text-gray-900 whitespace-nowrap bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                                                        {formatDeliveryDate(order.deliveryDate)}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+
+                                            <TableCell className="py-4 px-4">
+                                                <StatusBadge status={order.status} />
+                                            </TableCell>
+
+                                            <TableCell className="py-4 px-4">
+                                                <Select
+                                                    disabled={assigningDriver === order.id}
+                                                    value={order.driverId || "unassigned"}
+                                                    onValueChange={(driverId) => handleAssignDriver(order.id, driverId)}
+                                                >
+                                                    <SelectTrigger className={`w-36 h-8 text-xs border-gray-300 bg-white shadow-sm hover:border-gray-400 transition-colors cursor-pointer ${order.driverId ? 'text-gray-900' : 'text-gray-400'}`}>
+                                                        <SelectValue placeholder="Assign driver" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="unassigned" className="text-gray-400">
+                                                            Unassigned
+                                                        </SelectItem>
+                                                        {drivers.map(driver => (
+                                                            <SelectItem key={driver.id} value={driver.id}>
+                                                                {driver.fullName}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </TableCell>
+
+                                            <TableCell className="py-4 px-4 text-right">
+                                                <span className="font-bold text-sm text-gray-900 whitespace-nowrap">
+                                                    {formatCurrency(order.total)}
+                                                </span>
+                                            </TableCell>
+
+                                            <TableCell className="py-4 px-4 text-center">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <Select
+                                                        disabled={updatingStatus === order.id}
+                                                        onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}
+                                                    >
+                                                        <SelectTrigger className="w-32 h-8 text-xs border-gray-300 bg-white shadow-sm hover:border-gray-400 transition-colors cursor-pointer">
+                                                            <SelectValue placeholder="Update Status" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="PENDING" className="cursor-pointer">Pending</SelectItem>
+                                                            <SelectItem value="CONFIRMED" className="cursor-pointer">Confirmed</SelectItem>
+                                                            <SelectItem value="SHIPPED" className="cursor-pointer">Shipped</SelectItem>
+                                                            <SelectItem value="DELIVERED" className="cursor-pointer">Delivered</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {updatingStatus === order.id && (
+                                                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-500 flex-shrink-0" />
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+            </>
+        );
+    };
+
+    return (
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+            {/* Page Header */}
+            <div className="mb-6">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Delivery Management</h1>
+                <p className="text-gray-600">Manage and track order deliveries, assign drivers, and monitor progress</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card className="shadow-sm border border-gray-200 bg-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
+                        <CardTitle className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Today&apos;s Deliveries
+                        </CardTitle>
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4">
+                        <div className="text-3xl font-bold text-gray-900">{todayOrders.length}</div>
+                        <p className="text-xs text-gray-500 mt-1">{moment().format('dddd, MMM DD')}</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border border-gray-200 bg-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
+                        <CardTitle className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Tomorrow&apos;s Deliveries
+                        </CardTitle>
+                        <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center">
+                            <Truck className="h-4 w-4 text-purple-600" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4">
+                        <div className="text-3xl font-bold text-gray-900">{tomorrowOrders.length}</div>
+                        <p className="text-xs text-gray-500 mt-1">{moment().add(1, 'day').format('dddd, MMM DD')}</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border border-gray-200 bg-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
+                        <CardTitle className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Pending Orders
+                        </CardTitle>
+                        <div className="w-8 h-8 rounded-full bg-yellow-50 flex items-center justify-center">
+                            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4">
+                        <div className="text-3xl font-bold text-gray-900">{pendingCount}</div>
+                        <p className="text-xs text-gray-500 mt-1">Requires attention</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border border-gray-200 bg-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
+                        <CardTitle className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Delivered Today
+                        </CardTitle>
+                        <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center">
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4">
+                        <div className="text-3xl font-bold text-gray-900">{deliveredTodayCount}</div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {todayOrders.length > 0
+                                ? `${Math.round((deliveredTodayCount / todayOrders.length) * 100)}% completion`
+                                : 'No orders today'}
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Main Content Card */}
+            <Card className="shadow-lg border-0 bg-white">
+                <CardHeader className="border-b border-gray-200 pb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <CardTitle className="text-xl font-bold text-gray-900">Deliveries</CardTitle>
+                        <div className="relative max-w-xs w-full sm:w-auto">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input
-                                placeholder="Search deliveries..."
+                                placeholder="Search by name, phone, order #..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="max-w-xs"
+                                className="pl-9 h-9 border-gray-300 shadow-sm focus:border-blue-500"
                             />
                         </div>
                     </div>
-                </div>
-            </div>
+                </CardHeader>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-                {/* Simple Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Today&apos;s Deliveries</CardTitle>
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{todayOrders.length}</div>
-                            <p className="text-xs text-muted-foreground">
-                                {moment().format('dddd, MMM DD')}
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Tomorrow&apos;s Deliveries</CardTitle>
-                            <Truck className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{tomorrowOrders.length}</div>
-                            <p className="text-xs text-muted-foreground">
-                                {moment().add(1, 'day').format('dddd, MMM DD')}
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-                            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {[...todayOrders, ...tomorrowOrders, ...selectedDateOrders]
-                                    .filter(order => order.status === 'PENDING').length}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Requires attention
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Simple Tabs */}
-                <Tabs defaultValue="today" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="today" className="flex items-center gap-2 cursor-pointer">
-                            <Calendar className="w-4 h-4" />
-                            Today ({todayOrders.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="tomorrow" className="flex items-center gap-2 cursor-pointer">
-                            <Truck className="w-4 h-4" />
-                            Tomorrow ({tomorrowOrders.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="custom" className="flex items-center gap-2 cursor-pointer">
-                            <MapPin className="w-4 h-4" />
-                            Custom Date ({selectedDateOrders.length})
-                        </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="today" className="space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="w-5 h-5" />
-                                        Today&apos;s Deliveries - {moment().format('dddd, MMMM DD, YYYY')}
-                                    </div>
-                                    <ViewToggle />
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {loading ? (
-                                    <div className="flex justify-center py-8">
-                                        <RefreshCw className="w-6 h-6 animate-spin" />
-                                    </div>
-                                ) : currentView === 'list' ? (
-                                    renderOrdersTable(todayOrders)
-                                ) : (
-                                    <div className="h-[280px] sm:h-[420px] lg:h-[600px] relative bg-white rounded-lg border overflow-hidden">
-                                        <DeliveryMapView
-                                            orders={todayOrders.filter(order => order.address && order.status !== 'CANCELLED')}
-                                            title="Today&apos;s Deliveries"
-                                        />
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="tomorrow" className="space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Truck className="w-5 h-5" />
-                                        Tomorrow&apos;s Deliveries - {moment().add(1, 'day').format('dddd, MMMM DD, YYYY')}
-                                    </div>
-                                    <ViewToggle />
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {loading ? (
-                                    <div className="flex justify-center py-8">
-                                        <RefreshCw className="w-6 h-6 animate-spin" />
-                                    </div>
-                                ) : currentView === 'list' ? (
-                                    renderOrdersTable(tomorrowOrders)
-                                ) : (
-                                    <div className="h-[280px] sm:h-[420px] lg:h-[600px] relative bg-white rounded-lg border overflow-hidden">
-                                        <DeliveryMapView
-                                            orders={tomorrowOrders.filter(order => order.address && order.status !== 'CANCELLED')}
-                                            title="Tomorrow&apos;s Deliveries"
-                                        />
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="custom" className="space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="w-5 h-5" />
-                                        Custom Date Deliveries
-                                    </div>
-                                    <ViewToggle />
-                                </CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Input
-                                        type="date"
-                                        value={selectedDate}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                        className="max-w-xs"
-                                    />
-                                    {selectedDate && (
-                                        <span className="text-sm text-gray-600">
-                                            - {moment(selectedDate).format('dddd, MMMM DD, YYYY')}
+                <CardContent className="p-0">
+                    <Tabs defaultValue="today" className="w-full">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 pt-4 pb-3 border-b border-gray-100">
+                            <TabsList className="bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
+                                <TabsTrigger
+                                    value="today"
+                                    className="cursor-pointer text-sm font-medium px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all gap-2 flex items-center"
+                                >
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    Today
+                                    <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                        {todayOrders.length}
+                                    </span>
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="tomorrow"
+                                    className="cursor-pointer text-sm font-medium px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all gap-2 flex items-center"
+                                >
+                                    <Truck className="w-3.5 h-3.5" />
+                                    Tomorrow
+                                    <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                        {tomorrowOrders.length}
+                                    </span>
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="custom"
+                                    className="cursor-pointer text-sm font-medium px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all gap-2 flex items-center"
+                                >
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    Custom Date
+                                    {selectedDateOrders.length > 0 && (
+                                        <span className="bg-gray-200 text-gray-700 text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                            {selectedDateOrders.length}
                                         </span>
                                     )}
+                                </TabsTrigger>
+                            </TabsList>
+                            <ViewToggle />
+                        </div>
+
+                        {/* Today Tab */}
+                        <TabsContent value="today" className="mt-0">
+                            <div className="px-6 py-3 bg-gray-50/60 border-b border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    <span className="font-medium">{moment().format('dddd, MMMM DD, YYYY')}</span>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                {!selectedDate ? (
-                                    <div className="text-center py-8 text-gray-500">
-                                        <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                        <p>Select a date to view deliveries</p>
+                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                    <span className="flex items-center gap-1">
+                                        <Package className="w-3 h-3" />
+                                        {filterOrders(todayOrders).length} shown
+                                    </span>
+                                </div>
+                            </div>
+                            {currentView === 'list' ? (
+                                <div className="p-4 sm:p-6">
+                                    {renderOrdersTable(todayOrders)}
+                                </div>
+                            ) : (
+                                <div className="h-[300px] sm:h-[450px] lg:h-[600px] relative">
+                                    <DeliveryMapView
+                                        orders={todayOrders.filter(order => order.address && order.status !== 'CANCELLED')}
+                                        title="Today's Deliveries"
+                                    />
+                                </div>
+                            )}
+                        </TabsContent>
+
+                        {/* Tomorrow Tab */}
+                        <TabsContent value="tomorrow" className="mt-0">
+                            <div className="px-6 py-3 bg-gray-50/60 border-b border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Truck className="w-4 h-4 text-gray-400" />
+                                    <span className="font-medium">{moment().add(1, 'day').format('dddd, MMMM DD, YYYY')}</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                    <span className="flex items-center gap-1">
+                                        <Package className="w-3 h-3" />
+                                        {filterOrders(tomorrowOrders).length} shown
+                                    </span>
+                                </div>
+                            </div>
+                            {currentView === 'list' ? (
+                                <div className="p-4 sm:p-6">
+                                    {renderOrdersTable(tomorrowOrders)}
+                                </div>
+                            ) : (
+                                <div className="h-[300px] sm:h-[450px] lg:h-[600px] relative">
+                                    <DeliveryMapView
+                                        orders={tomorrowOrders.filter(order => order.address && order.status !== 'CANCELLED')}
+                                        title="Tomorrow's Deliveries"
+                                    />
+                                </div>
+                            )}
+                        </TabsContent>
+
+                        {/* Custom Date Tab */}
+                        <TabsContent value="custom" className="mt-0">
+                            <div className="px-6 py-3 bg-gray-50/60 border-b border-gray-100">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="w-4 h-4 text-gray-400" />
+                                        <span className="text-sm font-medium text-gray-700">Select delivery date:</span>
                                     </div>
-                                ) : loading ? (
-                                    <div className="flex justify-center py-8">
-                                        <RefreshCw className="w-6 h-6 animate-spin" />
-                                    </div>
-                                ) : currentView === 'list' ? (
-                                    renderOrdersTable(selectedDateOrders)
-                                ) : (
-                                    <div className="h-[280px] sm:h-[420px] lg:h-[600px] relative bg-white rounded-lg border overflow-hidden">
-                                        <DeliveryMapView
-                                            orders={selectedDateOrders.filter(order => order.address && order.status !== 'CANCELLED')}
-                                            title={`Deliveries for ${moment(selectedDate).format('MMM DD, YYYY')}`}
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="date"
+                                            value={selectedDate}
+                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                            className="h-8 text-sm border-gray-300 w-auto"
                                         />
+                                        {selectedDate && (
+                                            <span className="text-sm text-gray-600 font-medium">
+                                                {moment(selectedDate).format('dddd, MMMM DD, YYYY')}
+                                            </span>
+                                        )}
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                                </div>
+                            </div>
 
-
-            </div>
+                            {!selectedDate ? (
+                                <div className="flex flex-col items-center justify-center py-20">
+                                    <Calendar className="w-14 h-14 text-gray-200 mb-4" />
+                                    <p className="text-gray-500 font-medium text-lg">Select a date to view deliveries</p>
+                                    <p className="text-gray-400 text-sm mt-1">Use the date picker above to choose a delivery date</p>
+                                </div>
+                            ) : currentView === 'list' ? (
+                                <div className="p-4 sm:p-6">
+                                    {renderOrdersTable(selectedDateOrders)}
+                                </div>
+                            ) : (
+                                <div className="h-[300px] sm:h-[450px] lg:h-[600px] relative">
+                                    <DeliveryMapView
+                                        orders={selectedDateOrders.filter(order => order.address && order.status !== 'CANCELLED')}
+                                        title={`Deliveries for ${moment(selectedDate).format('MMM DD, YYYY')}`}
+                                    />
+                                </div>
+                            )}
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+            </Card>
         </div>
     );
 }
