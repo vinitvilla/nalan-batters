@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAdminApi } from "@/app/admin/use-admin-api";
+import { userStore } from "@/store/userStore";
 
 export interface AdminNotification {
   id: string;
@@ -25,15 +26,16 @@ interface NotificationsResponse {
   };
 }
 
-const POLL_INTERVAL_MS = 300000; // 5 minutes
-
 export function useNotifications() {
   const adminApiFetch = useAdminApi();
+  const token = userStore((s) => s.token);
+
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const esRef = useRef<EventSource | null>(null);
 
+  // ── Initial load ───────────────────────────────────────────────────────
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await adminApiFetch("/api/admin/notifications?page=1&limit=10");
@@ -48,16 +50,50 @@ export function useNotifications() {
     }
   }, [adminApiFetch]);
 
-  // Initial fetch + polling
   useEffect(() => {
     setLoading(true);
     fetchNotifications();
-
-    intervalRef.current = setInterval(fetchNotifications, POLL_INTERVAL_MS);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
   }, [fetchNotifications]);
+
+  // ── SSE real-time connection ───────────────────────────────────────────
+  // EventSource does not support custom headers, so the Firebase token is
+  // forwarded as a query parameter (safe over HTTPS; token is short-lived).
+  useEffect(() => {
+    if (!token) return;
+
+    const es = new EventSource(
+      `/api/admin/notifications/stream?token=${encodeURIComponent(token)}`
+    );
+    esRef.current = es;
+
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data as string);
+
+        if (data.type === "new_notification") {
+          const incoming: AdminNotification = data.notification;
+
+          setNotifications((prev) => {
+            // Guard against duplicates (e.g. caused by SSE reconnects)
+            if (prev.some((n) => n.id === incoming.id)) return prev;
+            // Keep at most 10 entries (matching the initial page size)
+            return [incoming, ...prev].slice(0, 10);
+          });
+
+          setUnreadCount((prev) => prev + 1);
+        }
+      } catch {
+        // Malformed event — ignore
+      }
+    };
+
+    // EventSource automatically reconnects on error — no action needed
+    es.onerror = () => {};
+
+    return () => {
+      es.close();
+    };
+  }, [token]);
 
   const markAllRead = useCallback(async () => {
     try {
@@ -88,5 +124,12 @@ export function useNotifications() {
     [adminApiFetch]
   );
 
-  return { notifications, unreadCount, loading, markAllRead, markOneRead, refetch: fetchNotifications };
+  return {
+    notifications,
+    unreadCount,
+    loading,
+    markAllRead,
+    markOneRead,
+    refetch: fetchNotifications,
+  };
 }
