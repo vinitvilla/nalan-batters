@@ -10,19 +10,33 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(uuid())
-  phone            String    @unique
-  defaultAddressId String?   @unique
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id               String         @id @default(uuid())
+  phone            String         @unique
+  defaultAddressId String?        @unique
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
   fullName         String
-  role             UserRole  @default(USER)
-  isDelete         Boolean   @default(false)
-  addresses        Address[] @relation("UserAddresses")
+  role             UserRole       @default(USER)
+  isDelete         Boolean        @default(false)
+  fcmToken         String?
+  addresses        Address[]      @relation("UserAddresses")
   cart             Cart?
   orders           Order[]
-  defaultAddress   Address?  @relation("DefaultAddress", fields: [defaultAddressId], references: [id])
-  driverOrders     Order[]   @relation("DriverOrders")
+  defaultAddress   Address?       @relation("DefaultAddress", fields: [defaultAddressId], references: [id])
+  driverOrders     Order[]        @relation("DriverOrders")
+  notifications    Notification[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  link      String   @default("/admin/orders")
+  isDelete  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Address {

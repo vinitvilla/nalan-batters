@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/requireAdmin";
 import { ContactStatus } from "@/generated/prisma";
 import moment from 'moment';
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 // Get all contact messages
 export async function GET(req: NextRequest) {
@@ -31,6 +32,7 @@ export async function GET(req: NextRequest) {
       prisma.contactMessage.count({ where: whereCondition }),
     ]);
 
+    logInfo(req.logger, { action: 'contact_messages_fetched', count: messages.length, total, page, status });
     return NextResponse.json({
       messages,
       pagination: {
@@ -41,7 +43,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching contact messages:", error);
+    logError(req.logger, error, { action: 'contact_messages_fetch_failed' });
     return NextResponse.json(
       { error: "Failed to fetch contact messages" },
       { status: 500 }
@@ -66,6 +68,7 @@ export async function PUT(req: NextRequest) {
 
     const validStatuses = ['NEW', 'READ', 'INPROGRESS', 'RESOLVED'];
     if (!validStatuses.includes(status.toUpperCase())) {
+      logWarn(req.logger, { action: 'invalid_contact_status', messageId: id, status });
       return NextResponse.json(
         { error: "Invalid status. Must be one of: NEW, READ, INPROGRESS, RESOLVED" },
         { status: 400 }
@@ -77,9 +80,10 @@ export async function PUT(req: NextRequest) {
       data: { status: status.toUpperCase() as ContactStatus, updatedAt: moment().toDate() },
     });
 
+    logInfo(req.logger, { action: 'contact_message_updated', messageId: id, newStatus: status });
     return NextResponse.json(updatedMessage);
   } catch (error) {
-    console.error("Error updating contact message:", error);
+    logError(req.logger, error, { action: 'contact_message_update_failed' });
     return NextResponse.json(
       { error: "Failed to update contact message" },
       { status: 500 }
@@ -107,9 +111,10 @@ export async function DELETE(req: NextRequest) {
       data: { isDelete: true, updatedAt: moment().toDate() },
     });
 
+    logInfo(req.logger, { action: 'contact_message_deleted', messageId: id });
     return NextResponse.json({ message: "Contact message deleted successfully" });
   } catch (error) {
-    console.error("Error deleting contact message:", error);
+    logError(req.logger, error, { action: 'contact_message_delete_failed' });
     return NextResponse.json(
       { error: "Failed to delete contact message" },
       { status: 500 }

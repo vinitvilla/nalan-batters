@@ -7,6 +7,7 @@ import { getAllConfigs, parseChargeConfig } from '@/services/config/config.servi
 import { calculateOrderCharges, calculateDiscountAmount, calculateOrderTotal } from '@/services/order/orderCalculation.service';
 import { validatePromoById, incrementPromoUsage } from '@/services/order/promoCode.service';
 import type { PosSaleRequest, PosSaleResponse } from '@/types';
+import { logError, logInfo } from '@/lib/logger'
 
 const MAX_ORDER_NUMBER_ATTEMPTS = 20;
 
@@ -38,6 +39,8 @@ export async function POST(request: NextRequest) {
     if (adminCheck instanceof NextResponse) return adminCheck;
 
     const saleData: PosSaleRequest = await request.json();
+
+    logInfo(request.logger, { action: 'pos_sale_initiated', itemCount: saleData.items?.length, paymentMethod: saleData.paymentMethod });
 
     // Validate required sale data
     if (!saleData.items || saleData.items.length === 0) {
@@ -83,6 +86,7 @@ export async function POST(request: NextRequest) {
             role: 'USER'
           }
         });
+        logInfo(request.logger, { action: 'pos_user_created', phone: standardizedPhone });
       } else if (user.phone !== standardizedPhone) {
         user = await prisma.user.update({
           where: { id: user.id },
@@ -100,6 +104,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!walkInUser) {
+        logError(request.logger, new Error('Walk-in customer not configured'), { action: 'walk_in_user_not_configured' });
         return NextResponse.json<PosSaleResponse>({
           success: false,
           error: 'Walk-in customer user not configured. Please contact support.'
@@ -117,6 +122,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!storeAddress) {
+      logError(request.logger, new Error('Store address not configured'), { action: 'store_address_not_configured' });
       return NextResponse.json<PosSaleResponse>({
         success: false,
         error: 'Store pickup location not configured. Please contact support.'
@@ -150,6 +156,7 @@ export async function POST(request: NextRequest) {
           discount: promoResult.promo.discount,
           discountType: promoResult.promo.discountType,
         };
+        logInfo(request.logger, { action: 'pos_promo_applied', promoCode: promoSnapshot.code, discount });
       }
     } else if (saleData.discount > 0) {
       // Manual discount from POS (no promo code)
@@ -221,6 +228,8 @@ export async function POST(request: NextRequest) {
       return created;
     });
 
+    logInfo(request.logger, { action: 'pos_sale_completed', orderId: order.id, orderNumber: order.orderNumber, total: Number(order.total), paymentMethod: saleData.paymentMethod });
+
     return NextResponse.json<PosSaleResponse>({
       success: true,
       data: {
@@ -233,7 +242,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('POS sale creation error:', error);
+    logError(request.logger, error, { action: 'pos_sale_failed' });
 
     let errorMessage = 'Failed to process POS sale';
     if (error instanceof Error) {

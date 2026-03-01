@@ -1,22 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { authMiddleware } from '@/middlewares/auth-middleware';
+import { loggerMiddleware } from '@/middlewares/logger-middleware';
+
+export const runtime = 'nodejs';
 
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Check for token in cookie or Authorization header
-    const cookieToken = request.cookies.get('auth-token');
-    const authHeader = request.headers.get('authorization');
-    const bearerToken = authHeader?.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : null;
-    const token = cookieToken || bearerToken;
-    if (!token) {
-      return NextResponse.redirect(new URL('/signin', request.url));
-    }
-  }
-  return NextResponse.next();
+  const authResponse = authMiddleware(request);
+  if (authResponse) return authResponse;
+
+  const requestHeaders = new Headers(request.headers);
+  loggerMiddleware(request, requestHeaders);
+
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/:path*'],
 };

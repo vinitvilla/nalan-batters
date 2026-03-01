@@ -173,7 +173,7 @@ describe('POST /api/admin/pos/sale', () => {
       });
     });
 
-    const res = await POST(makeRequest(body));
+    await POST(makeRequest(body));
     expect(prisma.user.create).toHaveBeenCalled();
   });
 

@@ -57,5 +57,84 @@ describe('/api/admin/orders', () => {
       expect(data).toEqual(mockPaginatedResult)
       expect(getOrdersPaginated).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }))
     })
+
+    it('should map orderType query param to deliveryType in function call', async () => {
+      vi.mocked(requireAdmin).mockResolvedValue({ admin: true } as any)
+      const mockPaginatedResult = {
+        orders: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 0 },
+      }
+      vi.mocked(getOrdersPaginated).mockResolvedValue(mockPaginatedResult as any)
+
+      const req = new Request('http://localhost/api/admin/orders?page=1&orderType=delivery')
+      const res = await GET(req as any)
+      await res.json()
+
+      expect(res.status).toBe(200)
+      expect(getOrdersPaginated).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 1,
+          deliveryType: 'delivery',
+        })
+      )
+    })
+
+    it('should handle pickup delivery type filter', async () => {
+      vi.mocked(requireAdmin).mockResolvedValue({ admin: true } as any)
+      const mockPaginatedResult = {
+        orders: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 0 },
+      }
+      vi.mocked(getOrdersPaginated).mockResolvedValue(mockPaginatedResult as any)
+
+      const req = new Request('http://localhost/api/admin/orders?page=1&orderType=pickup')
+      const res = await GET(req as any)
+
+      expect(res.status).toBe(200)
+      expect(getOrdersPaginated).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deliveryType: 'pickup',
+        })
+      )
+    })
+
+    it('should handle status and orderType filters together', async () => {
+      vi.mocked(requireAdmin).mockResolvedValue({ admin: true } as any)
+      const mockPaginatedResult = {
+        orders: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 0 },
+      }
+      vi.mocked(getOrdersPaginated).mockResolvedValue(mockPaginatedResult as any)
+
+      const req = new Request('http://localhost/api/admin/orders?page=1&status=pending&orderType=delivery')
+      const res = await GET(req as any)
+
+      expect(res.status).toBe(200)
+      expect(getOrdersPaginated).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'pending',
+          deliveryType: 'delivery',
+        })
+      )
+    })
+
+    it('should handle all order types when orderType is "all"', async () => {
+      vi.mocked(requireAdmin).mockResolvedValue({ admin: true } as any)
+      const mockPaginatedResult = {
+        orders: [],
+        pagination: { page: 1, limit: 25, total: 0, totalPages: 0 },
+      }
+      vi.mocked(getOrdersPaginated).mockResolvedValue(mockPaginatedResult as any)
+
+      const req = new Request('http://localhost/api/admin/orders?page=1&orderType=all')
+      const res = await GET(req as any)
+
+      expect(res.status).toBe(200)
+      expect(getOrdersPaginated).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deliveryType: 'all',
+        })
+      )
+    })
   })
 })

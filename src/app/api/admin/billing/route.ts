@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { startOfMonth } from 'date-fns';
+import { logError, logInfo, logWarn } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const adminCheck = await requireAdmin(request);
@@ -10,7 +11,6 @@ export async function GET(request: NextRequest) {
   try {
     const monthStart = startOfMonth(new Date());
 
-    // Get billing metrics
     const totalOrders = await prisma.order.count({
       where: { isDelete: false }
     });
@@ -58,13 +58,14 @@ export async function GET(request: NextRequest) {
       totalOrders
     };
 
-    return NextResponse.json({ 
+    logInfo(request.logger, { action: 'billing_metrics_fetched', totalOrders, monthlyRevenue: metrics.monthlyRevenue });
+    return NextResponse.json({
       success: true,
-      metrics 
+      metrics
     });
 
   } catch (error) {
-    console.error('Billing API error:', error);
+    logError(request.logger, error, { action: 'billing_metrics_fetch_failed' });
     return NextResponse.json(
       { success: false, error: 'Failed to fetch billing data' },
       { status: 500 }
@@ -80,24 +81,26 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, orderId } = body;
 
+    logInfo(request.logger, { action: 'billing_action_requested', billingAction: action, orderId });
+
     switch (action) {
       case 'refund':
-        // Process refund logic here
         const order = await prisma.order.update({
           where: { id: orderId },
-          data: { 
+          data: {
             status: 'CANCELLED',
-            // Add refund tracking fields as needed
           }
         });
 
-        return NextResponse.json({ 
-          success: true, 
+        logInfo(request.logger, { action: 'refund_processed', orderId, orderStatus: order.status });
+        return NextResponse.json({
+          success: true,
           message: 'Refund processed successfully',
-          order 
+          order
         });
 
       default:
+        logWarn(request.logger, { action: 'invalid_billing_action', billingAction: action });
         return NextResponse.json(
           { success: false, error: 'Invalid action' },
           { status: 400 }
@@ -105,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Billing action error:', error);
+    logError(request.logger, error, { action: 'billing_action_failed' });
     return NextResponse.json(
       { success: false, error: 'Failed to process billing action' },
       { status: 500 }

@@ -91,9 +91,9 @@ export default function OrdersPage() {
     };
 
     // Fetch orders when dependencies change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchOrders();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, pagination.currentPage, pagination.itemsPerPage, filters.debouncedSearch, filters.status, filters.orderType, filters.paymentMethod, filters.dateFilter, filters.sortBy, filters.sortOrder]);
 
     const handleStatusChange = async (orderId: string, newStatus: string) => {

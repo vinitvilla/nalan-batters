@@ -2,11 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase/firebase-admin";
 import { UserRole } from "@/generated/prisma";
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
+      logWarn(request.logger, { endpoint: 'GET /api/driver/orders', action: 'auth_failed', reason: 'missing_auth_header' });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -19,6 +21,7 @@ export async function GET(request: Request) {
     });
 
     if (!user || user.role !== UserRole.DRIVER) {
+      logWarn(request.logger, { endpoint: 'GET /api/driver/orders', action: 'auth_failed', reason: 'not_driver', uid });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -26,9 +29,7 @@ export async function GET(request: Request) {
       where: {
         driverId: user.id,
         status: {
-          not: "DELIVERED", // Show active orders. Maybe we want to show delivered too?
-          // For now, let's show all or filter by query param.
-          // Let's show active orders by default.
+          not: "DELIVERED",
         },
       },
       include: {
@@ -50,9 +51,10 @@ export async function GET(request: Request) {
       },
     });
 
+    logInfo(request.logger, { endpoint: 'GET /api/driver/orders', action: 'driver_orders_fetched', driverId: user.id, orderCount: orders.length });
     return NextResponse.json(orders);
   } catch (error) {
-    console.error("Error fetching driver orders:", error);
+    logError(request.logger, error, { endpoint: 'GET /api/driver/orders', action: 'driver_orders_fetch_failed' });
     return NextResponse.json(
       { error: "Failed to fetch orders" },
       { status: 500 }

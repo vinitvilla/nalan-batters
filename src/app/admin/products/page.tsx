@@ -62,6 +62,7 @@ export default function ProductsPage() {
                 setProducts(arr);
             })
             .catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, adminApiFetch]);
 
     // --- Derived Data ---

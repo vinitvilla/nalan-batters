@@ -59,5 +59,44 @@ describe('/api/admin/dashboard', () => {
       const res = await GET(req as any)
       expect(res.status).toBe(401)
     })
+
+    it('should group orders by deliveryType not orderType', async () => {
+      vi.mocked(requireAdmin).mockResolvedValue({ admin: true } as any)
+
+      // Mock all the prisma calls
+      mockPrisma.user.count.mockResolvedValue(10)
+      mockPrisma.order.count.mockResolvedValue(20)
+      mockPrisma.order.aggregate.mockResolvedValue({ _sum: { total: 1000 } })
+      mockPrisma.product.count.mockResolvedValue(5)
+
+      // Mock deliveryType grouping
+      mockPrisma.order.groupBy.mockResolvedValue([
+        { deliveryType: 'DELIVERY', _count: { _all: 15 } },
+        { deliveryType: 'PICKUP', _count: { _all: 5 } },
+      ])
+
+      mockPrisma.orderItem.groupBy.mockResolvedValue([])
+      mockPrisma.orderItem.findMany.mockResolvedValue([])
+      mockPrisma.order.findMany.mockResolvedValue([])
+      mockPrisma.product.findMany.mockResolvedValue([])
+
+      const req = new Request('http://localhost/api/admin/dashboard')
+      const res = await GET(req as any)
+      const data = await res.json()
+
+      expect(res.status).toBe(200)
+
+      // Verify the groupBy was called with 'deliveryType' field
+      const groupByCall = mockPrisma.order.groupBy.mock.calls.find(
+        call => call[0]?.by?.[0] === 'deliveryType'
+      )
+      expect(groupByCall).toBeDefined()
+
+      // Verify the response contains the delivery type distribution
+      expect(data.charts.orderType).toEqual([
+        { type: 'DELIVERY', count: 15 },
+        { type: 'PICKUP', count: 5 },
+      ])
+    })
   })
 })

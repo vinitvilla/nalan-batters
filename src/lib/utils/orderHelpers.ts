@@ -48,7 +48,7 @@ interface GetOrdersParams {
     limit?: number;
     search?: string;
     status?: string;
-    orderType?: string;
+    deliveryType?: string;
     paymentMethod?: string;
     startDate?: string;
     endDate?: string;
@@ -62,7 +62,7 @@ export async function getOrdersPaginated({
     limit = 25,
     search,
     status,
-    orderType,
+    deliveryType,
     paymentMethod,
     startDate,
     endDate,
@@ -114,9 +114,9 @@ export async function getOrdersPaginated({
         }
     }
 
-    // Order type filter
-    if (orderType && orderType !== 'all') {
-        whereClause.orderType = orderType.toUpperCase() as Prisma.EnumOrderSourceFilter["equals"];
+    // Delivery type filter
+    if (deliveryType && deliveryType !== 'all') {
+        whereClause.deliveryType = deliveryType.toUpperCase() as Prisma.EnumDeliveryTypeFilter["equals"];
     }
 
     // Payment method filter
@@ -171,7 +171,7 @@ export async function getOrdersPaginated({
             case 'status':
                 return { status: sortOrder };
             case 'orderType':
-                return { orderType: sortOrder };
+                return { deliveryType: sortOrder };
             case 'deliveryDate':
                 return { deliveryDate: sortOrder };
             case 'orderNumber':

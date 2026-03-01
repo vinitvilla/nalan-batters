@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/requireAdmin";
+import { logError, logInfo } from "@/lib/logger"
 
 export async function GET(req: NextRequest) {
   try {
@@ -112,9 +113,9 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // 9. Order Type Distribution (Pickup vs Delivery)
+    // 9. Delivery Type Distribution (Pickup vs Delivery)
     const orderTypeDistribution = await prisma.order.groupBy({
-      by: ['orderType'],
+      by: ['deliveryType'],
       where: {
         isDelete: false,
         createdAt: {
@@ -307,6 +308,8 @@ export async function GET(req: NextRequest) {
       ? ((Number(currentRevenue) - Number(lastRevenue)) / Number(lastRevenue) * 100).toFixed(1)
       : 0;
 
+    logInfo(req.logger, { action: 'dashboard_data_fetched', totalUsers, totalOrders, todaysOrders, activeProducts, lowStockProducts });
+
     return NextResponse.json({
       overview: {
         totalUsers,
@@ -323,7 +326,7 @@ export async function GET(req: NextRequest) {
           count: item._count._all
         })),
         orderType: orderTypeDistribution.map(item => ({
-          type: item.orderType,
+          type: item.deliveryType,
           count: item._count._all
         })),
         topProducts: topProducts.map(item => {
@@ -344,7 +347,7 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Dashboard API Error:', error);
+    logError(req.logger, error, { action: 'dashboard_data_fetch_failed' });
     return NextResponse.json(
       { error: 'Failed to fetch dashboard data' },
       { status: 500 }

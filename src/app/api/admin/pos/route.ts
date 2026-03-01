@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import moment from 'moment';
+import logger, { logError, logInfo } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -79,6 +80,8 @@ export async function GET() {
       freeDeliveryThreshold: parseFloat(String(configMap.freeDeliveryThreshold)) || 50.00
     };
 
+    logInfo(logger, { endpoint: 'GET /api/admin/pos', action: 'pos_data_fetched', productCount: products.length, categoryCount: categories.length, promoCodeCount: promoCodes.length });
+
     return NextResponse.json({
       success: true,
       data: {
@@ -90,7 +93,7 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('POS data fetch error:', error);
+    logError(logger, error, { endpoint: 'GET /api/admin/pos', action: 'pos_data_fetch_failed' });
     return NextResponse.json(
       { success: false, error: 'Failed to fetch POS data' },
       { status: 500 }

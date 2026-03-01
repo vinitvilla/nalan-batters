@@ -32,6 +32,7 @@ export default function QuickOrderSection() {
 				{} as { [id: string]: number }
 			)
 		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [products.length, fetchProducts]);
 
 	// Load free delivery config
