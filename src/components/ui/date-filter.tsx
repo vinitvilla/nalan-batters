@@ -76,7 +76,6 @@ export function DateFilter({ dateFilter, onDateFilterChange, className = "" }: D
 
   return (
     <div className={`flex flex-col space-y-2 ${className}`}>
-      <label className="text-sm font-medium mb-2">Date Range</label>
       
       {/* Quick date filter dropdown */}
       <Select
