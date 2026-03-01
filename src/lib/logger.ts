@@ -7,8 +7,12 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 /**
  * Configure Pino logger with environment-specific settings
- * - All environments: Write to daily log files
- * - Development: Additional pretty-printed console output
+ * - Development: Write to daily log files + pretty-printed console
+ * - Production:  Write to process.stdout (Vercel captures this automatically)
+ *
+ * NOTE: Vercel serverless functions run on a read-only filesystem, so file-based
+ * logging is only used in development. In production, pino defaults to stdout
+ * which Vercel surfaces in the Functions log tab.
  */
 const baseConfig = {
   level: isDevelopment ? 'debug' : isProduction ? 'info' : 'silent',
@@ -16,7 +20,7 @@ const baseConfig = {
 };
 
 /**
- * Generate log file path based on current date
+ * Generate log file path based on current date (development only)
  */
 function getLogFilePath(): string {
   const now = new Date();
@@ -28,9 +32,12 @@ function getLogFilePath(): string {
 }
 
 /**
- * Create file stream for logging (synchronous so logger is ready immediately)
+ * Create file stream for logging (development only).
+ * Returns undefined in production — Vercel's filesystem is read-only.
  */
-function createLogStream() {
+function createLogStream(): NodeJS.WritableStream | undefined {
+  if (!isDevelopment) return undefined;
+
   const logDir = join(process.cwd(), 'storage', 'logs');
   try {
     mkdirSync(logDir, { recursive: true });
@@ -41,10 +48,12 @@ function createLogStream() {
 }
 
 /**
- * Create a pino logger instance writing to the given stream
+ * Create a pino logger instance.
+ * - Development: writes to file stream + pretty-printed console
+ * - Production:  writes to process.stdout (pino default when no stream given)
  */
-function buildLogger(stream: NodeJS.WritableStream): pino.Logger {
-  if (isDevelopment) {
+function buildLogger(stream?: NodeJS.WritableStream): pino.Logger {
+  if (isDevelopment && stream) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pretty = require('pino-pretty');
     const consoleStream = pretty({
@@ -58,7 +67,8 @@ function buildLogger(stream: NodeJS.WritableStream): pino.Logger {
       { stream: consoleStream },
     ]));
   }
-  return pino(baseConfig, stream);
+  // No stream arg → pino writes to process.stdout
+  return pino(baseConfig);
 }
 
 let currentDate: string = new Date().toISOString().split('T')[0];
@@ -66,13 +76,16 @@ let logStream = createLogStream();
 let loggerInstance: pino.Logger = buildLogger(logStream);
 
 /**
- * Rotate log file and recreate logger if the date has changed
+ * Rotate log file and recreate logger if the date has changed (development only).
+ * In production this is a no-op since logs go to stdout.
  */
 function checkAndRotateLog() {
+  if (!isDevelopment) return;
+
   const newDate = new Date().toISOString().split('T')[0];
   if (newDate !== currentDate) {
     currentDate = newDate;
-    logStream.end();
+    logStream?.end();
     logStream = createLogStream();
     loggerInstance = buildLogger(logStream);
   }
