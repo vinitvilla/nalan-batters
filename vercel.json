@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm run build:ci",
   "functions": {
-    "src/app/api/**/*.ts": {
+    "api/**": {
       "maxDuration": 30
     }
   }

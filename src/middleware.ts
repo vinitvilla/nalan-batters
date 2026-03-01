@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
   if (authResponse) return authResponse;
 
   const requestHeaders = new Headers(request.headers);
-  loggerMiddleware(request, requestHeaders);
+  // loggerMiddleware(request, requestHeaders);
 
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
