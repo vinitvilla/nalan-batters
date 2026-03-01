@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { notifyUser } from "@/lib/notification-emitter";
 
 /**
- * Creates a "New Order" notification for every ADMIN and MANAGER user.
+ * Creates a "New Order" notification for every ADMIN and MANAGER user
+ * and immediately pushes it to any connected SSE clients so the UI
+ * updates in real-time without polling.
+ *
  * Called fire-and-forget after a public order is successfully created.
  */
 export async function createOrderNotifications(order: {
@@ -18,7 +22,8 @@ export async function createOrderNotifications(order: {
 
   if (admins.length === 0) return;
 
-  await prisma.notification.createMany({
+  // Write to DB and get back the created rows (Prisma 5.14+)
+  const created = await prisma.notification.createManyAndReturn({
     data: admins.map((admin) => ({
       userId: admin.id,
       title: `New Order #${order.orderNumber}`,
@@ -26,6 +31,11 @@ export async function createOrderNotifications(order: {
       link: `/admin/orders/${order.id}`,
     })),
   });
+
+  // Push to every admin/manager that currently has an open SSE connection
+  for (const notification of created) {
+    notifyUser(notification.userId, { type: "new_notification", notification });
+  }
 }
 
 /**
