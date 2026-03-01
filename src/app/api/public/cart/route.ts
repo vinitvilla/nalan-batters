@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { requireAuth } from "@/lib/auth-guard";
 import { CartSchema } from "@/lib/validation/schemas";
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 interface CartItem {
   productId?: string;
@@ -12,11 +13,9 @@ interface CartItem {
 
 // Fetch cart for a user
 export async function GET(req: NextRequest) {
-  // 1. Rate Limit
   const rateLimitRes = await rateLimit(req);
   if (rateLimitRes) return rateLimitRes;
 
-  // 2. Auth Check
   const authUser = await requireAuth(req);
   if (authUser instanceof NextResponse) return authUser;
 
@@ -25,56 +24,54 @@ export async function GET(req: NextRequest) {
 
   if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
 
-  // 3. Authorization (IDOR Check)
-  // Ensure the authenticated user is accessing their own cart
-  // Note: authUser.uid is the Firebase UID. We assume userId param is also Firebase UID.
   if (authUser.uid !== userId && !authUser.admin) {
+    logWarn(req.logger, { action: 'idor_blocked', requestedUserId: userId, authenticatedUid: authUser.uid });
     return NextResponse.json({ error: "Forbidden: You can only access your own cart" }, { status: 403 });
   }
 
-  const cart = await prisma.cart.findUnique({
-    where: { userId },
-    include: {
-      items: {
-        include: { product: true },
-        where: {
-          product: { isDelete: false }
+  try {
+    const cart = await prisma.cart.findUnique({
+      where: { userId },
+      include: {
+        items: {
+          include: { product: true },
+          where: {
+            product: { isDelete: false }
+          }
         }
-      }
-    },
-  });
-  return NextResponse.json({ cart });
+      },
+    });
+    logInfo(req.logger, { action: 'cart_fetched', userId, itemCount: cart?.items.length || 0 });
+    return NextResponse.json({ cart });
+  } catch (error) {
+    logError(req.logger, error, { action: 'cart_fetch_failed' });
+    return NextResponse.json({ error: "Failed to fetch cart" }, { status: 500 });
+  }
 }
 
 // Upsert or merge cart for a user
 export async function POST(req: NextRequest) {
-  // 1. Rate Limit
   const rateLimitRes = await rateLimit(req);
   if (rateLimitRes) return rateLimitRes;
 
-  // 2. Auth Check
   const authUser = await requireAuth(req);
   if (authUser instanceof NextResponse) return authUser;
 
   try {
     const body = await req.json();
-
-    // 3. Validation
     const validatedData = CartSchema.parse(body);
     const { userId, items, merge } = validatedData;
 
-    // 4. Authorization (IDOR Check)
     if (authUser.uid !== userId && !authUser.admin) {
+      logWarn(req.logger, { action: 'idor_blocked', requestedUserId: userId, authenticatedUid: authUser.uid });
       return NextResponse.json({ error: "Forbidden: You can only modify your own cart" }, { status: 403 });
     }
 
-    // Fetch existing cart
     const existingCart = await prisma.cart.findUnique({
       where: { userId },
       include: { items: true },
     });
 
-    // Normalize items to always have productId
     const normalizeItem = (item: CartItem) => ({
       productId: item.productId || item.id!,
       quantity: item.quantity,
@@ -82,7 +79,6 @@ export async function POST(req: NextRequest) {
 
     let finalItems = items.map(normalizeItem);
     if (merge && existingCart) {
-      // Merge logic: combine quantities for same productId
       const map = new Map<string, { productId: string; quantity: number }>();
       for (const dbItem of existingCart.items) {
         map.set(dbItem.productId, { productId: dbItem.productId, quantity: dbItem.quantity });
@@ -98,7 +94,6 @@ export async function POST(req: NextRequest) {
       finalItems = Array.from(map.values());
     }
 
-    // Upsert cart and items
     const cart = await prisma.cart.upsert({
       where: { userId },
       update: {
@@ -128,11 +123,14 @@ export async function POST(req: NextRequest) {
         }
       },
     });
+    logInfo(req.logger, { action: 'cart_updated', userId, itemCount: cart.items.length, merged: !!merge });
     return NextResponse.json({ cart });
   } catch (error: unknown) {
     if (error instanceof Error && error.name === 'ZodError') {
+      logWarn(req.logger, { action: 'cart_validation_error' });
       return NextResponse.json({ error: "Validation Error" }, { status: 400 });
     }
+    logError(req.logger, error, { action: 'cart_update_failed' });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

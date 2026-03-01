@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ContactStatus } from "@/generated/prisma";
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
     // Validate mobile format (basic validation for mobile numbers)
     const mobileRegex = /^[\+]?[1-9][\d]{0,15}$/;
     if (!mobileRegex.test(mobile.replace(/[\s\-\(\)]/g, ''))) {
+      logWarn(req.logger, { action: 'invalid_mobile_format', mobile });
       return NextResponse.json(
         { error: "Please provide a valid mobile number" },
         { status: 400 }
@@ -33,8 +35,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // TODO: Send SMS notification to admin
-    // You can add SMS service integration here (Twilio, etc.)
+    logInfo(req.logger, { action: 'contact_message_created', messageId: contactMessage.id, name: name.trim() });
 
     return NextResponse.json(
       {
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Contact form error:", error);
+    logError(req.logger, error, { action: 'contact_message_create_failed' });
     return NextResponse.json(
       { error: "Failed to send message. Please try again later." },
       { status: 500 }

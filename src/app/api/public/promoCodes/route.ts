@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateAndApplyPromoCode } from '@/services/order/promoCode.service';
 import { requireAuth } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
+import { logError, logInfo } from "@/lib/logger"
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
     const result = await validateAndApplyPromoCode(code.trim(), orderAmount);
 
     if (!result.valid) {
+      logInfo(req.logger, { action: 'promo_code_validation_failed', code: code.trim(), reason: result.error });
       return NextResponse.json({
         valid: false,
         discount: 0,
@@ -42,6 +44,7 @@ export async function POST(req: NextRequest) {
       }, { status: 200 });
     }
 
+    logInfo(req.logger, { action: 'promo_code_validated', code: code.trim(), discount: result.promo!.discount, discountType: result.promo!.discountType });
     // Return validated promo
     return NextResponse.json({
       valid: true,
@@ -51,7 +54,8 @@ export async function POST(req: NextRequest) {
       maxDiscount: result.promo!.maxDiscount,
       minOrderAmount: result.promo!.minOrderAmount
     }, { status: 200 });
-  } catch {
+  } catch (error) {
+    logError(req.logger, error, { action: 'promo_code_validation_error' });
     return NextResponse.json({ valid: false, discount: 0, error: "Server error" }, { status: 500 });
   }
 }

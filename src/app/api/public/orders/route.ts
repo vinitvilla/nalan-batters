@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth-guard";
 import { OrderSchema } from "@/lib/validation/schemas";
 import { parse, isValid, startOfDay, isBefore } from "date-fns";
 import { createOrderNotifications } from "@/services/notification/notification.service";
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 export async function POST(req: NextRequest) {
     const authUser = await requireAuth(req);
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const result = OrderSchema.safeParse(body);
         if (!result.success) {
+            logWarn(req.logger, { action: 'order_validation_failed', errors: result.error.flatten().fieldErrors });
             return NextResponse.json(
                 { error: "Validation Error", details: result.error.flatten().fieldErrors },
                 { status: 400 }
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
             });
 
             if (!pickupAddress) {
+                req.logger.error({ action: 'pickup_location_not_configured' });
                 return NextResponse.json({
                     error: "Pickup location not configured. Please contact support."
                 }, { status: 500 });
@@ -58,6 +61,8 @@ export async function POST(req: NextRequest) {
 
             finalAddressId = pickupAddress.id;
         }
+
+        logInfo(req.logger, { action: 'order_creation_initiated', userId, deliveryType, itemCount: items.length });
 
         const order = await createOrder({
             userId,
@@ -71,8 +76,10 @@ export async function POST(req: NextRequest) {
         // Fire-and-forget: notify admin/manager users without blocking the response
         void createOrderNotifications({ id: order.id, orderNumber: order.orderNumber });
 
+        logInfo(req.logger, { action: 'order_created', orderId: order.id, orderNumber: order.orderNumber, userId, deliveryType });
         return NextResponse.json({ order });
     } catch (err: unknown) {
+        logError(req.logger, err, { action: 'order_create_failed' });
         const message = err instanceof Error ? err.message : 'An error occurred';
         return NextResponse.json({ error: message }, { status: 400 });
     }

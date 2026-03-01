@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { prisma } from '@/lib/prisma';
+import { logError, logInfo } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
-    
+
     if (!query || query.length < 2) {
       return NextResponse.json({
         success: false,
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
         message: 'Query must be at least 2 characters'
       });
     }
-    
+
     // Search for users by name (case-insensitive)
     const users = await prisma.user.findMany({
       where: {
@@ -48,15 +49,16 @@ export async function GET(request: NextRequest) {
         fullName: 'asc'
       }
     });
-    
+
+    logInfo(request.logger, { action: 'user_search_completed', query, resultCount: users.length });
     return NextResponse.json({
       success: true,
       users,
       message: `Found ${users.length} users`
     });
-    
+
   } catch (error) {
-    console.error('User search error:', error);
+    logError(request.logger, error, { action: 'user_search_failed' });
     return NextResponse.json({
       success: false,
       error: 'Internal server error'

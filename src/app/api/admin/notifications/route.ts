@@ -5,6 +5,7 @@ import {
   getNotifications,
   markAllAsRead,
 } from "@/services/notification/notification.service";
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 /** Resolve the DB user id from the Firebase decoded token. */
 async function getDbUserId(decoded: { phone_number?: string }): Promise<string | null> {
@@ -24,6 +25,7 @@ export async function GET(req: NextRequest) {
 
     const userId = await getDbUserId(decoded);
     if (!userId) {
+      logWarn(req.logger, { action: 'user_not_found', phone: decoded.phone_number });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -32,8 +34,10 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
 
     const result = await getNotifications(userId, page, limit);
+    logInfo(req.logger, { action: 'notifications_fetched', userId, page, limit });
     return NextResponse.json(result);
   } catch (err: unknown) {
+    logError(req.logger, err, { action: 'notifications_fetch_failed' });
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
@@ -49,12 +53,15 @@ export async function PATCH(req: NextRequest) {
 
     const userId = await getDbUserId(decoded);
     if (!userId) {
+      logWarn(req.logger, { action: 'user_not_found', phone: decoded.phone_number });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     await markAllAsRead(userId);
+    logInfo(req.logger, { action: 'all_notifications_marked_read', userId });
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
+    logError(req.logger, err, { action: 'mark_all_read_failed' });
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }

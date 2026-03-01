@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma, OrderStatus, PaymentMethod } from '@/generated/prisma';
 import { requireAdmin } from '@/lib/requireAdmin';
 import { prisma } from '@/lib/prisma';
+import { logError, logInfo } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,6 +100,8 @@ export async function GET(request: NextRequest) {
       }))
     }));
 
+    logInfo(request.logger, { action: 'pos_orders_fetched', count: transformedOrders.length, total: totalCount, page });
+
     return NextResponse.json({
       success: true,
       data: transformedOrders,
@@ -113,7 +116,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('POS orders fetch error:', error);
+    logError(request.logger, error, { action: 'pos_orders_fetch_failed' });
     return NextResponse.json({
       success: false,
       error: 'Failed to fetch POS orders'
