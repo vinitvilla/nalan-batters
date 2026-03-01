@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase/firebase-admin";
 import { z } from "zod";
 import { UserRole } from "@/generated/prisma";
-import logger, { logError, logInfo, logWarn } from "@/lib/logger"
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 const updateStatusSchema = z.object({
   status: z.enum(["DELIVERED", "PENDING", "CONFIRMED", "SHIPPED", "CANCELLED"]),

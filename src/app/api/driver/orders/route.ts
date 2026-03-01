@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase/firebase-admin";
 import { UserRole } from "@/generated/prisma";
-import logger, { logError, logInfo, logWarn } from "@/lib/logger"
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 export async function GET(request: Request) {
   try {

@@ -2,7 +2,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import CartButton from "./CartButton";
 import MainNav from "./MainNav";
-import { Button } from "@/components/ui/button";
 import { Menu, X, Home, UtensilsCrossed, Phone } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";

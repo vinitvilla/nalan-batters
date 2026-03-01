@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!walkInUser) {
-        request.logger.error({ action: 'walk_in_user_not_configured' });
+        logError(request.logger, new Error('Walk-in customer not configured'), { action: 'walk_in_user_not_configured' });
         return NextResponse.json<PosSaleResponse>({
           success: false,
           error: 'Walk-in customer user not configured. Please contact support.'
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!storeAddress) {
-      request.logger.error({ action: 'store_address_not_configured' });
+      logError(request.logger, new Error('Store address not configured'), { action: 'store_address_not_configured' });
       return NextResponse.json<PosSaleResponse>({
         success: false,
         error: 'Store pickup location not configured. Please contact support.'

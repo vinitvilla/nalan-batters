@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
             });
 
             if (!pickupAddress) {
-                req.logger.error({ action: 'pickup_location_not_configured' });
+                logError(req.logger, new Error('Pickup location not configured'), { action: 'pickup_location_not_configured' });
                 return NextResponse.json({
                     error: "Pickup location not configured. Please contact support."
                 }, { status: 500 });

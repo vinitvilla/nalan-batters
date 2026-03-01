@@ -18,6 +18,10 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/services/notification/notification.service', () => ({
+  createOrderNotifications: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { requireAuth } from '@/lib/auth-guard';
 import { createOrder } from '@/lib/utils/orderHelpers';
 import { prisma } from '@/lib/prisma';

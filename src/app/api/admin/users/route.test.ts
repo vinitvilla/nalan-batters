@@ -23,7 +23,8 @@ describe('/api/admin/users', () => {
       const mockUsers = [{ id: '1', fullName: 'User 1' }]
       vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as any)
 
-      const res = await GET()
+      const req = new Request('http://localhost/api/admin/users')
+      const res = await GET(req as any)
       const data = await res.json()
 
       expect(res.status).toBe(200) // NextResponse.json defaults to 200

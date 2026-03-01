@@ -68,7 +68,7 @@ describe('/api/admin/orders', () => {
 
       const req = new Request('http://localhost/api/admin/orders?page=1&orderType=delivery')
       const res = await GET(req as any)
-      const data = await res.json()
+      await res.json()
 
       expect(res.status).toBe(200)
       expect(getOrdersPaginated).toHaveBeenCalledWith(

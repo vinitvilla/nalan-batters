@@ -35,7 +35,7 @@ export default function UserDropdown({ onClose }: { onClose?: () => void }) {
       </Link>
       <DropdownMenuItem
         onClick={() => {
-          onClose && onClose();
+          onClose?.();
           signOut();
         }}
         className="cursor-pointer text-red-600 hover:bg-red-50"

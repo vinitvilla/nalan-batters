@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import logger, { logError, logInfo } from "@/lib/logger"
+import { logError, logInfo } from "@/lib/logger"
 
 export async function PUT(req: Request) {
   try {

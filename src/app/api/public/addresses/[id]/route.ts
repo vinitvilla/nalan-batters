@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import logger, { logError, logInfo, logWarn } from "@/lib/logger"
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 // DELETE /api/public/addresses/[id]
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

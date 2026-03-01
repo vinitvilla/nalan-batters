@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { UserRole } from "@/generated/prisma";
-import logger, { logError, logInfo, logWarn } from "@/lib/logger"
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 const assignDriverSchema = z.object({
   orderId: z.string(),

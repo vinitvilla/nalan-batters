@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { GoldButton } from "@/components/GoldButton";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
 import { Star, Clock, MapPin } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay";

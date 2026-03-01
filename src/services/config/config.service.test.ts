@@ -1,4 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    config: { findMany: vi.fn(), findFirst: vi.fn() },
+  },
+}));
+
 import { parseChargeConfig, parseFreeDeliveryConfig, getConfigField } from './config.service';
 import type { Config } from '@/generated/prisma';
 

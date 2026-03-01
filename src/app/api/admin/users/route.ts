@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import logger, { logError, logInfo } from "@/lib/logger"
+import { logError, logInfo } from "@/lib/logger"
 
 // GET: List all users (for admin)
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const users = await prisma.user.findMany({
       where: { isDelete: false },

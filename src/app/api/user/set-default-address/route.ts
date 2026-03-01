@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { adminAuth } from "@/lib/firebase/firebase-admin";
-import logger, { logError, logInfo, logWarn } from "@/lib/logger"
+import { logError, logInfo, logWarn } from "@/lib/logger"
 
 export async function PATCH(req: NextRequest) {
   // Get and verify auth token

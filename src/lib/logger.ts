@@ -82,7 +82,7 @@ export const logger = new Proxy({} as pino.Logger, {
   get: (_target, prop) => {
     checkAndRotateLog();
     if (prop in loggerInstance) {
-      return (loggerInstance as any)[prop];
+      return (loggerInstance as pino.Logger & Record<string | symbol, unknown>)[prop];
     }
     return undefined;
   },
@@ -99,7 +99,7 @@ export function createRequestLogger(
 ) {
   const requestId = crypto.randomUUID();
   const method = 'method' in req ? req.method : 'GET';
-  const url = 'url' in req ? req.url : (req as any).url;
+  const url = req.url;
 
   return logger.child({
     requestId,
@@ -115,19 +115,20 @@ export function createRequestLogger(
  * Log API request/response with standardized format
  */
 export function logApiCall(
-  requestLogger: ReturnType<typeof createRequestLogger>,
+  requestLogger: ReturnType<typeof createRequestLogger> | undefined,
   action: 'request' | 'success' | 'error',
-  data?: Record<string, any>
+  data?: Record<string, unknown>
 ) {
+  const log = requestLogger ?? logger;
   switch (action) {
     case 'request':
-      requestLogger.info({ action: 'api_request', ...data });
+      log.info({ action: 'api_request', ...data });
       break;
     case 'success':
-      requestLogger.info({ action: 'api_success', ...data });
+      log.info({ action: 'api_success', ...data });
       break;
     case 'error':
-      requestLogger.error({ action: 'api_error', ...data });
+      log.error({ action: 'api_error', ...data });
       break;
   }
 }
@@ -136,44 +137,44 @@ export function logApiCall(
  * Log database operations
  */
 export function logDatabase(
-  requestLogger: ReturnType<typeof createRequestLogger>,
+  requestLogger: ReturnType<typeof createRequestLogger> | undefined,
   operation: 'query' | 'insert' | 'update' | 'delete',
-  data?: Record<string, any>
+  data?: Record<string, unknown>
 ) {
-  requestLogger.debug({ type: 'database', operation, ...data });
+  (requestLogger ?? logger).debug({ type: 'database', operation, ...data });
 }
 
 /**
  * Log authentication events
  */
-export function logAuth(action: 'login' | 'logout' | 'failed' | 'token_refresh', userId?: string, data?: Record<string, any>) {
+export function logAuth(action: 'login' | 'logout' | 'failed' | 'token_refresh', userId?: string, data?: Record<string, unknown>) {
   logger.info({ type: 'auth', action, userId, ...data });
 }
 
 type AnyLogger = ReturnType<typeof createRequestLogger> | typeof logger;
 
-export function logInfo(requestLogger: AnyLogger, data: Record<string, any>) {
-  requestLogger.info(data);
+export function logInfo(requestLogger: AnyLogger | undefined, data: Record<string, unknown>) {
+  (requestLogger ?? logger).info(data);
 }
 
-export function logWarn(requestLogger: AnyLogger, data: Record<string, any>) {
-  requestLogger.warn(data);
+export function logWarn(requestLogger: AnyLogger | undefined, data: Record<string, unknown>) {
+  (requestLogger ?? logger).warn(data);
 }
 
-export function logDebug(requestLogger: AnyLogger, data: Record<string, any>) {
-  requestLogger.debug(data);
+export function logDebug(requestLogger: AnyLogger | undefined, data: Record<string, unknown>) {
+  (requestLogger ?? logger).debug(data);
 }
 
 /**
  * Log errors with full context — normalizes Error objects and unknown throws
  */
 export function logError(
-  requestLogger: AnyLogger,
+  requestLogger: AnyLogger | undefined,
   error: Error | unknown,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ) {
   const errorData = error instanceof Error ? { message: error.message, stack: error.stack } : { error: String(error) };
-  requestLogger.error({ ...errorData, ...context });
+  (requestLogger ?? logger).error({ ...errorData, ...context });
 }
 
 export default logger;
