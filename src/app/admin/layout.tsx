@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     if (loading) {
         return (
             <div className="flex min-h-screen bg-muted overflow-hidden">
-                <div className="hidden lg:flex w-64 flex-col gap-4 p-4 border-r bg-background">
+                <div className="hidden lg:flex w-[240px] flex-col gap-4 p-4 border-r bg-background">
                     <Skeleton className="h-8 w-3/4 mb-8 mt-2" />
                     {Array.from({ length: 6 }).map((_, i) => (
                         <Skeleton key={i} className="h-10 w-full" />
@@ -72,7 +72,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
             />
-            <div className="flex-1 flex flex-col lg:ml-64 h-screen overflow-hidden">
+            <div className="flex-1 flex flex-col lg:ml-[240px] h-screen overflow-hidden">
                 <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
                 <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                     {children}

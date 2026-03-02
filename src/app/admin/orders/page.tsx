@@ -55,6 +55,7 @@ import { DateFilter } from "@/components/ui/date-filter";
 import { EnhancedPagination } from "@/components/ui/enhanced-pagination";
 import { useOrderFilters } from "@/hooks/useOrderFilters";
 import moment from "moment";
+import { useUnreadOrderIds } from "@/hooks/useUnreadOrderIds";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ export default function OrdersPage() {
   const token = userStore((s) => s.token);
   const adminApiFetch = useAdminApi();
   const router = useRouter();
+  const { unreadOrderIds, markOrderRead } = useUnreadOrderIds();
 
   const {
     filters,
@@ -169,6 +171,15 @@ export default function OrdersPage() {
     filters.sortOrder,
   ]);
 
+  // Re-fetch when a new order notification arrives via SSE
+  const unreadSize = unreadOrderIds.size;
+  useEffect(() => {
+    if (unreadSize > 0) {
+      fetchOrders();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unreadSize]);
+
   // ── Status update ─────────────────────────────────────────────────────────
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
@@ -201,6 +212,9 @@ export default function OrdersPage() {
         )
       );
       toast.success("Order status updated successfully");
+
+      // Mark notification as read when status is changed
+      void markOrderRead(orderId);
     } catch (error) {
       console.error("Error updating order status:", error);
       toast.error(
@@ -434,150 +448,154 @@ export default function OrdersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order, idx) => (
-                  <TableRow
-                    key={order.id}
-                    className={`border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer ${
-                      idx % 2 === 0 ? "bg-white" : "bg-gray-50/30"
-                    }`}
-                    onClick={(e) => {
-                      const target = e.target as HTMLElement;
-                      if (
-                        target.closest('[role="combobox"]') ||
-                        target.closest('[role="option"]') ||
-                        target.closest(".select-trigger") ||
-                        target.closest("[data-radix-menu-trigger]")
-                      )
-                        return;
-                      router.push(`/admin/orders/${order.id}`);
-                    }}
-                  >
-                    {/* Order # */}
-                    <TableCell className="py-3.5 px-4">
-                      <span className="font-mono text-sm font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
-                        #{order.orderNumber || "N/A"}
-                      </span>
-                    </TableCell>
-
-                    {/* Customer */}
-                    <TableCell className="py-3.5 px-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {order.user.fullName}
-                      </div>
-                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <Phone className="w-3 h-3" />
-                        {formatPhoneNumber(order.user.phone)}
-                      </div>
-                    </TableCell>
-
-                    {/* Status */}
-                    <TableCell
-                      className="py-3.5 px-4"
-                      onClick={(e) => e.stopPropagation()}
+                {orders.map((order, idx) => {
+                  const isUnread = unreadOrderIds.has(order.id);
+                  return (
+                    <TableRow
+                      key={order.id}
+                      className={`border-b border-gray-100 hover:bg-blue-50/40 transition-colors cursor-pointer ${isUnread
+                        ? "bg-blue-50/70 border-l-2 border-l-blue-400"
+                        : idx % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                        }`}
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (
+                          target.closest('[role="combobox"]') ||
+                          target.closest('[role="option"]') ||
+                          target.closest(".select-trigger") ||
+                          target.closest("[data-radix-menu-trigger]")
+                        )
+                          return;
+                        void markOrderRead(order.id);
+                        router.push(`/admin/orders/${order.id}`);
+                      }}
                     >
-                      <Select
-                        value={order.status}
-                        onValueChange={(newStatus) =>
-                          handleStatusChange(order.id, newStatus)
-                        }
-                        disabled={updatingStatus === order.id}
-                      >
-                        <SelectTrigger
-                          className={`w-28 h-7 select-trigger text-xs font-semibold border ${statusColor(order.status)}`}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ORDER_STATUSES.map((s) => (
-                            <SelectItem key={s} value={s} className="text-xs">
-                              {capitalize(s)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
+                      {/* Order # */}
+                      <TableCell className="py-3.5 px-4">
+                        <span className="font-mono text-sm font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
+                          #{order.orderNumber || "N/A"}
+                        </span>
+                      </TableCell>
 
-                    {/* Type */}
-                    <TableCell className="py-3.5 px-4">
-                      <Badge
-                        className={`text-xs font-semibold px-2 py-0.5 border ${
-                          order.deliveryType === "DELIVERY"
+                      {/* Customer */}
+                      <TableCell className="py-3.5 px-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {order.user.fullName}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <Phone className="w-3 h-3" />
+                          {formatPhoneNumber(order.user.phone)}
+                        </div>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell
+                        className="py-3.5 px-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Select
+                          value={order.status}
+                          onValueChange={(newStatus) =>
+                            handleStatusChange(order.id, newStatus)
+                          }
+                          disabled={updatingStatus === order.id}
+                        >
+                          <SelectTrigger
+                            className={`w-28 h-7 select-trigger text-xs font-semibold border ${statusColor(order.status)}`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ORDER_STATUSES.map((s) => (
+                              <SelectItem key={s} value={s} className="text-xs">
+                                {capitalize(s)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
+                      {/* Type */}
+                      <TableCell className="py-3.5 px-4">
+                        <Badge
+                          className={`text-xs font-semibold px-2 py-0.5 border ${order.deliveryType === "DELIVERY"
                             ? "bg-blue-50 text-blue-700 border-blue-200"
                             : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        }`}
-                      >
-                        {order.deliveryType === "DELIVERY" ? (
-                          <Truck className="w-3 h-3 mr-1" />
-                        ) : (
-                          <Package className="w-3 h-3 mr-1" />
-                        )}
-                        {capitalize(order.deliveryType || "N/A")}
-                      </Badge>
-                    </TableCell>
+                            }`}
+                        >
+                          {order.deliveryType === "DELIVERY" ? (
+                            <Truck className="w-3 h-3 mr-1" />
+                          ) : (
+                            <Package className="w-3 h-3 mr-1" />
+                          )}
+                          {capitalize(order.deliveryType || "N/A")}
+                        </Badge>
+                      </TableCell>
 
-                    {/* Amount */}
-                    <TableCell className="py-3.5 px-4 text-right">
-                      <div className="font-bold text-gray-900">
-                        {formatCurrency(order.total)}
-                      </div>
-                      {Number(order.discount) > 0 && (
-                        <div className="text-xs text-emerald-600 font-medium">
-                          -{formatCurrency(Number(order.discount))} saved
+                      {/* Amount */}
+                      <TableCell className="py-3.5 px-4 text-right">
+                        <div className="font-bold text-gray-900">
+                          {formatCurrency(order.total)}
                         </div>
-                      )}
-                      <div className="text-xs text-gray-500">
-                        {capitalize(order.paymentMethod || "N/A")}
-                      </div>
-                    </TableCell>
-
-                    {/* Order Date */}
-                    <TableCell className="py-3.5 px-4">
-                      <div className="text-sm text-gray-900">
-                        {formatDate(order.createdAt)}
-                      </div>
-                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3 h-3" />
-                        {moment(order.createdAt).format("h:mm A")}
-                      </div>
-                    </TableCell>
-
-                    {/* Delivery */}
-                    <TableCell className="py-3.5 px-4">
-                      {order.deliveryDate ? (
-                        <>
-                          <div className="text-sm text-gray-900">
-                            {formatDateOnly(order.deliveryDate)}
+                        {Number(order.discount) > 0 && (
+                          <div className="text-xs text-emerald-600 font-medium">
+                            -{formatCurrency(Number(order.discount))} saved
                           </div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                            <MapPin className="w-3 h-3" />
-                            {order.address?.city || "N/A"}
-                          </div>
-                        </>
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">
-                          Not scheduled
-                        </span>
-                      )}
-                    </TableCell>
+                        )}
+                        <div className="text-xs text-gray-500">
+                          {capitalize(order.paymentMethod || "N/A")}
+                        </div>
+                      </TableCell>
 
-                    {/* View */}
-                    <TableCell
-                      className="py-3.5 px-4 text-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2.5 text-gray-500 hover:text-gray-900 cursor-pointer"
-                        onClick={() =>
-                          router.push(`/admin/orders/${order.id}`)
-                        }
+                      {/* Order Date */}
+                      <TableCell className="py-3.5 px-4">
+                        <div className="text-sm text-gray-900">
+                          {formatDate(order.createdAt)}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <Clock className="w-3 h-3" />
+                          {moment(order.createdAt).format("h:mm A")}
+                        </div>
+                      </TableCell>
+
+                      {/* Delivery */}
+                      <TableCell className="py-3.5 px-4">
+                        {order.deliveryDate ? (
+                          <>
+                            <div className="text-sm text-gray-900">
+                              {formatDateOnly(order.deliveryDate)}
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3" />
+                              {order.address?.city || "N/A"}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">
+                            Not scheduled
+                          </span>
+                        )}
+                      </TableCell>
+
+                      {/* View */}
+                      <TableCell
+                        className="py-3.5 px-4 text-center"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2.5 text-gray-500 hover:text-gray-900 cursor-pointer"
+                          onClick={() =>
+                            router.push(`/admin/orders/${order.id}`)
+                          }
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

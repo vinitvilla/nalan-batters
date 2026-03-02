@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ContactStatus } from "@/generated/prisma";
-import { logError, logInfo, logWarn } from "@/lib/logger"
+import { logError, logInfo, logWarn } from "@/lib/logger";
+import { createContactMessageNotifications } from "@/services/notification/notification.service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,6 +38,10 @@ export async function POST(req: NextRequest) {
 
     logInfo(req.logger, { action: 'contact_message_created', messageId: contactMessage.id, name: name.trim() });
 
+    // Fire-and-forget: notify all admins/managers via SSE
+    void createContactMessageNotifications({ id: contactMessage.id, name: name.trim() });
+
+
     return NextResponse.json(
       {
         success: true,
@@ -45,6 +50,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
+
   } catch (error) {
     logError(req.logger, error, { action: 'contact_message_create_failed' });
     return NextResponse.json(

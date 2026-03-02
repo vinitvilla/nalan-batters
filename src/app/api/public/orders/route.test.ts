@@ -26,13 +26,20 @@ import { requireAuth } from '@/lib/auth-guard';
 import { createOrder } from '@/lib/utils/orderHelpers';
 import { prisma } from '@/lib/prisma';
 
+// Compute a delivery date always 7 days from now so past-date validation never fires
+function futureDateString(daysAhead = 7): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+}
+
 const validOrderBody = {
   userId: 'user-uuid-1',
   addressId: 'address-uuid-1',
   items: [
     { productId: '550e8400-e29b-41d4-a716-446655440000', quantity: 2, price: 12.99 },
   ],
-  deliveryDate: '2026-03-01',
+  deliveryDate: futureDateString(),
   deliveryType: 'DELIVERY',
 };
 
