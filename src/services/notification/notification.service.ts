@@ -39,6 +39,40 @@ export async function createOrderNotifications(order: {
 }
 
 /**
+ * Creates a "New Contact Message" notification for every ADMIN and MANAGER user
+ * and immediately pushes it to any connected SSE clients.
+ *
+ * Called fire-and-forget after a public contact form submission is saved.
+ */
+export async function createContactMessageNotifications(message: {
+  id: string;
+  name: string;
+}) {
+  const admins = await prisma.user.findMany({
+    where: {
+      role: { in: ["ADMIN", "MANAGER"] },
+      isDelete: false,
+    },
+    select: { id: true },
+  });
+
+  if (admins.length === 0) return;
+
+  const created = await prisma.notification.createManyAndReturn({
+    data: admins.map((admin) => ({
+      userId: admin.id,
+      title: `New Message from ${message.name}`,
+      body: "A new contact form message has been received.",
+      link: `/admin/contact-messages/${message.id}`,
+    })),
+  });
+
+  for (const notification of created) {
+    notifyUser(notification.userId, { type: "new_notification", notification });
+  }
+}
+
+/**
  * Returns paginated notifications for a user (excluding soft-deleted).
  */
 export async function getNotifications(

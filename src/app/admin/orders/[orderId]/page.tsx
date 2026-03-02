@@ -19,13 +19,14 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatPhoneNumber, formatAddress } from "@/lib/utils/commonFunctions";
 import moment from "moment";
+import { useUnreadOrderIds } from "@/hooks/useUnreadOrderIds";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    PENDING:   { label: "Pending",   color: "bg-amber-50 text-amber-700 border-amber-200",   icon: <Clock className="w-3.5 h-3.5" /> },
-    CONFIRMED: { label: "Confirmed", color: "bg-blue-50 text-blue-700 border-blue-200",      icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-    SHIPPED:   { label: "Shipped",   color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: <Package className="w-3.5 h-3.5" /> },
-    DELIVERED: { label: "Delivered", color: "bg-green-50 text-green-700 border-green-200",   icon: <Truck className="w-3.5 h-3.5" /> },
-    CANCELLED: { label: "Cancelled", color: "bg-red-50 text-red-700 border-red-200",         icon: <AlertCircle className="w-3.5 h-3.5" /> },
+    PENDING: { label: "Pending", color: "bg-amber-50 text-amber-700 border-amber-200", icon: <Clock className="w-3.5 h-3.5" /> },
+    CONFIRMED: { label: "Confirmed", color: "bg-blue-50 text-blue-700 border-blue-200", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+    SHIPPED: { label: "Shipped", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: <Package className="w-3.5 h-3.5" /> },
+    DELIVERED: { label: "Delivered", color: "bg-green-50 text-green-700 border-green-200", icon: <Truck className="w-3.5 h-3.5" /> },
+    CANCELLED: { label: "Cancelled", color: "bg-red-50 text-red-700 border-red-200", icon: <AlertCircle className="w-3.5 h-3.5" /> },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -48,6 +49,14 @@ export default function OrderDetailPage() {
     const [status, setStatus] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const { markOrderRead } = useUnreadOrderIds();
+
+    // Mark notification as read when order detail is viewed
+    useEffect(() => {
+        if (orderId) {
+            void markOrderRead(orderId);
+        }
+    }, [orderId, markOrderRead]);
 
     useEffect(() => {
         if (!orderId || !token) return;
@@ -84,6 +93,7 @@ export default function OrderDetailPage() {
             setOrder(prev => prev ? { ...prev, status: uppercaseStatus as OrderStatus } : null);
             setStatus(uppercaseStatus);
             toast.success("Order status updated");
+            void markOrderRead(orderId);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Failed to update status");
         } finally {
