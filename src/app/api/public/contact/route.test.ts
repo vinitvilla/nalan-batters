@@ -12,6 +12,10 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
+vi.mock('@/services/notification/notification.service', () => ({
+  createContactMessageNotifications: vi.fn().mockResolvedValue(undefined),
+}))
+
 describe('/api/public/contact', () => {
   beforeEach(() => {
     vi.clearAllMocks()
