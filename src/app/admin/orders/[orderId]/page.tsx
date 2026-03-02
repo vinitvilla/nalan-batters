@@ -193,9 +193,8 @@ export default function OrderDetailPage() {
                             <h1 className="text-xl font-bold text-gray-900">
                                 {order.orderNumber ? `Order #${order.orderNumber}` : `Order`}
                             </h1>
-                            <StatusBadge status={order.status} />
                             <button
-                                className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                                className="inline-flex items-center gap-1 text-xs text-gray-500 hover:border-b hover:border-gray-500 hover:text-gray-600 transition-colors"
                                 onClick={() => {
                                     navigator.clipboard.writeText(order.orderNumber || order.id);
                                     toast.success("Copied!");
@@ -220,6 +219,7 @@ export default function OrderDetailPage() {
                                 <Package className="w-3.5 h-3.5" />
                                 {order.items.length} {order.items.length === 1 ? "item" : "items"}
                             </span>
+                            <StatusBadge status={order.status} />
                         </div>
                     </div>
                     <div className="text-right">
