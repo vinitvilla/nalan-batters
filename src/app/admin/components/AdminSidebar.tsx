@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useNewMessagesCount } from "@/hooks/useNewMessagesCount";
+import { useAdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
 import { useUserRole } from "@/hooks/useUserRole";
 import { hasPermission, Permission } from "@/lib/permissions";
 import { userStore } from "@/store/userStore";
@@ -74,7 +74,7 @@ function getInitials(fullName: string, phone: string): string {
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const pathname = usePathname();
-    const { newMessagesCount } = useNewMessagesCount();
+    const { ordersCount, messagesCount, markSectionRead, ORDER_LINK_PREFIX, MESSAGES_LINK_PREFIX } = useAdminSidebarCounts();
     const { userRole, isManager } = useUserRole();
     const fullName = userStore((s) => s.fullName);
     const phone = userStore((s) => s.phone);
@@ -91,15 +91,27 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         e.stopPropagation();
     };
 
+    const getBadgeCount = (href: string): number => {
+        if (href === "/admin/orders") return ordersCount;
+        if (href === "/admin/contact-messages") return messagesCount;
+        return 0;
+    };
+
+    const handleSectionClick = (href: string) => {
+        if (href === "/admin/orders") void markSectionRead(ORDER_LINK_PREFIX);
+        if (href === "/admin/contact-messages") void markSectionRead(MESSAGES_LINK_PREFIX);
+        handleNavClick();
+    };
+
     const renderNavItem = (item: NavItem) => {
         const Icon = item.icon;
         const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-        const isContactMessages = item.href === "/admin/contact-messages";
-        const showBadge = isContactMessages && newMessagesCount > 0;
+        const badgeCount = getBadgeCount(item.href);
+        const showBadge = badgeCount > 0;
 
         return (
             <div key={item.href} className="relative">
-                <Link href={item.href} onClick={handleNavClick}>
+                <Link href={item.href} onClick={() => handleSectionClick(item.href)}>
                     <div className={`
                         group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
                         transition-all duration-200 cursor-pointer
@@ -147,7 +159,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
                             {showBadge ? (
                                 <Badge className="ml-2 bg-red-500 hover:bg-red-500 text-white text-[10px] font-bold px-1.5 py-0 min-w-[18px] h-[18px] flex items-center justify-center rounded-full flex-shrink-0 animate-pulse">
-                                    {newMessagesCount > 99 ? "99+" : newMessagesCount}
+                                    {badgeCount > 99 ? "99+" : badgeCount}
                                 </Badge>
                             ) : isActive ? (
                                 <ChevronRight className="h-3.5 w-3.5 text-white/50 flex-shrink-0 ml-1" />
